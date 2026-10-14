@@ -1,5 +1,9 @@
 
 const User = require("../models/User");
+const {
+    sendWelcomeEmail,
+    sendLoginAlert
+} = require("../services/emailService");
 const { createToken } = require("../services/tokenService");
 
 const validRoles = ["athlete", "coach"];
@@ -83,6 +87,9 @@ async function register(req, res, next) {
             password,
             role: selectedRole
         });
+        sendWelcomeEmail(user).catch((error) => {
+            console.error("Welcome email failed:", error.message);
+        });
 
         return res.status(201).json({
             success: true,
@@ -134,6 +141,10 @@ async function login(req, res, next) {
                 message: "Invalid email or password"
             });
         }
+
+        sendLoginAlert(user).catch((error) => {
+            console.error("Login notification failed:", error.message);
+        });
 
         return res.status(200).json({
             success: true,
