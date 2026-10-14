@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema(
             minlength: 2,
             maxlength: 60
         },
+
         email: {
             type: String,
             required: true,
@@ -19,30 +20,48 @@ const userSchema = new mongoose.Schema(
             trim: true,
             maxlength: 254
         },
+
         password: {
             type: String,
-            required: true,
+            select: false,
             minlength: 8,
-            select: false
+            maxlength: 72
         },
+
+        googleId: {
+            type: String,
+            unique: true,
+            sparse: true
+        },
+
+        avatar: {
+            type: String,
+            default: ""
+        },
+
         role: {
             type: String,
             enum: ["athlete", "coach"],
-            default: "athlete"
+            default: "athlete",
+            required: true
         }
     },
     { timestamps: true }
 );
 
-// Hash the password before saving a new password.
 userSchema.pre("save", async function () {
-    if (!this.isModified("password")) return;
+    if (!this.isModified("password") || !this.password) {
+        return;
+    }
 
     this.password = await bcrypt.hash(this.password, 12);
 });
 
-// Compare a login password with the stored hash.
 userSchema.methods.comparePassword = function (candidatePassword) {
+    if (!this.password) {
+        return Promise.resolve(false);
+    }
+
     return bcrypt.compare(candidatePassword, this.password);
 };
 

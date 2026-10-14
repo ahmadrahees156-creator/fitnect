@@ -1,30 +1,27 @@
 
-const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { createToken } = require("../services/tokenService");
 
-function createToken(user) {
-    if (!process.env.JWT_SECRET) {
-        throw new Error("JWT_SECRET is not configured");
-    }
-
-    return jwt.sign(
-        {
-            id: user._id.toString(),
-            role: user.role
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: "7d" }
-    );
-}
+const validRoles = ["athlete", "coach"];
 
 function validEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function publicUser(user) {
+    return {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar || ""
+    };
+}
+
 // POST /api/auth/register
 async function register(req, res, next) {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role } = req.body;
 
         if (
             typeof name !== "string" ||
@@ -39,6 +36,7 @@ async function register(req, res, next) {
 
         const cleanName = name.trim();
         const cleanEmail = email.trim().toLowerCase();
+        const selectedRole = role || "athlete";
 
         if (cleanName.length < 2 || cleanName.length > 60) {
             return res.status(400).json({
@@ -61,6 +59,13 @@ async function register(req, res, next) {
             });
         }
 
+        if (!validRoles.includes(selectedRole)) {
+            return res.status(400).json({
+                success: false,
+                message: "Role must be athlete or coach"
+            });
+        }
+
         const existingUser = await User.findOne({
             email: cleanEmail
         });
@@ -75,21 +80,15 @@ async function register(req, res, next) {
         const user = await User.create({
             name: cleanName,
             email: cleanEmail,
-            password
+            password,
+            role: selectedRole
         });
-
-        const token = createToken(user);
 
         return res.status(201).json({
             success: true,
             message: "Account created successfully",
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
+            token: createToken(user),
+            user: publicUser(user)
         });
     } catch (error) {
         if (error.code === 11000) {
@@ -136,18 +135,11 @@ async function login(req, res, next) {
             });
         }
 
-        const token = createToken(user);
-
         return res.status(200).json({
             success: true,
             message: "Login successful",
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
+            token: createToken(user),
+            user: publicUser(user)
         });
     } catch (error) {
         next(error);
