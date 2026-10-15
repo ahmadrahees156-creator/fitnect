@@ -492,56 +492,130 @@ function Landing() {
         }
       `}</style>
 
-      <header className="relative z-50 border-b border-black/10">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between px-5 py-4 sm:px-8 lg:px-14">
-          <Brand />
+   
+<header className="sticky top-0 z-50 border-b border-white/60 bg-[#E4DBF4]/85 backdrop-blur-2xl">
+  <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-10">
 
-          <button
-            type="button"
-            aria-label="Toggle navigation"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/15 text-xl md:hidden"
-          >
-            {menuOpen ? '×' : '☰'}
-          </button>
+    {/* Logo */}
+    <div onClick={() => setMenuOpen(false)} className="shrink-0">
+      <Brand />
+    </div>
 
-          <nav
-            className={`${
-              menuOpen ? 'flex' : 'hidden'
-            } absolute left-4 right-4 top-[70px] flex-col gap-1 rounded-2xl border border-white bg-[#F6F2FA] p-4 shadow-xl md:static md:flex md:flex-row md:items-center md:gap-8 md:border-0 md:bg-transparent md:p-0 md:shadow-none`}
+    {/* Desktop Navigation */}
+    <nav className="hidden items-center gap-1 rounded-full border border-white/70 bg-white/45 p-1.5 shadow-sm md:flex">
+      <a
+        href="#about"
+        className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#51465F] transition-all duration-300 hover:bg-white hover:text-[#7855A6]"
+      >
+        Our approach
+      </a>
+
+      <a
+        href="#features"
+        className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#51465F] transition-all duration-300 hover:bg-white hover:text-[#7855A6]"
+      >
+        Features
+      </a>
+
+      <a
+        href="#how-it-works"
+        className="rounded-full px-4 py-2.5 text-sm font-semibold text-[#51465F] transition-all duration-300 hover:bg-white hover:text-[#7855A6]"
+      >
+        How it works
+      </a>
+    </nav>
+
+    {/* Desktop Actions */}
+    <div className="hidden items-center gap-3 md:flex">
+      <a
+        href="/login"
+        className="rounded-full px-5 py-3 text-sm font-bold text-[#51465F] transition-all duration-300 hover:bg-white/70 hover:text-[#7855A6]"
+      >
+        Log in
+      </a>
+
+      <a
+        href="/register"
+        className="group inline-flex items-center gap-2 rounded-full bg-[#151517] px-5 py-3 text-sm font-bold text-white shadow-md shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#7855A6] hover:shadow-lg"
+      >
+    Register
+        <span className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-0.5">
+          ↗
+        </span>
+      </a>
+    </div>
+
+    {/* Mobile Menu Button */}
+    <button
+      type="button"
+      aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+      aria-expanded={menuOpen}
+      onClick={() => setMenuOpen(!menuOpen)}
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white bg-white/70 text-xl text-[#151517] shadow-sm transition-all duration-300 hover:bg-white md:hidden"
+    >
+      {menuOpen ? "×" : "☰"}
+    </button>
+  </div>
+
+  {/* Mobile Navigation */}
+  <div
+    className={`grid transition-all duration-300 ease-in-out md:hidden ${
+      menuOpen
+        ? "grid-rows-[1fr] opacity-100"
+        : "pointer-events-none grid-rows-[0fr] opacity-0"
+    }`}
+  >
+    <div className="overflow-hidden">
+      <nav className="mx-4 mb-4 rounded-3xl border border-white/80 bg-white/75 p-3 shadow-xl shadow-[#7855A6]/10 backdrop-blur-2xl">
+        <a
+          href="#about"
+          onClick={() => setMenuOpen(false)}
+          className="block rounded-2xl px-4 py-3.5 text-sm font-semibold text-[#51465F] transition hover:bg-[#F1ECFA] hover:text-[#7855A6]"
+        >
+          Our approach
+        </a>
+
+        <a
+          href="#features"
+          onClick={() => setMenuOpen(false)}
+          className="block rounded-2xl px-4 py-3.5 text-sm font-semibold text-[#51465F] transition hover:bg-[#F1ECFA] hover:text-[#7855A6]"
+        >
+          Features
+        </a>
+
+        <a
+          href="#how-it-works"
+          onClick={() => setMenuOpen(false)}
+          className="block rounded-2xl px-4 py-3.5 text-sm font-semibold text-[#51465F] transition hover:bg-[#F1ECFA] hover:text-[#7855A6]"
+        >
+          How it works
+        </a>
+
+        <div className="mt-2 grid grid-cols-2 gap-3 border-t border-black/10 pt-3">
+          <a
+            href="/login"
+            onClick={() => setMenuOpen(false)}
+            className="flex items-center justify-center rounded-full border border-[#7855A6]/20 bg-white px-4 py-3.5 text-sm font-bold text-[#7855A6] transition hover:bg-[#F1ECFA]"
           >
-            <a
-              onClick={() => setMenuOpen(false)}
-              href="#about"
-              className="px-3 py-3 text-sm font-semibold text-black/65 hover:text-black"
-            >
-              Our approach
-            </a>
-            <a
-              onClick={() => setMenuOpen(false)}
-              href="#features"
-              className="px-3 py-3 text-sm font-semibold text-black/65 hover:text-black"
-            >
-              Features
-            </a>
-            <a
-              onClick={() => setMenuOpen(false)}
-              href="#how-it-works"
-              className="px-3 py-3 text-sm font-semibold text-black/65 hover:text-black"
-            >
-              How it works
-            </a>
-          </nav>
+            Log in
+          </a>
 
           <a
-            href="#features"
-            className="group hidden items-center gap-3 rounded-full bg-[#151517] px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:shadow-xl md:inline-flex"
+            href="/register"
+            onClick={() => setMenuOpen(false)}
+            className="group flex items-center justify-center gap-2 rounded-full bg-[#FDC381] px-4 py-3.5 text-sm font-bold text-[#151517] transition hover:bg-[#F8B466]"
           >
-            Discover FitNect <Arrow diagonal />
+            Get Started
+            <span className="transition-transform duration-300 group-hover:translate-x-1">
+              ↗
+            </span>
           </a>
         </div>
-      </header>
+      </nav>
+    </div>
+  </div>
+</header>
+
 
       <section className="relative isolate mx-auto grid max-w-[1600px] items-center gap-8 px-5 pb-14 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:min-h-[740px] lg:grid-cols-[.92fr_1.08fr] lg:gap-0 lg:px-14 lg:py-12">
         <div className="pointer-events-none absolute -left-36 top-20 -z-10 h-96 w-96 rounded-full bg-[#F373D4]/20 blur-[100px]" />
