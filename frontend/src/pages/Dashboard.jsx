@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Brand from '../components/Brand'
+import TrainingActivity from '../components/TrainingActivity'
 
 const navItems = [
   'Overview',
@@ -512,6 +513,8 @@ function Dashboard() {
                 FitNect <span className="mx-1">·</span> Train smart. Recover better.
               </footer>
             </>
+          ) : activeItem === 'Training & Activity' ? (
+            <TrainingActivity />
           ) : (
             <section className="fitnect-enter relative overflow-hidden rounded-[28px] border border-[#EAE1F1] bg-white p-6 sm:p-10">
               <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#EADBF7] opacity-60 blur-3xl" />
