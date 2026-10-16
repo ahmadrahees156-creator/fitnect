@@ -36,7 +36,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const backgroundColor = Color(0xFFEFE8F6); // Soft pastel purple theme
+    
+    const backgroundColor = Color(0xFFEFE8F6);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -63,8 +64,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   children: const [
                     _SlideOne(),
                     _SlideTwo(),
-                    _SlideThree(),
-                    _SlideFour(),
+                    _SlideThree(), 
+                    _SlideFour(),  
                   ],
                 ),
               ),
@@ -125,7 +126,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-
 class _SlideOne extends StatelessWidget {
   const _SlideOne();
 
@@ -139,7 +139,7 @@ class _SlideOne extends StatelessWidget {
         children: [
           Row(
             children: const [
-              Icon(Icons.circle, size: 8, color: Color(0xFF9C27B0)),
+              Icon(Icons.circle, size: 8, color: Color.fromARGB(255, 189, 40, 134)),
               SizedBox(width: 8),
               Text(
                 'ATHLETE WELLNESS, REIMAGINED',
@@ -154,13 +154,56 @@ class _SlideOne extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const Text(
-            'Listen\nto your\nbody.',
+            'Listen\nto your',
             style: TextStyle(
               color: Colors.black,
               fontSize: 48,
               height: 1.1,
               fontWeight: FontWeight.w900,
             ),
+          ),
+          const SizedBox(height: 4),
+          
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              
+              Positioned(
+                bottom: 4,
+                left: 0,
+                child: Container(
+                  height: 12,
+                  width: 140,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFCC80), 
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+              ),
+              
+              const Text(
+                'body',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 48,
+                  height: 1.1,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              
+              Positioned(
+                bottom: 8,
+                right: -16,
+                child: Container(
+                  height: 10,
+                  width: 10,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF6C4AB6), 
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
           const Text(
@@ -277,65 +320,14 @@ class _SlideThree extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            height: 160,
-            width: 160,
-            decoration: BoxDecoration(
-              color: Colors.purple.shade100,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.directions_run_rounded,
-              size: 90,
-              color: Color(0xFF6C4AB6),
-            ),
-          ),
-          const SizedBox(height: 36),
-          const Text(
-            "You're all set, Athlete.",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Connect your sensors, set your recovery goals, and start listening to your body. Your journey to optimized performance begins now.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.black87,
-              fontSize: 15,
-              height: 1.5,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-class _SlideFour extends StatelessWidget {
-  const _SlideFour();
-
-  @override
-  Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           Row(
             children: const [
-              Icon(Icons.circle, size: 8, color: Color(0xFF9C27B0)),
+              Icon(Icons.circle, size: 8, color: Color(0xFF8E24AA)),
               SizedBox(width: 8),
               Text(
                 'A SIMPLE PRACTICE',
@@ -349,7 +341,6 @@ class _SlideFour extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-         
           RichText(
             text: const TextSpan(
               style: TextStyle(
@@ -372,62 +363,27 @@ class _SlideFour extends StatelessWidget {
             'A straightforward process designed around everyday athlete wellness, not complicated dashboards.',
             style: TextStyle(color: Colors.black54, fontSize: 13, height: 1.4),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          
           _buildStepRow(
             badgeText: '01',
             badgeColor: Colors.greenAccent,
             title: 'Check in with yourself.',
             subtitle: 'Record how you feel, how you slept, how your body is recovering.',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _buildStepRow(
             badgeText: '02',
             badgeColor: Colors.lightBlueAccent,
             title: 'Connect the signals.',
             subtitle: 'Bring wellness and training information together to understand patterns.',
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           _buildStepRow(
             badgeText: '03',
             badgeColor: Colors.amberAccent,
             title: 'Make informed decisions.',
             subtitle: 'Use the bigger picture to guide thoughts, training and recovery choices.',
-          ),
-          const SizedBox(height: 24),
-
-          
-          Container(
-            padding: const EdgeInsets.all(24.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFCC80), 
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  '• YOUR JOURNEY, YOUR SIGNALS',
-                  style: TextStyle(
-                    color: Color(0xFFD84315),
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Train hard.\nUnderstand deeper.',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    height: 1.15,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -441,9 +397,9 @@ class _SlideFour extends StatelessWidget {
     required String subtitle,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.5),
+        color: Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -461,7 +417,7 @@ class _SlideFour extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -484,6 +440,56 @@ class _SlideFour extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class _SlideFour extends StatelessWidget {
+  const _SlideFour();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            height: 160,
+            width: 160,
+            decoration: BoxDecoration(
+              color: Colors.purple.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.directions_run_rounded,
+              size: 90,
+              color: Color(0xFF6C4AB6),
+            ),
+          ),
+          const SizedBox(height: 36),
+          const Text(
+            "You're all set.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Connect your sensors, set your recovery goals, and start listening to your body. Your journey to optimized performance begins now.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.black87,
+              fontSize: 15,
+              height: 1.5,
             ),
           ),
         ],
