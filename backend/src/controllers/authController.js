@@ -73,6 +73,8 @@ async function register(req, res, next) {
             email: cleanEmail
         });
 
+        let user;
+        
         if (existingUser) {
             if (existingUser.emailVerified) {
                 return res.status(409).json({
