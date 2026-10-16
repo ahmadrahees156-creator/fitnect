@@ -5,36 +5,39 @@ const { createToken } = require("../services/tokenService");
 const { sendLoginAlert } = require("../services/emailService");
 
 const googleClient = new OAuth2Client();
-
 const validRoles = ["athlete", "coach"];
 
 function publicUser(user) {
     return {
-        id: user._id,
+        id: user._id.toString(),
         name: user.name,
         email: user.email,
         role: user.role,
-        avatar: user.avatar || ""
+        avatar: user.avatar || "",
+        emailVerified: user.emailVerified
     };
 }
 
+// POST /api/auth/google
 async function googleLogin(req, res, next) {
     try {
-        const { credential, role } = req.body;
+        // Support both web clients using "credential" and mobile clients
+        // sending the same Google ID token as "idToken".
+        const { credential, idToken, role } = req.body;
+        const googleToken = idToken || credential;
 
-        if (typeof credential !== "string" || !credential) {
+        if (typeof googleToken !== "string" || !googleToken) {
             return res.status(400).json({
                 success: false,
                 message: "Google ID token is required"
             });
         }
 
-        const clientIds = (process.env.GOOGLE_CLIENT_IDS || "")
-            .split(",")
-            .map((id) => id.trim())
-            .filter(Boolean);
+        // This must be your Web application OAuth client ID.
+        // Mobile clients should request an ID token for this server client.
+        const webClientId = process.env.GOOGLE_WEB_CLIENT_ID;
 
-        if (clientIds.length === 0) {
+        if (!webClientId) {
             return res.status(503).json({
                 success: false,
                 message: "Google Sign-In is not configured"
@@ -42,8 +45,8 @@ async function googleLogin(req, res, next) {
         }
 
         const ticket = await googleClient.verifyIdToken({
-            idToken: credential,
-            audience: clientIds
+            idToken: googleToken,
+            audience: webClientId
         });
 
         const payload = ticket.getPayload();
@@ -62,14 +65,16 @@ async function googleLogin(req, res, next) {
 
         const email = payload.email.trim().toLowerCase();
 
-        let user = await User.findOne({
-            googleId: payload.sub
-        });
+        // First, find an account already linked to this Google identity.
+        let user = await User.findOne({ googleId: payload.sub });
 
         if (user) {
+            user.emailVerified = true;
             user.avatar = payload.picture || user.avatar || "";
             await user.save();
         } else {
+            // If an account with this verified email already exists,
+            // link the Google identity to that account.
             user = await User.findOne({ email });
 
             if (user) {
@@ -81,6 +86,7 @@ async function googleLogin(req, res, next) {
                 }
 
                 user.googleId = payload.sub;
+                user.emailVerified = true;
                 user.avatar = payload.picture || user.avatar || "";
                 await user.save();
             } else {
@@ -98,11 +104,13 @@ async function googleLogin(req, res, next) {
                     email,
                     googleId: payload.sub,
                     avatar: payload.picture || "",
-                    role: selectedRole
+                    role: selectedRole,
+                    emailVerified: true
                 });
             }
         }
 
+        // Email notification must not block a successful sign-in.
         sendLoginAlert(user).catch((error) => {
             console.error("Google login notification failed:", error.message);
         });
@@ -121,9 +129,12 @@ async function googleLogin(req, res, next) {
             });
         }
 
+        // Invalid, expired, or incorrectly targeted Google ID token.
         if (
-            error.message &&
-            /token|audience|issuer|expired|verification/i.test(error.message)
+            error.name === "OAuth2ClientError" ||
+            /token|audience|issuer|expired|verification/i.test(
+                error.message || ""
+            )
         ) {
             return res.status(401).json({
                 success: false,

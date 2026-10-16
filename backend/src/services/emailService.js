@@ -85,7 +85,42 @@ function escapeHtml(value = "") {
     })[character]);
 }
 
+
+async function sendOTPEmail({ email, name, otp }) {
+    const response = await fetch(
+        "https://api.brevo.com/v3/smtp/email",
+        {
+            method: "POST",
+            headers: {
+                "accept": "application/json",
+                "api-key": process.env.BREVO_API_KEY,
+                "content-type": "application/json"
+            },
+            body: JSON.stringify({
+                sender: {
+                    name: process.env.BREVO_SENDER_NAME || "FitNect",
+                    email: process.env.BREVO_SENDER_EMAIL
+                },
+                to: [{ email }],
+                subject: "Verify your FitNect email",
+                textContent:
+                    `Hi ${name || "there"}, your FitNect verification code is ${otp}. ` +
+                    "It expires in 10 minutes. Do not share this code with anyone."
+            }),
+            signal: AbortSignal.timeout(10000)
+        }
+    );
+
+    if (!response.ok) {
+        const details = await response.text();
+        console.error("Brevo OTP email failed:", response.status, details);
+        throw new Error("Could not send verification email.");
+    }
+}
+
+
 module.exports = {
     sendWelcomeEmail,
-    sendLoginAlert
+    sendLoginAlert,
+    sendOTPEmail
 };

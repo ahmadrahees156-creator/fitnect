@@ -44,6 +44,11 @@ const userSchema = new mongoose.Schema(
             enum: ["athlete", "coach"],
             default: "athlete",
             required: true
+        },
+        emailVerified: {
+            type: Boolean,
+            default: false,
+            required: true
         }
     },
     { timestamps: true }
