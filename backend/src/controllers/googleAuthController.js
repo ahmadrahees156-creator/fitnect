@@ -2,6 +2,7 @@
 const { OAuth2Client } = require("google-auth-library");
 const User = require("../models/User");
 const { createToken } = require("../services/tokenService");
+const { sendLoginAlert } = require("../services/emailService");
 
 const googleClient = new OAuth2Client();
 
@@ -17,7 +18,6 @@ function publicUser(user) {
     };
 }
 
-// POST /api/auth/google
 async function googleLogin(req, res, next) {
     try {
         const { credential, role } = req.body;
@@ -41,7 +41,6 @@ async function googleLogin(req, res, next) {
             });
         }
 
-        // Verify signature, issuer, audience and expiration.
         const ticket = await googleClient.verifyIdToken({
             idToken: credential,
             audience: clientIds
@@ -63,21 +62,17 @@ async function googleLogin(req, res, next) {
 
         const email = payload.email.trim().toLowerCase();
 
-        // Find the existing Google account first.
         let user = await User.findOne({
             googleId: payload.sub
         });
 
         if (user) {
-            // Do not let a login request change an existing user's role.
             user.avatar = payload.picture || user.avatar || "";
             await user.save();
         } else {
             user = await User.findOne({ email });
 
             if (user) {
-                // Link a verified Google account to an existing
-                // email account, but never replace another Google ID.
                 if (user.googleId && user.googleId !== payload.sub) {
                     return res.status(409).json({
                         success: false,
@@ -108,6 +103,10 @@ async function googleLogin(req, res, next) {
             }
         }
 
+        sendLoginAlert(user).catch((error) => {
+            console.error("Google login notification failed:", error.message);
+        });
+
         return res.status(200).json({
             success: true,
             message: "Google Sign-In successful",
@@ -122,8 +121,6 @@ async function googleLogin(req, res, next) {
             });
         }
 
-        // Invalid or expired Google tokens should not become
-        // generic server errors.
         if (
             error.message &&
             /token|audience|issuer|expired|verification/i.test(error.message)
