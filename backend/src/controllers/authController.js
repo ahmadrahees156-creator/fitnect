@@ -69,7 +69,7 @@ async function register(req, res, next) {
             });
         }
 
-        let user = await User.findOne({
+        let existingUser = await User.findOne({
             email: cleanEmail
         });
 
