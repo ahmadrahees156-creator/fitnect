@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:fitnect/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -41,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => const PlaceholderHomeScreen(), 
+            builder: (context) => const OnboardingScreen(), 
           ),
         );
       }
