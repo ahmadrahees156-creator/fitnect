@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
+import 'login.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -28,7 +29,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => const PlaceholderHomeScreen(),
+          builder: (context) => const SignUpScreen(),
         ),
       );
     }
