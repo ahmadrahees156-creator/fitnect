@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '../services/authService'
@@ -8,6 +7,7 @@ import WellnessCheckIn from '../components/WellnessCheckIn'
 import Recovery from '../components/Recovery'
 import Nutrition from '../components/Nutrition'
 import InjuryRisk from '../components/InjuryRisk'
+import Profile from './Profile'
 
 const navItems = [
   'Overview',
@@ -97,7 +97,6 @@ function Dashboard() {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeItem, setActiveItem] = useState('Overview')
-
   const [checkedIn, setCheckedIn] = useState(false)
   const [mood, setMood] = useState('Good')
 
@@ -284,7 +283,7 @@ function Dashboard() {
 
             <button
               type="button"
-              onClick={() => navigate('/profile')}
+              onClick={() => handleNavigation('Profile & Settings')}
               title="View profile"
               aria-label="Open profile"
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#E4D5F4] to-[#F8D9EF] text-xs font-extrabold text-[#654A7D] shadow-sm transition duration-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#9872B5] focus:ring-offset-2"
@@ -587,17 +586,19 @@ function Dashboard() {
                 FitNect <span className="mx-1">·</span> Train smart. Recover better.
               </footer>
             </>
-              ) : activeItem === 'Injury Risk' ? (
-              <InjuryRisk />
-              ) : activeItem === 'Training & Activity' ? (
-             <TrainingActivity />
-              ) : activeItem === 'Wellness Check-in' ? (
-              <WellnessCheckIn />
-              ) : activeItem === 'Recovery' ? (
+          ) : activeItem === 'Injury Risk' ? (
+            <InjuryRisk />
+          ) : activeItem === 'Training & Activity' ? (
+            <TrainingActivity />
+          ) : activeItem === 'Wellness Check-in' ? (
+            <WellnessCheckIn />
+          ) : activeItem === 'Recovery' ? (
             <Recovery />
-              ) : activeItem === 'Nutrition' ? (
-             <Nutrition />      
-              ) : (
+          ) : activeItem === 'Nutrition' ? (
+            <Nutrition />
+          ) : activeItem === 'Profile & Settings' ? (
+            <Profile />
+          ) : (
             <section className="fitnect-enter relative overflow-hidden rounded-[28px] border border-[#EAE1F1] bg-white p-6 sm:p-10">
               <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#EADBF7] opacity-60 blur-3xl" />
 
