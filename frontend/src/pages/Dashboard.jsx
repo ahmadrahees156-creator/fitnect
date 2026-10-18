@@ -281,14 +281,22 @@ function Dashboard() {
               </p>
             </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#E4D5F4] to-[#F8D9EF] text-xs font-extrabold text-[#654A7D] shadow-sm">
-              {(user?.name || user?.fullName || 'A')
-                .split(' ')
-                .map((part) => part[0])
-                .join('')
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
+        
+        <button
+          type="button"
+           onClick={() => navigate('/profile')}
+           title="View profile"
+            aria-label="Open profile"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#E4D5F4] to-[#F8D9EF] text-xs font-extrabold text-[#654A7D] shadow-sm transition duration-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#9872B5] focus:ring-offset-2"
+              >
+                   {(user?.name || user?.fullName || 'A')
+                    .split(' ')
+                    .map((part) => part[0])
+                    .join('')
+                     .slice(0, 2)
+                    .toUpperCase()}
+                 </button>
+
           </div>
         </header>
 
