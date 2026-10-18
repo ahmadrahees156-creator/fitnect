@@ -8,6 +8,7 @@ import VerifyEmail from './pages/VerifyEmail'
 import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
 import { getCurrentUser } from './services/authService'
+import Profile from './pages/Profile'
 
 function ProtectedRoute({ children }) {
   const [status, setStatus] = useState('loading')
@@ -75,6 +76,14 @@ function App() {
               <Dashboard />
             </ProtectedRoute>
           }
+        />
+        <Route
+           path="/profile"
+            element={
+              <ProtectedRoute>
+                 <Profile />
+               </ProtectedRoute>
+              }
         />
 
         <Route path="/register" element={<Register />} />
