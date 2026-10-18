@@ -8,6 +8,7 @@ import Recovery from '../components/Recovery'
 import Nutrition from '../components/Nutrition'
 import InjuryRisk from '../components/InjuryRisk'
 import Profile from './Profile'
+import Settings from './Settings'
 
 const navItems = [
   'Overview',
@@ -18,6 +19,7 @@ const navItems = [
   'Recovery',
   'Nutrition',
   'Profile & Settings',
+  'Settings',
 ]
 
 const stats = [
@@ -597,7 +599,9 @@ function Dashboard() {
           ) : activeItem === 'Nutrition' ? (
             <Nutrition />
           ) : activeItem === 'Profile & Settings' ? (
-            <Profile />
+             <Profile />
+          ) : activeItem === 'Settings' ? (
+             <Settings />
           ) : (
             <section className="fitnect-enter relative overflow-hidden rounded-[28px] border border-[#EAE1F1] bg-white p-6 sm:p-10">
               <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#EADBF7] opacity-60 blur-3xl" />
