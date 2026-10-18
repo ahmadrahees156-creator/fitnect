@@ -1,8 +1,12 @@
+
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '../services/authService'
 import Brand from '../components/Brand'
 import TrainingActivity from '../components/TrainingActivity'
+import WellnessCheckIn from '../components/WellnessCheckIn'
+import Recovery from '../components/Recovery'
+import Nutrition from '../components/Nutrition'
 
 const navItems = [
   'Overview',
@@ -45,14 +49,11 @@ function SectionHeading({ eyebrow, title, detail, action }) {
         <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
           {eyebrow}
         </p>
-
         <h2 className="mt-1 text-xl font-bold tracking-[-0.7px] text-[#302442] sm:text-2xl">
           {title}
         </h2>
-
         {detail && <p className="mt-1 text-sm text-[#92879F]">{detail}</p>}
       </div>
-
       {action}
     </div>
   )
@@ -95,6 +96,7 @@ function Dashboard() {
 
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeItem, setActiveItem] = useState('Overview')
+
   const [checkedIn, setCheckedIn] = useState(false)
   const [mood, setMood] = useState('Good')
 
@@ -210,7 +212,6 @@ function Dashboard() {
               }`}
             >
               <span>{item}</span>
-
               {activeItem === item && (
                 <span className="h-1.5 w-1.5 rounded-full bg-[#D96CC5]" />
               )}
@@ -275,28 +276,25 @@ function Dashboard() {
               <p className="text-sm font-bold">
                 {user?.name || user?.fullName || 'Athlete'}
               </p>
-
               <p className="mt-0.5 text-[11px] text-[#998BA4]">
                 {user?.email || 'Athlete workspace'}
               </p>
             </div>
 
-        
-        <button
-          type="button"
-           onClick={() => navigate('/profile')}
-           title="View profile"
-            aria-label="Open profile"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#E4D5F4] to-[#F8D9EF] text-xs font-extrabold text-[#654A7D] shadow-sm transition duration-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#9872B5] focus:ring-offset-2"
-              >
-                   {(user?.name || user?.fullName || 'A')
-                    .split(' ')
-                    .map((part) => part[0])
-                    .join('')
-                     .slice(0, 2)
-                    .toUpperCase()}
-                 </button>
-
+            <button
+              type="button"
+              onClick={() => navigate('/profile')}
+              title="View profile"
+              aria-label="Open profile"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#E4D5F4] to-[#F8D9EF] text-xs font-extrabold text-[#654A7D] shadow-sm transition duration-200 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#9872B5] focus:ring-offset-2"
+            >
+              {(user?.name || user?.fullName || 'A')
+                .split(' ')
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()}
+            </button>
           </div>
         </header>
 
@@ -429,7 +427,6 @@ function Dashboard() {
                               }`}
                               style={{ height: `${day.value}%`, animationDelay: `${index * 65}ms` }}
                             />
-
                             <span className="absolute -top-6 hidden rounded-md bg-[#332544] px-2 py-1 text-[9px] text-white group-hover:block">
                               {day.value}%
                             </span>
@@ -535,7 +532,6 @@ function Dashboard() {
                 <article className="fitnect-surface rounded-[24px] p-5 sm:p-7">
                   <div className="flex items-start gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#F3E3F3] text-xl text-[#A65AA1]">✳</div>
-
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-[1.8px] text-[#A88AAB]">Daily wellness</p>
                       <h2 className="mt-1 text-xl font-bold tracking-[-.6px] text-[#302442]">How are you feeling?</h2>
@@ -592,7 +588,13 @@ function Dashboard() {
             </>
           ) : activeItem === 'Training & Activity' ? (
             <TrainingActivity />
-          ) : (
+           ) : activeItem === 'Wellness Check-in' ? (
+           <WellnessCheckIn />
+            ) : activeItem === 'Recovery' ? (
+            <Recovery />
+            ) : activeItem === 'Nutrition' ? (
+      <Nutrition />      
+       ) : (
             <section className="fitnect-enter relative overflow-hidden rounded-[28px] border border-[#EAE1F1] bg-white p-6 sm:p-10">
               <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#EADBF7] opacity-60 blur-3xl" />
 
