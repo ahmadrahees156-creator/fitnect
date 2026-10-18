@@ -1,5 +1,5 @@
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const initialFactors = {
   trainingLoad: 'Balanced',
@@ -183,9 +183,70 @@ function getRecommendations(factors) {
   return recommendations
 }
 
+function readSavedValue(key, fallback, validate) {
+  try {
+    const saved = localStorage.getItem(key)
+
+    if (!saved) return fallback
+
+    const parsed = JSON.parse(saved)
+
+    return validate(parsed) ? parsed : fallback
+  } catch {
+    return fallback
+  }
+}
+
 function InjuryRisk() {
-  const [factors, setFactors] = useState(initialFactors)
-  const [checkedTips, setCheckedTips] = useState([])
+  const [factors, setFactors] = useState(() =>
+    readSavedValue(
+      'fitnect-injury-factors',
+      initialFactors,
+      (saved) =>
+        saved &&
+        typeof saved === 'object' &&
+        !Array.isArray(saved) &&
+        Object.entries(initialFactors).every(([key, value]) =>
+          factorOptions
+            .find((factor) => factor.key === key)
+            .options.includes(saved[key] ?? value),
+        ),
+    ),
+  )
+
+  const [checkedTips, setCheckedTips] = useState(() =>
+    readSavedValue(
+      'fitnect-injury-tips',
+      [],
+      (saved) =>
+        Array.isArray(saved) &&
+        saved.every((title) =>
+          preventionTips.some((tip) => tip.title === title),
+        ),
+    ),
+  )
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        'fitnect-injury-factors',
+        JSON.stringify(factors),
+      )
+    } catch {
+      // Storage may be unavailable in some browser contexts.
+    }
+  }, [factors])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        'fitnect-injury-tips',
+        JSON.stringify(checkedTips),
+      )
+    } catch {
+      // Storage may be unavailable in some browser contexts.
+    }
+  }, [checkedTips])
 
   const risk = getRisk(factors)
   const recommendations = getRecommendations(factors)
@@ -207,7 +268,6 @@ function InjuryRisk() {
 
   return (
     <div className="fitnect-enter space-y-7">
-      {/* Hero */}
       <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#302442] via-[#473451] to-[#69466B] p-6 text-white sm:p-9">
         <div className="pointer-events-none absolute -right-12 -top-16 h-64 w-64 rounded-full bg-[#F7BBD9]/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 right-1/3 h-48 w-48 rounded-full bg-[#FDC381]/15 blur-3xl" />
@@ -247,7 +307,9 @@ function InjuryRisk() {
             </div>
 
             <p className="mt-4 text-lg font-bold">{risk.label}</p>
-            <p className="mt-1 text-xs text-[#D7C9DF]">{risk.level}</p>
+            <p className="mt-1 text-xs text-[#D7C9DF]">
+              {risk.level}
+            </p>
 
             <span className="mt-3 rounded-full bg-white/10 px-3 py-1 text-[10px] text-[#E6D9EB]">
               Demo indicator
@@ -256,7 +318,6 @@ function InjuryRisk() {
         </div>
       </section>
 
-      {/* Input factors */}
       <section>
         <div className="mb-5">
           <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
@@ -312,7 +373,6 @@ function InjuryRisk() {
         </div>
       </section>
 
-      {/* Current inputs and prevention checklist */}
       <section className="grid gap-5 xl:grid-cols-2">
         <article className="rounded-[24px] border border-[#ECE6F2] bg-white p-5 sm:p-7">
           <p className="text-[10px] font-bold uppercase tracking-[1.8px] text-[#A08BAF]">
@@ -439,7 +499,6 @@ function InjuryRisk() {
         </article>
       </section>
 
-      {/* Dynamic recommendations */}
       <section className="rounded-[24px] border border-[#ECE6F2] bg-white p-5 sm:p-7">
         <p className="text-[10px] font-bold uppercase tracking-[1.8px] text-[#A08BAF]">
           Based on your selections
@@ -475,7 +534,6 @@ function InjuryRisk() {
         </div>
       </section>
 
-      {/* Disclaimer */}
       <p className="rounded-2xl border border-[#E9DFF0] bg-[#F2EBF8] p-4 text-xs leading-5 text-[#786787]">
         This page uses illustrative rules, not a clinically validated risk
         prediction model. It cannot diagnose or rule out an injury. Stop
