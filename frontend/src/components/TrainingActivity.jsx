@@ -11,7 +11,21 @@ function TrainingActivity() {
   const [category, setCategory] = useState('All')
   const [difficulty, setDifficulty] = useState('All')
   const [selectedId, setSelectedId] = useState(null)
-  const [checkedExercises, setCheckedExercises] = useState({})
+
+  const [checkedExercises, setCheckedExercises] = useState(() => {
+    const savedWorkouts = getWorkouts()
+    const checked = {}
+
+    savedWorkouts.forEach((workout) => {
+      if (workout.completed) {
+        workout.exercises.forEach((exercise) => {
+          checked[`${workout.id}-${exercise.id}`] = true
+        })
+      }
+    })
+
+    return checked
+  })
 
   const selectedWorkout = workouts.find(
     (workout) => workout.id === selectedId
@@ -50,17 +64,20 @@ function TrainingActivity() {
 
   function handleComplete(workout) {
     const allChecked = workout.exercises.every(
-      (exercise) => checkedExercises[`${workout.id}-${exercise.id}`]
+      (exercise) =>
+        checkedExercises[`${workout.id}-${exercise.id}`]
     )
 
-    if (!allChecked) return
+    if (!allChecked || workout.completed) return
 
-    setWorkouts(completeWorkout(workout.id))
+    const updatedWorkouts = completeWorkout(workout.id)
+    setWorkouts(updatedWorkouts)
     setSelectedId(null)
   }
 
   function handleReset(workoutId) {
-    setWorkouts(resetWorkout(workoutId))
+    const updatedWorkouts = resetWorkout(workoutId)
+    setWorkouts(updatedWorkouts)
 
     setCheckedExercises((previous) => {
       const updated = { ...previous }
@@ -130,9 +147,11 @@ function TrainingActivity() {
             <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
               Training library
             </p>
+
             <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#302442]">
               Find your next workout
             </h2>
+
             <p className="mt-1 text-sm text-[#92879F]">
               Pick a session that matches your energy today.
             </p>
@@ -202,6 +221,7 @@ function TrainingActivity() {
                   <span className="rounded-full bg-[#F3EDF9] px-2.5 py-1 text-[10px] font-bold text-[#806991]">
                     {workout.category}
                   </span>
+
                   <span className="rounded-full bg-[#F8F5FA] px-2.5 py-1 text-[10px] font-semibold text-[#9686A1]">
                     {workout.difficulty}
                   </span>
@@ -245,7 +265,9 @@ function TrainingActivity() {
 
         {filteredWorkouts.length === 0 && (
           <div className="rounded-2xl border border-dashed border-[#DCCFE7] bg-white p-8 text-center">
-            <p className="font-bold text-[#493456]">No workouts found</p>
+            <p className="font-bold text-[#493456]">
+              No workouts found
+            </p>
             <p className="mt-2 text-sm text-[#92849D]">
               Try changing your filters.
             </p>
@@ -273,12 +295,14 @@ function TrainingActivity() {
                 <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
                   Workout session
                 </p>
+
                 <h2
                   id="workout-dialog-title"
                   className="mt-2 text-2xl font-bold text-[#302442]"
                 >
                   {selectedWorkout.title}
                 </h2>
+
                 <p className="mt-1 text-sm text-[#92879F]">
                   {selectedWorkout.duration} minutes ·{' '}
                   {selectedWorkout.difficulty}
@@ -332,6 +356,7 @@ function TrainingActivity() {
                       >
                         {exercise.name}
                       </span>
+
                       <span className="mt-1 block text-xs text-[#92849D]">
                         {exercise.detail}
                       </span>
@@ -350,6 +375,7 @@ function TrainingActivity() {
             <div className="mt-5">
               <div className="mb-2 flex justify-between text-xs font-semibold text-[#8D7C9C]">
                 <span>Exercise progress</span>
+
                 <span>
                   {
                     selectedWorkout.exercises.filter(
@@ -368,14 +394,16 @@ function TrainingActivity() {
                   className="h-full rounded-full bg-gradient-to-r from-[#B58AD8] to-[#E28CCF] transition-all duration-300"
                   style={{
                     width: `${
-                      (selectedWorkout.exercises.filter(
-                        (exercise) =>
-                          checkedExercises[
-                            `${selectedWorkout.id}-${exercise.id}`
-                          ]
-                      ).length /
-                        selectedWorkout.exercises.length) *
-                      100
+                      selectedWorkout.exercises.length
+                        ? (selectedWorkout.exercises.filter(
+                            (exercise) =>
+                              checkedExercises[
+                                `${selectedWorkout.id}-${exercise.id}`
+                              ]
+                          ).length /
+                            selectedWorkout.exercises.length) *
+                          100
+                        : 0
                     }%`,
                   }}
                 />
