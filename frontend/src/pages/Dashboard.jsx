@@ -1,6 +1,6 @@
-
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getCurrentUser } from '../services/authService'
 import Brand from '../components/Brand'
 import TrainingActivity from '../components/TrainingActivity'
 
@@ -45,11 +45,14 @@ function SectionHeading({ eyebrow, title, detail, action }) {
         <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
           {eyebrow}
         </p>
+
         <h2 className="mt-1 text-xl font-bold tracking-[-0.7px] text-[#302442] sm:text-2xl">
           {title}
         </h2>
+
         {detail && <p className="mt-1 text-sm text-[#92879F]">{detail}</p>}
       </div>
+
       {action}
     </div>
   )
@@ -89,10 +92,43 @@ function WorkoutIllustration({ type }) {
 
 function Dashboard() {
   const navigate = useNavigate()
+
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeItem, setActiveItem] = useState('Overview')
   const [checkedIn, setCheckedIn] = useState(false)
   const [mood, setMood] = useState('Good')
+
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('fitnect_user')) || null
+    } catch {
+      return null
+    }
+  })
+
+  useEffect(() => {
+    let active = true
+
+    const loadUser = async () => {
+      try {
+        const response = await getCurrentUser()
+        const currentUser = response.user || response.data || response
+
+        if (active) {
+          setUser(currentUser)
+          localStorage.setItem('fitnect_user', JSON.stringify(currentUser))
+        }
+      } catch (error) {
+        console.error('Failed to load user profile:', error)
+      }
+    }
+
+    loadUser()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const logout = () => {
     localStorage.removeItem('fitnect_token')
@@ -112,20 +148,24 @@ function Dashboard() {
           from { opacity: 0; transform: translateY(14px); }
           to { opacity: 1; transform: translateY(0); }
         }
+
         @keyframes fitnectFloat {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-7px); }
         }
+
         @keyframes fitnectGrow {
           from { transform: scaleY(0); }
           to { transform: scaleY(1); }
         }
+
         .fitnect-enter { animation: fitnectFadeUp .55s ease-out both; }
         .fitnect-float { animation: fitnectFloat 5s ease-in-out infinite; }
         .fitnect-bar { transform-origin: bottom; animation: fitnectGrow .75s cubic-bezier(.2,.8,.2,1) both; }
         .fitnect-nav { transition: background .2s ease, color .2s ease, transform .2s ease; }
         .fitnect-nav:hover { transform: translateX(3px); }
         .fitnect-surface { border: 1px solid #ECE6F2; background: rgba(255,255,255,.88); }
+
         @media (prefers-reduced-motion: reduce) {
           .fitnect-enter, .fitnect-float, .fitnect-bar { animation: none !important; }
           .fitnect-nav { transition: none; }
@@ -170,6 +210,7 @@ function Dashboard() {
               }`}
             >
               <span>{item}</span>
+
               {activeItem === item && (
                 <span className="h-1.5 w-1.5 rounded-full bg-[#D96CC5]" />
               )}
@@ -185,12 +226,15 @@ function Dashboard() {
                 72%
               </span>
             </div>
+
             <p className="mt-2 text-xs leading-5 text-[#8A7A98]">
               Stay consistent and keep moving toward your weekly goal.
             </p>
+
             <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-[#E6DCEB]">
               <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-[#BB8EE4] to-[#E47ACB]" />
             </div>
+
             <p className="mt-2 text-[10px] font-medium text-[#8A7A98]">
               5 of 7 sessions complete
             </p>
@@ -217,6 +261,7 @@ function Dashboard() {
             >
               ☰
             </button>
+
             <div className="min-w-0">
               <p className="text-[11px] text-[#9A8AA5]">Your workspace</p>
               <h1 className="truncate text-lg font-bold tracking-[-.5px] sm:text-xl">
@@ -227,11 +272,22 @@ function Dashboard() {
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <div className="hidden text-right sm:block">
-              <p className="text-sm font-bold">Rahees Ahmad</p>
-              <p className="mt-0.5 text-[11px] text-[#998BA4]">Athlete workspace</p>
+              <p className="text-sm font-bold">
+                {user?.name || user?.fullName || 'Athlete'}
+              </p>
+
+              <p className="mt-0.5 text-[11px] text-[#998BA4]">
+                {user?.email || 'Athlete workspace'}
+              </p>
             </div>
+
             <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-[#E4D5F4] to-[#F8D9EF] text-xs font-extrabold text-[#654A7D] shadow-sm">
-              RA
+              {(user?.name || user?.fullName || 'A')
+                .split(' ')
+                .map((part) => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()}
             </div>
           </div>
         </header>
@@ -304,6 +360,7 @@ function Dashboard() {
                         className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-40 blur-2xl transition duration-300 group-hover:opacity-70"
                         style={{ backgroundColor: stat.color }}
                       />
+
                       <div className="relative flex items-start justify-between gap-3">
                         <p className="text-xs font-medium text-[#91849D]">{stat.label}</p>
                         <span
@@ -313,12 +370,14 @@ function Dashboard() {
                           {stat.icon}
                         </span>
                       </div>
+
                       <div className="relative mt-5 flex items-baseline gap-1">
                         <span className="text-3xl font-bold tracking-[-1px] text-[#302442]">
                           {stat.value}
                         </span>
                         <span className="text-xs font-medium text-[#9D91A7]">{stat.unit}</span>
                       </div>
+
                       <div className="relative mt-4 flex items-center justify-between gap-2">
                         <span className="rounded-full bg-[#F1EAF7] px-2.5 py-1 text-[10px] font-bold text-[#775B91]">
                           {stat.change}
@@ -349,6 +408,7 @@ function Dashboard() {
                         <div key={line} className="border-t border-dashed border-[#EEE8F3]" />
                       ))}
                     </div>
+
                     <div className="relative flex h-48 items-end justify-between gap-2 sm:gap-4">
                       {weeklyActivity.map((day, index) => (
                         <div key={day.day} className="group flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-3">
@@ -361,10 +421,12 @@ function Dashboard() {
                               }`}
                               style={{ height: `${day.value}%`, animationDelay: `${index * 65}ms` }}
                             />
+
                             <span className="absolute -top-6 hidden rounded-md bg-[#332544] px-2 py-1 text-[9px] text-white group-hover:block">
                               {day.value}%
                             </span>
                           </div>
+
                           <span className={`text-[10px] ${index === 5 ? 'font-bold text-[#A65DA7]' : 'text-[#A095AA]'}`}>
                             {day.day}
                           </span>
@@ -384,9 +446,11 @@ function Dashboard() {
 
                 <article className="relative overflow-hidden rounded-[24px] bg-gradient-to-br from-[#EDE3F7] to-[#F7EAF5] p-5 sm:p-7">
                   <div className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full bg-white/70 blur-2xl" />
+
                   <div className="relative">
                     <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#9B7CB0]">Weekly target</p>
                     <h2 className="mt-2 text-xl font-bold tracking-[-.7px] text-[#382749]">Consistency matters</h2>
+
                     <p className="mt-2 max-w-sm text-sm leading-6 text-[#8D7C9C]">
                       You're building a routine. Keep showing up and progress will follow.
                     </p>
@@ -401,6 +465,7 @@ function Dashboard() {
                           <span className="text-[9px] text-[#9987A6]">Complete</span>
                         </div>
                       </div>
+
                       <div className="min-w-[120px] flex-1">
                         <p className="text-sm font-bold text-[#493456]">5 of 7 sessions</p>
                         <p className="mt-2 text-xs leading-5 text-[#93819F]">
@@ -446,11 +511,13 @@ function Dashboard() {
                         >
                           <WorkoutIllustration type={workout.type} />
                         </div>
+
                         <div className="min-w-0 flex-1">
                           <span className="text-[9px] font-bold tracking-[1.2px] text-[#A18EAF]">{workout.category}</span>
                           <h3 className="mt-1 text-sm font-bold text-[#40304F]">{workout.title}</h3>
                           <p className="mt-1 text-xs text-[#9B8DA5]">{workout.detail}</p>
                         </div>
+
                         <span className="text-lg text-[#B39AC3] transition group-hover:translate-x-1 group-hover:text-[#925AA9]">→</span>
                       </div>
                     ))}
@@ -460,6 +527,7 @@ function Dashboard() {
                 <article className="fitnect-surface rounded-[24px] p-5 sm:p-7">
                   <div className="flex items-start gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#F3E3F3] text-xl text-[#A65AA1]">✳</div>
+
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-[1.8px] text-[#A88AAB]">Daily wellness</p>
                       <h2 className="mt-1 text-xl font-bold tracking-[-.6px] text-[#302442]">How are you feeling?</h2>
@@ -503,6 +571,7 @@ function Dashboard() {
                       Demo check-in: feeling {mood.toLowerCase()}.
                     </p>
                   )}
+
                   <p className="mt-3 text-[10px] leading-4 text-[#AA9DB3]">
                     Demo interaction · Check-ins are not saved to your account.
                   </p>
@@ -518,13 +587,18 @@ function Dashboard() {
           ) : (
             <section className="fitnect-enter relative overflow-hidden rounded-[28px] border border-[#EAE1F1] bg-white p-6 sm:p-10">
               <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#EADBF7] opacity-60 blur-3xl" />
+
               <div className="relative">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0E5F8] text-2xl text-[#9469B2]">✳</div>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0E5F8] text-2xl text-[#9469B2]">⚡</div>
+
                 <p className="mt-6 text-[10px] font-bold uppercase tracking-[2px] text-[#A66BA7]">FitNect workspace</p>
+
                 <h2 className="mt-2 text-3xl font-bold tracking-[-1px] text-[#302442]">{activeItem}</h2>
+
                 <p className="mt-3 max-w-xl text-sm leading-7 text-[#92849D]">
                   This section is ready for its dedicated features. The current dashboard uses sample data; connect the relevant backend API before using it for real training or health decisions.
                 </p>
+
                 <button
                   type="button"
                   onClick={() => setActiveItem('Overview')}
