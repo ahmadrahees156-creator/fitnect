@@ -7,6 +7,7 @@ import TrainingActivity from '../components/TrainingActivity'
 import WellnessCheckIn from '../components/WellnessCheckIn'
 import Recovery from '../components/Recovery'
 import Nutrition from '../components/Nutrition'
+import InjuryRisk from '../components/InjuryRisk'
 
 const navItems = [
   'Overview',
@@ -586,15 +587,17 @@ function Dashboard() {
                 FitNect <span className="mx-1">·</span> Train smart. Recover better.
               </footer>
             </>
-          ) : activeItem === 'Training & Activity' ? (
-            <TrainingActivity />
-           ) : activeItem === 'Wellness Check-in' ? (
-           <WellnessCheckIn />
-            ) : activeItem === 'Recovery' ? (
+              ) : activeItem === 'Injury Risk' ? (
+              <InjuryRisk />
+              ) : activeItem === 'Training & Activity' ? (
+             <TrainingActivity />
+              ) : activeItem === 'Wellness Check-in' ? (
+              <WellnessCheckIn />
+              ) : activeItem === 'Recovery' ? (
             <Recovery />
-            ) : activeItem === 'Nutrition' ? (
-      <Nutrition />      
-       ) : (
+              ) : activeItem === 'Nutrition' ? (
+             <Nutrition />      
+              ) : (
             <section className="fitnect-enter relative overflow-hidden rounded-[28px] border border-[#EAE1F1] bg-white p-6 sm:p-10">
               <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-[#EADBF7] opacity-60 blur-3xl" />
 
