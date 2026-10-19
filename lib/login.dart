@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'otpscreen.dart';
+import 'signin_screen.dart'; 
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -43,7 +44,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         if (mounted) {
-          
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => OtpVerificationScreen(
@@ -253,6 +253,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: _isLoading
                           ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
                           : const Text('Create account →', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  
+                  Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const SignInScreen()),
+                        );
+                      },
+                      child: RichText(
+                        text: const TextSpan(
+                          style: TextStyle(fontSize: 13, color: Colors.black54),
+                          children: [
+                            TextSpan(text: 'Already have an account? '),
+                            TextSpan(
+                              text: 'Log in',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF8E24AA),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
