@@ -1,23 +1,20 @@
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import api from '../services/api'
-import { loginUser } from '../services/authService'
+import { loginUser, getCurrentUser } from '../services/authService'
 
 function Login() {
   const navigate = useNavigate()
 
-  const [form, setForm] = useState({
-    email: '',
-    password: '',
-  })
-
+  const [form, setForm] = useState({ email: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const saveSession = (data) => {
+  const saveSession = async (data) => {
     const token = data.token || data.data?.token
 
     if (!token) {
@@ -25,7 +22,19 @@ function Login() {
     }
 
     localStorage.setItem('fitnect_token', token)
-    navigate('/dashboard')
+
+    const response = await getCurrentUser()
+    const user = response.user || response.data?.user || response.data || response
+
+    if (!user?.role) {
+      throw new Error('Could not determine your account role.')
+    }
+
+    localStorage.setItem('fitnect_user', JSON.stringify(user))
+
+    navigate(user.role === 'coach' ? '/coach' : '/dashboard', {
+      replace: true,
+    })
   }
 
   const handleChange = (e) => {
@@ -44,7 +53,7 @@ function Login() {
         form.password
       )
 
-      saveSession(data)
+      await saveSession(data)
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -70,7 +79,7 @@ function Login() {
         idToken: credentialResponse.credential,
       })
 
-      saveSession(response.data)
+      await saveSession(response.data)
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -85,15 +94,11 @@ function Login() {
   return (
     <main className="min-h-screen bg-[#E4DBF4] px-3 py-5 sm:px-5 sm:py-6">
       <div className="mx-auto grid min-h-[calc(100vh-3rem)] max-w-6xl overflow-hidden rounded-[26px] bg-white shadow-xl lg:grid-cols-2">
-
         <section className="relative flex flex-col justify-between overflow-hidden bg-[#E4DBF4] p-6 sm:p-9 lg:p-10">
           <div className="absolute -left-12 top-36 h-48 w-48 rounded-full bg-[#FDC381]/60 blur-3xl" />
           <div className="absolute bottom-0 right-0 h-52 w-52 rounded-full bg-[#A9CDFA]/70 blur-3xl" />
 
-          <Link
-            to="/"
-            className="relative z-10 w-fit text-2xl font-extrabold tracking-tight text-[#151517]"
-          >
+          <Link to="/" className="relative z-10 w-fit text-2xl font-extrabold tracking-tight text-[#151517]">
             Fit<span className="text-[#8B73D9]">Nect</span>
           </Link>
 
@@ -122,12 +127,8 @@ function Login() {
             </div>
 
             <div className="mt-4 rounded-2xl bg-white/75 p-3.5">
-              <p className="text-sm font-bold text-[#151517]">
-                Every day counts.
-              </p>
-              <p className="mt-1 text-xs text-gray-600">
-                Train smart. Recover well.
-              </p>
+              <p className="text-sm font-bold text-[#151517]">Every day counts.</p>
+              <p className="mt-1 text-xs text-gray-600">Train smart. Recover well.</p>
             </div>
           </div>
 
@@ -151,23 +152,16 @@ function Login() {
             </p>
 
             {error && (
-              <div
-                role="alert"
-                className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600"
-              >
+              <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="mt-7 space-y-5">
               <div>
-                <label
-                  htmlFor="email"
-                  className="mb-1.5 block text-sm font-semibold text-[#151517]"
-                >
+                <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-[#151517]">
                   Email address
                 </label>
-
                 <input
                   id="email"
                   name="email"
@@ -177,15 +171,12 @@ function Login() {
                   value={form.email}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-xl border border-[#E5DCEF] bg-[#FBF9FE] px-3.5 py-3.5 text-sm text-[#151517] outline-none transition focus:border-[#A58AD2] focus:ring-2 focus:ring-[#E4DBF4]"
+                  className="w-full rounded-xl border border-[#E5DCEF] bg-[#FBF9FE] px-3.5 py-3.5 text-sm outline-none transition focus:border-[#A58AD2] focus:ring-2 focus:ring-[#E4DBF4]"
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="password"
-                  className="mb-1.5 block text-sm font-semibold text-[#151517]"
-                >
+                <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-[#151517]">
                   Password
                 </label>
 
@@ -199,9 +190,8 @@ function Login() {
                     value={form.password}
                     onChange={handleChange}
                     required
-                    className="min-w-0 flex-1 bg-transparent px-3.5 py-3.5 text-sm text-[#151517] outline-none"
+                    className="min-w-0 flex-1 bg-transparent px-3.5 py-3.5 text-sm outline-none"
                   />
-
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -247,10 +237,7 @@ function Login() {
 
             <p className="mt-7 text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <Link
-                to="/register"
-                className="font-bold text-[#8059B7] hover:underline"
-              >
+              <Link to="/register" className="font-bold text-[#8059B7] hover:underline">
                 Create account
               </Link>
             </p>
