@@ -1,99 +1,113 @@
 
-import { useMemo, useState } from 'react'
-import {
-  completeWorkout,
-  getWorkouts,
-  resetWorkout,
-} from '../services/workoutService'
+import { useEffect, useMemo, useState } from 'react'
+import { getWorkouts } from '../services/workoutService'
+
+const categoryOptions = [
+  { label: 'All categories', value: 'All' },
+  { label: 'Strength', value: 'strength' },
+  { label: 'Cardio', value: 'cardio' },
+  { label: 'Flexibility', value: 'flexibility' },
+  { label: 'Yoga', value: 'yoga' },
+  { label: 'Sports', value: 'sports' },
+  { label: 'Other', value: 'other' },
+]
+
+const selectClass =
+  'rounded-xl border border-[#E8DDF0] bg-white px-3 py-2.5 text-sm text-[#5D496F] outline-none focus:border-[#B88AD5]'
+
+function getWorkoutList(response) {
+  if (Array.isArray(response)) return response
+  if (Array.isArray(response?.workouts)) return response.workouts
+  if (Array.isArray(response?.data)) return response.data
+  if (Array.isArray(response?.data?.workouts)) return response.data.workouts
+  if (Array.isArray(response?.results)) return response.results
+  return []
+}
+
+function formatCategory(category = 'other') {
+  return category.charAt(0).toUpperCase() + category.slice(1)
+}
 
 function TrainingActivity() {
-  const [workouts, setWorkouts] = useState(() => getWorkouts())
+  const [workouts, setWorkouts] = useState([])
   const [category, setCategory] = useState('All')
-  const [difficulty, setDifficulty] = useState('All')
   const [selectedId, setSelectedId] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const [checkedExercises, setCheckedExercises] = useState(() => {
-    const savedWorkouts = getWorkouts()
-    const checked = {}
+  useEffect(() => {
+    let active = true
 
-    savedWorkouts.forEach((workout) => {
-      if (workout.completed) {
-        workout.exercises.forEach((exercise) => {
-          checked[`${workout.id}-${exercise.id}`] = true
+    async function loadWorkouts() {
+      setLoading(true)
+      setError('')
+
+      try {
+        const response = await getWorkouts({
+          page: 1,
+          limit: 50,
+          category,
         })
+
+        if (active) {
+          setWorkouts(getWorkoutList(response))
+        }
+      } catch (err) {
+        if (active) {
+          setError(
+            err.response?.data?.message ||
+              'Could not load workouts. Please try again.'
+          )
+        }
+      } finally {
+        if (active) setLoading(false)
       }
-    })
+    }
 
-    return checked
-  })
+    loadWorkouts()
 
-  const selectedWorkout = workouts.find(
-    (workout) => workout.id === selectedId
-  )
+    return () => {
+      active = false
+    }
+  }, [category])
 
   const filteredWorkouts = useMemo(() => {
-    return workouts.filter((workout) => {
-      const matchesCategory =
-        category === 'All' || workout.category === category
+    if (category === 'All') return workouts
 
-      const matchesDifficulty =
-        difficulty === 'All' || workout.difficulty === difficulty
+    return workouts.filter(
+      (workout) =>
+        workout.category?.toLowerCase() === category.toLowerCase()
+    )
+  }, [workouts, category])
 
-      return matchesCategory && matchesDifficulty
-    })
-  }, [workouts, category, difficulty])
+  const selectedWorkout = filteredWorkouts.find(
+    (workout) => String(workout._id ?? workout.id) === String(selectedId)
+  )
 
-  const completedCount = workouts.filter(
-    (workout) => workout.completed
-  ).length
-
-  const totalMinutes = workouts.reduce(
-    (total, workout) =>
-      total + (workout.completed ? workout.duration : 0),
+  const totalMinutes = filteredWorkouts.reduce(
+    (total, workout) => total + (Number(workout.durationMinutes) || 0),
     0
   )
 
-  function toggleExercise(workoutId, exerciseId) {
-    const key = `${workoutId}-${exerciseId}`
+  const exerciseList = Array.isArray(selectedWorkout?.exercises)
+    ? selectedWorkout.exercises
+    : []
 
-    setCheckedExercises((previous) => ({
-      ...previous,
-      [key]: !previous[key],
-    }))
+  function formatExercise(exercise) {
+    const details = []
+
+    if (exercise.sets != null) details.push(`${exercise.sets} sets`)
+    if (exercise.reps != null) details.push(`${exercise.reps} reps`)
+    if (exercise.weightKg != null) details.push(`${exercise.weightKg} kg`)
+    if (exercise.durationSeconds != null) {
+      details.push(`${exercise.durationSeconds} seconds`)
+    }
+    if (exercise.distanceKm != null) {
+      details.push(`${exercise.distanceKm} km`)
+    }
+
+    return details.length ? details.join(' · ') : 'Details not provided'
   }
-
-  function handleComplete(workout) {
-    const allChecked = workout.exercises.every(
-      (exercise) =>
-        checkedExercises[`${workout.id}-${exercise.id}`]
-    )
-
-    if (!allChecked || workout.completed) return
-
-    const updatedWorkouts = completeWorkout(workout.id)
-    setWorkouts(updatedWorkouts)
-    setSelectedId(null)
-  }
-
-  function handleReset(workoutId) {
-    const updatedWorkouts = resetWorkout(workoutId)
-    setWorkouts(updatedWorkouts)
-
-    setCheckedExercises((previous) => {
-      const updated = { ...previous }
-
-      Object.keys(updated).forEach((key) => {
-        if (key.startsWith(`${workoutId}-`)) {
-          delete updated[key]
-        }
-      })
-
-      return updated
-    })
-  }
-
-  const selectClass =
-    'rounded-xl border border-[#E8DDF0] bg-white px-3 py-2.5 text-sm text-[#5D496F] outline-none focus:border-[#B88AD5]'
 
   return (
     <div className="fitnect-enter space-y-7">
@@ -110,31 +124,21 @@ function TrainingActivity() {
           </h2>
 
           <p className="mt-3 max-w-lg text-sm leading-6 text-[#DED2E7]">
-            Choose a workout, follow the exercises, and track your
-            progress one session at a time.
+            Explore your saved workouts and review the exercises in each session.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <div className="rounded-xl border border-white/10 bg-white/10 px-4 py-3">
-              <p className="text-2xl font-bold">{completedCount}</p>
+              <p className="text-2xl font-bold">{filteredWorkouts.length}</p>
               <p className="mt-1 text-[11px] text-[#DED2E7]">
-                Workouts completed
+                Workouts loaded
               </p>
             </div>
 
             <div className="rounded-xl border border-white/10 bg-white/10 px-4 py-3">
               <p className="text-2xl font-bold">{totalMinutes}</p>
               <p className="mt-1 text-[11px] text-[#DED2E7]">
-                Minutes completed
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/10 px-4 py-3">
-              <p className="text-2xl font-bold">
-                {workouts.length - completedCount}
-              </p>
-              <p className="mt-1 text-[11px] text-[#DED2E7]">
-                Workouts remaining
+                Total workout minutes
               </p>
             </div>
           </div>
@@ -142,135 +146,136 @@ function TrainingActivity() {
       </section>
 
       <section>
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
-              Training library
-            </p>
+        <div className="mb-5">
+          <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
+            Training library
+          </p>
 
-            <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#302442]">
-              Find your next workout
-            </h2>
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#302442]">
+            Your workouts
+          </h2>
 
-            <p className="mt-1 text-sm text-[#92879F]">
-              Pick a session that matches your energy today.
-            </p>
-          </div>
-
-          <span className="rounded-full border border-[#E9E0F0] bg-white px-3 py-1.5 text-[10px] font-semibold text-[#92829E]">
-            {filteredWorkouts.length} SESSIONS
-          </span>
+          <p className="mt-1 text-sm text-[#92879F]">
+            Workouts are loaded from your FitNect account.
+          </p>
         </div>
 
         <div className="mb-5 flex flex-wrap gap-3">
           <select
             aria-label="Filter by category"
             value={category}
-            onChange={(event) => setCategory(event.target.value)}
+            onChange={(event) => {
+              setCategory(event.target.value)
+              setSelectedId(null)
+            }}
             className={selectClass}
           >
-            <option value="All">All categories</option>
-            <option value="Strength">Strength</option>
-            <option value="Cardio">Cardio</option>
-            <option value="Recovery">Recovery</option>
-          </select>
-
-          <select
-            aria-label="Filter by difficulty"
-            value={difficulty}
-            onChange={(event) => setDifficulty(event.target.value)}
-            className={selectClass}
-          >
-            <option value="All">All levels</option>
-            <option value="Easy">Easy</option>
-            <option value="Moderate">Moderate</option>
-            <option value="Challenging">Challenging</option>
+            {categoryOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {filteredWorkouts.map((workout) => (
-            <article
-              key={workout.id}
-              className="group overflow-hidden rounded-[22px] border border-[#ECE6F2] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D9C6E9] hover:shadow-[0_15px_35px_rgba(72,46,94,.07)]"
+        {loading && (
+          <div className="rounded-2xl border border-[#ECE6F2] bg-white p-10 text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-[#E8DDF0] border-t-[#9469B2]" />
+            <p className="mt-4 text-sm text-[#92849D]">
+              Loading your workouts...
+            </p>
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="rounded-2xl border border-[#F0C9C9] bg-white p-6">
+            <p className="font-bold text-[#9B4545]">
+              Unable to load workouts
+            </p>
+            <p className="mt-2 text-sm text-[#92849D]">{error}</p>
+            <button
+              type="button"
+              onClick={() => setCategory((current) => current)}
+              className="mt-4 rounded-xl bg-[#332743] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#4A365D]"
             >
-              <div
-                className="relative flex h-32 items-center justify-center overflow-hidden"
-                style={{ backgroundColor: workout.color }}
-              >
-                <div className="absolute h-24 w-24 rounded-full border border-white/60" />
-                <div className="absolute h-16 w-16 rounded-full border border-white/60" />
+              Retry
+            </button>
+          </div>
+        )}
 
-                <span className="relative text-4xl font-black text-[#69527D] transition duration-300 group-hover:scale-110">
-                  {workout.category === 'Strength'
-                    ? '↗'
-                    : workout.category === 'Cardio'
-                      ? '〰'
-                      : '✳'}
-                </span>
-
-                {workout.completed && (
-                  <span className="absolute right-3 top-3 rounded-full bg-white px-3 py-1 text-[10px] font-bold text-[#43845D] shadow-sm">
-                    Completed ✓
-                  </span>
-                )}
-              </div>
-
-              <div className="p-5">
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-[#F3EDF9] px-2.5 py-1 text-[10px] font-bold text-[#806991]">
-                    {workout.category}
-                  </span>
-
-                  <span className="rounded-full bg-[#F8F5FA] px-2.5 py-1 text-[10px] font-semibold text-[#9686A1]">
-                    {workout.difficulty}
-                  </span>
-                </div>
-
-                <h3 className="mt-3 text-lg font-bold text-[#382749]">
-                  {workout.title}
-                </h3>
-
-                <p className="mt-2 min-h-10 text-sm leading-5 text-[#92849D]">
-                  {workout.description}
-                </p>
-
-                <div className="mt-4 flex items-center justify-between border-t border-[#F0EAF4] pt-4">
-                  <span className="text-xs font-semibold text-[#8D7C9C]">
-                    ◷ {workout.duration} minutes
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(workout.id)}
-                    className="rounded-xl bg-[#332743] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#4A365D]"
-                  >
-                    {workout.completed ? 'Review workout' : 'Start workout'} →
-                  </button>
-                </div>
-
-                {workout.completed && (
-                  <button
-                    type="button"
-                    onClick={() => handleReset(workout.id)}
-                    className="mt-3 text-xs font-semibold text-[#9B648F] transition hover:text-[#75456C]"
-                  >
-                    Reset progress
-                  </button>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
-
-        {filteredWorkouts.length === 0 && (
+        {!loading && !error && filteredWorkouts.length === 0 && (
           <div className="rounded-2xl border border-dashed border-[#DCCFE7] bg-white p-8 text-center">
-            <p className="font-bold text-[#493456]">
-              No workouts found
-            </p>
+            <p className="font-bold text-[#493456]">No workouts found</p>
             <p className="mt-2 text-sm text-[#92849D]">
-              Try changing your filters.
+              There are no saved workouts for this category yet.
             </p>
+          </div>
+        )}
+
+        {!loading && !error && filteredWorkouts.length > 0 && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredWorkouts.map((workout) => {
+              const workoutId = workout._id ?? workout.id
+              const categoryName = workout.category || 'other'
+              const duration = Number(workout.durationMinutes) || 0
+              const exercises = Array.isArray(workout.exercises)
+                ? workout.exercises
+                : []
+
+              return (
+                <article
+                  key={workoutId}
+                  className="group overflow-hidden rounded-[22px] border border-[#ECE6F2] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D9C6E9] hover:shadow-[0_15px_35px_rgba(72,46,94,.07)]"
+                >
+                  <div className="relative flex h-32 items-center justify-center overflow-hidden bg-[#EDE2F8]">
+                    <div className="absolute h-24 w-24 rounded-full border border-white/70" />
+                    <div className="absolute h-16 w-16 rounded-full border border-white/70" />
+
+                    <span className="relative text-4xl font-black text-[#69527D] transition duration-300 group-hover:scale-110">
+                      {categoryName === 'strength'
+                        ? '↗'
+                        : categoryName === 'cardio'
+                          ? '〰'
+                          : '＋'}
+                    </span>
+                  </div>
+
+                  <div className="p-5">
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-[#F3EDF9] px-2.5 py-1 text-[10px] font-bold text-[#806991]">
+                        {formatCategory(categoryName)}
+                      </span>
+
+                      <span className="rounded-full bg-[#F8F5FA] px-2.5 py-1 text-[10px] font-semibold text-[#9686A1]">
+                        {exercises.length} exercises
+                      </span>
+                    </div>
+
+                    <h3 className="mt-3 text-lg font-bold text-[#382749]">
+                      {workout.title || 'Untitled workout'}
+                    </h3>
+
+                    <p className="mt-2 min-h-10 text-sm leading-5 text-[#92849D]">
+                      {workout.notes || 'Review the exercises in this session.'}
+                    </p>
+
+                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#F0EAF4] pt-4">
+                      <span className="text-xs font-semibold text-[#8D7C9C]">
+                        ◷ {duration} minutes
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(workoutId)}
+                        className="rounded-xl bg-[#332743] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#4A365D]"
+                      >
+                        View workout →
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
           </div>
         )}
       </section>
@@ -293,19 +298,19 @@ function TrainingActivity() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
-                  Workout session
+                  Workout details
                 </p>
 
                 <h2
                   id="workout-dialog-title"
                   className="mt-2 text-2xl font-bold text-[#302442]"
                 >
-                  {selectedWorkout.title}
+                  {selectedWorkout.title || 'Untitled workout'}
                 </h2>
 
                 <p className="mt-1 text-sm text-[#92879F]">
-                  {selectedWorkout.duration} minutes ·{' '}
-                  {selectedWorkout.difficulty}
+                  {Number(selectedWorkout.durationMinutes) || 0} minutes ·{' '}
+                  {formatCategory(selectedWorkout.category || 'other')}
                 </p>
               </div>
 
@@ -319,128 +324,50 @@ function TrainingActivity() {
               </button>
             </div>
 
+            {selectedWorkout.notes && (
+              <p className="mt-4 text-sm leading-6 text-[#92849D]">
+                {selectedWorkout.notes}
+              </p>
+            )}
+
             <div className="mt-6 space-y-3">
-              {selectedWorkout.exercises.map((exercise, index) => {
-                const key = `${selectedWorkout.id}-${exercise.id}`
-                const checked = Boolean(checkedExercises[key])
-
-                return (
-                  <label
-                    key={exercise.id}
-                    className={`flex cursor-pointer items-center gap-3 rounded-2xl border p-4 transition ${
-                      checked
-                        ? 'border-[#C6E6D1] bg-[#F0F9F3]'
-                        : 'border-[#ECE6F2] bg-white hover:border-[#DCC7E8]'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() =>
-                        toggleExercise(selectedWorkout.id, exercise.id)
-                      }
-                      className="h-4 w-4 accent-[#9469B2]"
-                    />
-
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F0E5F8] text-xs font-bold text-[#795792]">
-                      {String(index + 1).padStart(2, '0')}
-                    </span>
-
-                    <span className="min-w-0 flex-1">
-                      <span
-                        className={`block text-sm font-bold ${
-                          checked
-                            ? 'text-[#5E8A6C] line-through'
-                            : 'text-[#493456]'
-                        }`}
-                      >
-                        {exercise.name}
-                      </span>
-
-                      <span className="mt-1 block text-xs text-[#92849D]">
-                        {exercise.detail}
-                      </span>
-                    </span>
-
-                    {checked && (
-                      <span className="text-sm font-bold text-[#4B9A69]">
-                        ✓
-                      </span>
-                    )}
-                  </label>
-                )
-              })}
-            </div>
-
-            <div className="mt-5">
-              <div className="mb-2 flex justify-between text-xs font-semibold text-[#8D7C9C]">
-                <span>Exercise progress</span>
-
-                <span>
-                  {
-                    selectedWorkout.exercises.filter(
-                      (exercise) =>
-                        checkedExercises[
-                          `${selectedWorkout.id}-${exercise.id}`
-                        ]
-                    ).length
-                  }{' '}
-                  / {selectedWorkout.exercises.length}
-                </span>
-              </div>
-
-              <div className="h-2 overflow-hidden rounded-full bg-[#EAE1F1]">
+              {exerciseList.map((exercise, index) => (
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#B58AD8] to-[#E28CCF] transition-all duration-300"
-                  style={{
-                    width: `${
-                      selectedWorkout.exercises.length
-                        ? (selectedWorkout.exercises.filter(
-                            (exercise) =>
-                              checkedExercises[
-                                `${selectedWorkout.id}-${exercise.id}`
-                              ]
-                          ).length /
-                            selectedWorkout.exercises.length) *
-                          100
-                        : 0
-                    }%`,
-                  }}
-                />
-              </div>
+                  key={exercise._id ?? exercise.id ?? `${exercise.name}-${index}`}
+                  className="flex items-center gap-3 rounded-2xl border border-[#ECE6F2] bg-white p-4"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F0E5F8] text-xs font-bold text-[#795792]">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold text-[#493456]">
+                      {exercise.name || 'Exercise'}
+                    </span>
+                    <span className="mt-1 block text-xs text-[#92849D]">
+                      {formatExercise(exercise)}
+                    </span>
+                  </span>
+                </div>
+              ))}
+
+              {exerciseList.length === 0 && (
+                <p className="rounded-2xl border border-dashed border-[#DCCFE7] p-6 text-center text-sm text-[#92849D]">
+                  No exercise details are available for this workout.
+                </p>
+              )}
             </div>
 
             <button
               type="button"
-              disabled={
-                selectedWorkout.completed ||
-                !selectedWorkout.exercises.every(
-                  (exercise) =>
-                    checkedExercises[
-                      `${selectedWorkout.id}-${exercise.id}`
-                    ]
-                )
-              }
-              onClick={() => handleComplete(selectedWorkout)}
-              className="mt-6 w-full rounded-xl bg-[#332743] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[#4A365D] disabled:cursor-not-allowed disabled:bg-[#D8CFDF] disabled:text-[#84768E]"
+              onClick={() => setSelectedId(null)}
+              className="mt-6 w-full rounded-xl bg-[#332743] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[#4A365D]"
             >
-              {selectedWorkout.completed
-                ? 'Workout already completed ✓'
-                : 'Complete workout'}
+              Close workout
             </button>
-
-            <p className="mt-3 text-center text-[11px] leading-5 text-[#AA9DB3]">
-              Demo tracking only. Choose exercises appropriate for your
-              fitness level and stop if you feel pain.
-            </p>
           </section>
         </div>
       )}
-
-      <p className="text-center text-[11px] leading-5 text-[#AA9DB3]">
-        Your demo progress is stored in this browser. It is not synced to
-        your account or backend yet.
-      </p>
     </div>
   )
 }
