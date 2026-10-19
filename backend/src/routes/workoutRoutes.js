@@ -11,6 +11,7 @@ const {
   updateWorkout,
   deleteWorkout,
 } = require("../controllers/workoutController");
+const { getWorkoutStats } = require("../controllers/workoutStatsController");
 
 // All workout routes require login
 router.use(protect);
@@ -29,5 +30,8 @@ router.patch("/:id", updateWorkout);
 
 // DELETE /api/workouts/:id
 router.delete("/:id", deleteWorkout);
+
+// GET /api/workouts/stats
+router.get("/stats", getWorkoutStats);
 
 module.exports = router;
