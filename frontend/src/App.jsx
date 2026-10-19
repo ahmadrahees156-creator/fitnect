@@ -1,18 +1,21 @@
 
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+
 import Landing from './pages/Landing'
 import Register from './pages/Register'
 import Login from './pages/Login'
 import VerifyEmail from './pages/VerifyEmail'
 import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
-import { getCurrentUser } from './services/authService'
-import Profile from './pages/Profile'
 import CoachDashboard from './pages/CoachDashboard'
+import Profile from './pages/Profile'
 
-function ProtectedRoute({ children }) {
+import { getCurrentUser } from './services/authService'
+
+function ProtectedRoute({ children, allowedRole }) {
   const [status, setStatus] = useState('loading')
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -26,17 +29,24 @@ function ProtectedRoute({ children }) {
       }
 
       try {
-        await getCurrentUser()
+        const response = await getCurrentUser()
+        const currentUser =
+          response.user || response.data?.user || response.data || response
+
+        if (!currentUser?.role) {
+          throw new Error('User role was not returned by the server.')
+        }
 
         if (active) {
+          localStorage.setItem('fitnect_user', JSON.stringify(currentUser))
+          setUser(currentUser)
           setStatus('authorized')
         }
-      } catch (error) {
+      } catch {
         localStorage.removeItem('fitnect_token')
+        localStorage.removeItem('fitnect_user')
 
-        if (active) {
-          setStatus('unauthorized')
-        }
+        if (active) setStatus('unauthorized')
       }
     }
 
@@ -59,6 +69,15 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />
   }
 
+  if (allowedRole && user?.role !== allowedRole) {
+    return (
+      <Navigate
+        to={user?.role === 'coach' ? '/coach' : '/dashboard'}
+        replace
+      />
+    )
+  }
+
   return children
 }
 
@@ -73,26 +92,28 @@ function App() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRole="athlete">
               <Dashboard />
             </ProtectedRoute>
           }
         />
+
         <Route
-        path="/coach"
-        element={
-        <ProtectedRoute>
-         <CoachDashboard />
-       </ProtectedRoute>
-        }
-         />
+          path="/coach"
+          element={
+            <ProtectedRoute allowedRole="coach">
+              <CoachDashboard />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
-           path="/profile"
-            element={
-              <ProtectedRoute>
-                 <Profile />
-               </ProtectedRoute>
-              }
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
         />
 
         <Route path="/register" element={<Register />} />
