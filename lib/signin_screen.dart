@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -60,12 +61,50 @@ class _SignInScreenState extends State<SignInScreen> {
   
   Future<void> _handleGoogleSignIn() async {
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Google Sign-In integration ready for ID token.'),
-        backgroundColor: Color(0xFF8E24AA),
-      ),
+   try {
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    
+    // Pops up the native Google account chooser
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    if (googleUser == null) return; // User cancelled
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final String? idToken = googleAuth.idToken;
+
+    if (idToken == null) {
+      _showErrorDialog('Failed to get Google ID token.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    
+    final response = await http.post(
+      Uri.parse('$_baseUrl/api/auth/google'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'idToken': idToken}),
     );
+
+    setState(() => _isLoading = false);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      final String? token = data['token'];
+      debugPrint('Google Login Token: $token');
+
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
+    } else {
+      final errorData = jsonDecode(response.body);
+      _showErrorDialog(errorData['message'] ?? 'Google sign-in failed.');
+    }
+  } catch (e) {
+    setState(() => _isLoading = false);
+    _showErrorDialog('An error occurred during Google Sign-In.');
+  }
   }
 
   void _showErrorDialog(String message) {
