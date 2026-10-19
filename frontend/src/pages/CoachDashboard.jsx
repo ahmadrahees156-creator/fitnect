@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import CoachProfile from './CoachProfile'
 
 const athletes = [
   {
@@ -70,6 +71,7 @@ const navigation = [
   { id: 'athletes', label: 'My Athletes', icon: '♧' },
   { id: 'alerts', label: 'Risk Alerts', icon: '⚠' },
   { id: 'notes', label: 'Coach Notes', icon: '▤' },
+  { id: 'profile', label: 'Coach Profile', icon: '◉' },
 ]
 
 const NOTES_STORAGE_KEY = 'fitnect-coach-notes'
@@ -78,6 +80,14 @@ function loadNotes() {
   try {
     const saved = localStorage.getItem(NOTES_STORAGE_KEY)
     return saved ? JSON.parse(saved) : {}
+  } catch {
+    return {}
+  }
+}
+
+function loadCoachUser() {
+  try {
+    return JSON.parse(localStorage.getItem('fitnect_user') || '{}')
   } catch {
     return {}
   }
@@ -109,7 +119,7 @@ function StatCard({ label, value, detail, icon, color }) {
   )
 }
 
-function ProgressBar({ label, value, color = 'bg-[#A9CDFA]' }) {
+function ProgressBar({ label, value, color = 'bg-[#CAECD6]' }) {
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-3">
@@ -120,7 +130,7 @@ function ProgressBar({ label, value, color = 'bg-[#A9CDFA]' }) {
       <div className="h-2 overflow-hidden rounded-full bg-[#F0EDF4]">
         <div
           className={`h-full rounded-full transition-all duration-700 ${color}`}
-          style={{ width: `${value}%` }}
+          style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
         />
       </div>
     </div>
@@ -137,7 +147,9 @@ function AthleteCard({ athlete, onView }) {
           </div>
 
           <div className="min-w-0">
-            <h3 className="truncate font-bold text-[#151517]">{athlete.name}</h3>
+            <h3 className="truncate font-bold text-[#151517]">
+              {athlete.name}
+            </h3>
             <p className="mt-1 text-xs text-[#7E7E82]">
               {athlete.sport} · {athlete.age} years
             </p>
@@ -174,8 +186,9 @@ function AthleteCard({ athlete, onView }) {
         </div>
 
         <button
+          type="button"
           onClick={() => onView(athlete)}
-          className="shrink-0 rounded-xl bg-[#F4F0F9] px-3 py-2 text-xs font-bold text-[#63477F] transition-all duration-200 hover:scale-105 hover:bg-[#E4DBF4] active:scale-95"
+          className="shrink-0 rounded-xl bg-[#F4F0F9] px-3 py-2 text-xs font-bold text-[#63477F] transition-all hover:scale-105 hover:bg-[#E4DBF4] active:scale-95"
         >
           View details →
         </button>
@@ -207,7 +220,7 @@ function AthleteModal({ athlete, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="athlete-modal-title"
-        className="my-auto w-full max-w-lg animate-[popIn_0.25s_ease-out] rounded-[28px] bg-white p-6 shadow-2xl sm:p-8"
+        className="my-auto w-full max-w-lg rounded-[28px] bg-white p-6 shadow-2xl sm:p-8"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
@@ -217,7 +230,7 @@ function AthleteModal({ athlete, onClose }) {
             </div>
 
             <div>
-              <h2 id="athlete-modal-title" className="text-xl font-bold text-[#151517]">
+              <h2 id="athlete-modal-title" className="text-xl font-bold">
                 {athlete.name}
               </h2>
               <p className="mt-1 text-sm text-[#7E7E82]">
@@ -227,6 +240,7 @@ function AthleteModal({ athlete, onClose }) {
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             aria-label="Close athlete details"
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F4F0F9] text-[#63477F] transition hover:rotate-90 hover:bg-[#E4DBF4]"
@@ -236,33 +250,49 @@ function AthleteModal({ athlete, onClose }) {
         </div>
 
         <div className="mt-6 flex items-center justify-between rounded-2xl bg-[#FAF8FC] p-4">
-          <span className="text-sm font-medium text-[#7E7E82]">Injury risk</span>
+          <span className="text-sm font-medium text-[#7E7E82]">
+            Injury risk
+          </span>
           <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${getRiskStyle(athlete.risk)}`}>
             {athlete.risk} Risk
           </span>
         </div>
 
         <div className="mt-6 space-y-5">
-          <ProgressBar label="Recovery" value={athlete.recovery} color="bg-[#CAECD6]" />
-          <ProgressBar label="Training load" value={athlete.trainingLoad} color="bg-[#FDC381]" />
-          <ProgressBar label="Hydration" value={athlete.hydration} color="bg-[#A9CDFA]" />
+          <ProgressBar label="Recovery" value={athlete.recovery} />
+          <ProgressBar
+            label="Training load"
+            value={athlete.trainingLoad}
+            color="bg-[#FDC381]"
+          />
+          <ProgressBar
+            label="Hydration"
+            value={athlete.hydration}
+            color="bg-[#A9CDFA]"
+          />
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-[#F8F5FC] p-4">
             <p className="text-xs text-[#7E7E82]">Average sleep</p>
-            <p className="mt-2 text-xl font-bold text-[#151517]">{athlete.sleep}h</p>
+            <p className="mt-2 text-xl font-bold">{athlete.sleep}h</p>
           </div>
 
           <div className="rounded-2xl bg-[#F8F5FC] p-4">
             <p className="text-xs text-[#7E7E82]">Current concern</p>
-            <p className="mt-2 text-sm font-bold text-[#151517]">{athlete.injury}</p>
+            <p className="mt-2 text-sm font-bold">{athlete.injury}</p>
           </div>
         </div>
 
+        <p className="mt-5 text-xs leading-5 text-[#7E7E82]">
+          These are illustrative monitoring indicators, not a medical
+          assessment or diagnosis.
+        </p>
+
         <button
+          type="button"
           onClick={onClose}
-          className="mt-7 w-full rounded-2xl bg-[#151517] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#63477F] active:scale-[0.98]"
+          className="mt-5 w-full rounded-2xl bg-[#151517] py-3.5 text-sm font-semibold text-white transition hover:bg-[#63477F] active:scale-[0.98]"
         >
           Done
         </button>
@@ -272,6 +302,8 @@ function AthleteModal({ athlete, onClose }) {
 }
 
 export default function CoachDashboard() {
+  const navigate = useNavigate()
+
   const [activeTab, setActiveTab] = useState('overview')
   const [search, setSearch] = useState('')
   const [riskFilter, setRiskFilter] = useState('All')
@@ -280,8 +312,27 @@ export default function CoachDashboard() {
   const [notesSaved, setNotesSaved] = useState(true)
   const [storageError, setStorageError] = useState(false)
 
-  const highRiskCount = athletes.filter((athlete) => athlete.risk === 'High').length
-  const mediumRiskCount = athletes.filter((athlete) => athlete.risk === 'Medium').length
+  const [coachUser, setCoachUser] = useState(() => {
+    const user = loadCoachUser()
+
+    return {
+      name: user.name || user.fullName || 'Coach Workspace',
+      email: user.email || '',
+    }
+  })
+
+  const highRiskCount = athletes.filter(
+    (athlete) => athlete.risk === 'High'
+  ).length
+
+  const mediumRiskCount = athletes.filter(
+    (athlete) => athlete.risk === 'Medium'
+  ).length
+
+  const averageRecovery = Math.round(
+    athletes.reduce((sum, athlete) => sum + athlete.recovery, 0) /
+      athletes.length
+  )
 
   useEffect(() => {
     try {
@@ -294,14 +345,26 @@ export default function CoachDashboard() {
     }
   }, [notes])
 
+  useEffect(() => {
+    const user = loadCoachUser()
+
+    setCoachUser({
+      name: user.name || user.fullName || 'Coach Workspace',
+      email: user.email || '',
+    })
+  }, [])
+
   const filteredAthletes = useMemo(() => {
     return athletes.filter((athlete) => {
       const matchesSearch =
         athlete.name.toLowerCase().includes(search.toLowerCase()) ||
         athlete.sport.toLowerCase().includes(search.toLowerCase())
 
-      const matchesRisk = riskFilter === 'All' || athlete.risk === riskFilter
-      const matchesTab = activeTab !== 'alerts' || athlete.risk !== 'Low'
+      const matchesRisk =
+        riskFilter === 'All' || athlete.risk === riskFilter
+
+      const matchesTab =
+        activeTab !== 'alerts' || athlete.risk !== 'Low'
 
       return matchesSearch && matchesRisk && matchesTab
     })
@@ -324,9 +387,14 @@ export default function CoachDashboard() {
       title: 'Coach Notes',
       subtitle: 'Keep track of your observations and follow-ups.',
     },
+    profile: {
+      title: 'Coach Profile',
+      subtitle: 'Manage your coaching identity and professional details.',
+    },
   }
 
-  const currentPage = pageTitles[activeTab]
+  const currentPage = pageTitles[activeTab] || pageTitles.overview
+  const coachInitial = coachUser.name.trim().charAt(0).toUpperCase() || 'C'
 
   function changeTab(tab) {
     setActiveTab(tab)
@@ -343,14 +411,18 @@ export default function CoachDashboard() {
     setNotesSaved(false)
   }
 
+  function handleLogout() {
+    localStorage.removeItem('fitnect_user')
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    sessionStorage.clear()
+
+    navigate('/login', { replace: true })
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF8FC] text-[#151517]">
       <style>{`
-        @keyframes popIn {
-          from { opacity: 0; transform: translateY(10px) scale(0.96); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
         @keyframes contentEnter {
           from { opacity: 0; transform: translateY(8px); }
           to { opacity: 1; transform: translateY(0); }
@@ -361,9 +433,7 @@ export default function CoachDashboard() {
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .dashboard-enter {
-            animation: none;
-          }
+          .dashboard-enter { animation: none; }
         }
       `}</style>
 
@@ -375,7 +445,9 @@ export default function CoachDashboard() {
             </div>
 
             <div>
-              <h1 className="text-xl font-extrabold tracking-tight">FitNect</h1>
+              <h1 className="text-xl font-extrabold tracking-tight">
+                FitNect
+              </h1>
               <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7E7E82]">
                 Coach workspace
               </p>
@@ -386,7 +458,10 @@ export default function CoachDashboard() {
             Workspace
           </div>
 
-          <nav aria-label="Coach dashboard navigation" className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-1">
+          <nav
+            aria-label="Coach dashboard navigation"
+            className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1"
+          >
             {navigation.map((item) => {
               const isActive = activeTab === item.id
 
@@ -396,15 +471,27 @@ export default function CoachDashboard() {
                   type="button"
                   aria-current={isActive ? 'page' : undefined}
                   onClick={() => changeTab(item.id)}
-                  className={`group relative flex items-center gap-3 overflow-hidden rounded-2xl px-3 py-3 text-left text-sm font-semibold transition-all duration-300 ease-out ${
+                  className={`group relative flex items-center gap-3 overflow-hidden rounded-2xl px-3 py-3 text-left text-sm font-semibold transition-all duration-300 ${
                     isActive
-                      ? 'scale-[1.03] bg-[#E4DBF4] text-[#63477F] shadow-md shadow-[#DCCCEF]/50 ring-1 ring-[#D2C1E8]'
-                      : 'text-[#7E7E82] hover:translate-x-1 hover:scale-[1.02] hover:bg-[#F8F6FC] hover:text-[#302442]'
+                      ? 'scale-[1.02] bg-[#E4DBF4] text-[#63477F] shadow-md shadow-[#DCCCEF]/50 ring-1 ring-[#D2C1E8]'
+                      : 'text-[#7E7E82] hover:translate-x-1 hover:bg-[#F8F6FC] hover:text-[#302442]'
                   }`}
                 >
-                  <span className={`absolute bottom-2 left-0 top-2 w-1 rounded-r-full bg-[#A17BC8] transition-all duration-300 ${isActive ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0'}`} />
+                  <span
+                    className={`absolute bottom-2 left-0 top-2 w-1 rounded-r-full bg-[#A17BC8] transition-all ${
+                      isActive
+                        ? 'translate-x-0 opacity-100'
+                        : '-translate-x-2 opacity-0'
+                    }`}
+                  />
 
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg transition-all duration-300 ${isActive ? 'scale-110 -rotate-3 bg-white shadow-sm' : 'group-hover:scale-110 group-hover:bg-white'}`}>
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg transition ${
+                      isActive
+                        ? 'scale-110 bg-white shadow-sm'
+                        : 'group-hover:scale-110 group-hover:bg-white'
+                    }`}
+                  >
                     {item.icon}
                   </span>
 
@@ -415,33 +502,55 @@ export default function CoachDashboard() {
                       {highRiskCount}
                     </span>
                   )}
-
-                  {isActive && (
-                    <span aria-hidden="true" className="hidden text-xs text-[#A17BC8] sm:inline">
-                      ●
-                    </span>
-                  )}
                 </button>
               )
             })}
           </nav>
 
           <div className="mt-6 hidden rounded-3xl bg-[#F8F5FC] p-4 lg:mt-auto lg:block">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#CAECD6] text-lg">♡</div>
-            <h3 className="mt-3 text-sm font-bold">Athlete-first coaching</h3>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#CAECD6] text-lg">
+              ♡
+            </div>
+            <h3 className="mt-3 text-sm font-bold">
+              Athlete-first coaching
+            </h3>
             <p className="mt-2 text-xs leading-5 text-[#7E7E82]">
-              Use wellness and recovery signals to guide thoughtful training decisions.
+              Use wellness and recovery signals to guide thoughtful training
+              decisions.
             </p>
           </div>
 
-          <div className="mt-5 flex items-center gap-3 border-t border-[#ECE7F1] pt-5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FDC381] font-bold text-[#302442]">
-              C
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-5 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-[#B42318] transition-all duration-300 hover:bg-[#FCE4E4] active:scale-[0.98]"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FCE4E4] text-lg">
+              ↪
+            </span>
+            <span>Logout</span>
+          </button>
+
+          <div className="mt-4 flex items-center gap-3 border-t border-[#ECE7F1] pt-5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FDC381] font-bold text-[#302442]">
+              {coachInitial}
             </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold">Coach Workspace</p>
-              <p className="text-xs text-[#7E7E82]">Team manager</p>
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold">{coachUser.name}</p>
+              <p className="truncate text-xs text-[#7E7E82]">
+                {coachUser.email || 'Team manager'}
+              </p>
             </div>
+
+            <button
+              type="button"
+              onClick={() => changeTab('profile')}
+              aria-label="Open coach profile"
+              className="rounded-xl p-2 text-[#8062A2] transition hover:bg-[#F4F0F9]"
+            >
+              ↗
+            </button>
           </div>
         </aside>
 
@@ -454,7 +563,9 @@ export default function CoachDashboard() {
               <h2 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
                 {currentPage.title}
               </h2>
-              <p className="mt-2 text-sm text-[#7E7E82]">{currentPage.subtitle}</p>
+              <p className="mt-2 text-sm text-[#7E7E82]">
+                {currentPage.subtitle}
+              </p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -464,13 +575,21 @@ export default function CoachDashboard() {
                 </p>
                 <p className="mt-1 text-lg font-extrabold">{athletes.length}</p>
               </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E4DBF4] text-lg font-bold text-[#63477F]">
-                C
-              </div>
+
+              <button
+                type="button"
+                onClick={() => changeTab('profile')}
+                aria-label="Open coach profile"
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#E4DBF4] text-lg font-bold text-[#63477F] transition hover:scale-105"
+              >
+                {coachInitial}
+              </button>
             </div>
           </header>
 
           <div key={activeTab} className="dashboard-enter">
+            {activeTab === 'profile' && <CoachProfile />}
+
             {activeTab === 'overview' && (
               <>
                 <section className="relative mb-7 overflow-hidden rounded-[28px] bg-[#E4DBF4] p-6 sm:p-8">
@@ -478,17 +597,22 @@ export default function CoachDashboard() {
                     <span className="inline-flex rounded-full bg-white/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#63477F]">
                       Your team dashboard
                     </span>
+
                     <h3 className="mt-5 max-w-xl text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
                       Better insights.
                       <br />
                       Smarter training.
                     </h3>
+
                     <p className="mt-3 max-w-lg text-sm leading-6 text-[#635777]">
-                      Stay on top of athlete recovery, training loads and wellness indicators in one place.
+                      Stay on top of athlete recovery, training loads and
+                      wellness indicators in one place.
                     </p>
+
                     <button
+                      type="button"
                       onClick={() => changeTab('athletes')}
-                      className="mt-6 rounded-2xl bg-[#151517] px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#63477F] active:scale-95"
+                      className="mt-6 rounded-2xl bg-[#151517] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#63477F] active:scale-95"
                     >
                       Explore athletes →
                     </button>
@@ -500,12 +624,30 @@ export default function CoachDashboard() {
                 </section>
 
                 <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <StatCard label="Total athletes" value={athletes.length} detail="Athletes in your team" icon="♧" color="bg-[#E4DBF4]" />
-                  <StatCard label="High risk" value={highRiskCount} detail="Require closer attention" icon="⚠" color="bg-[#FCE4E4]" />
-                  <StatCard label="Medium risk" value={mediumRiskCount} detail="Keep monitoring" icon="◷" color="bg-[#FFF0D9]" />
+                  <StatCard
+                    label="Total athletes"
+                    value={athletes.length}
+                    detail="Athletes in your team"
+                    icon="♧"
+                    color="bg-[#E4DBF4]"
+                  />
+                  <StatCard
+                    label="High risk"
+                    value={highRiskCount}
+                    detail="Require closer attention"
+                    icon="⚠"
+                    color="bg-[#FCE4E4]"
+                  />
+                  <StatCard
+                    label="Medium risk"
+                    value={mediumRiskCount}
+                    detail="Keep monitoring"
+                    icon="◷"
+                    color="bg-[#FFF0D9]"
+                  />
                   <StatCard
                     label="Avg. recovery"
-                    value={`${Math.round(athletes.reduce((sum, athlete) => sum + athlete.recovery, 0) / athletes.length)}%`}
+                    value={`${averageRecovery}%`}
                     detail="Across sample athletes"
                     icon="♡"
                     color="bg-[#CAECD6]"
@@ -515,12 +657,16 @@ export default function CoachDashboard() {
                 <section className="mt-9">
                   <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                     <div>
-                      <h3 className="text-xl font-extrabold">Athlete overview</h3>
+                      <h3 className="text-xl font-extrabold">
+                        Athlete overview
+                      </h3>
                       <p className="mt-1 text-sm text-[#7E7E82]">
                         A quick look at your team's current status.
                       </p>
                     </div>
+
                     <button
+                      type="button"
                       onClick={() => changeTab('athletes')}
                       className="self-start text-sm font-bold text-[#8062A2] transition hover:translate-x-1"
                     >
@@ -530,7 +676,11 @@ export default function CoachDashboard() {
 
                   <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                     {athletes.map((athlete) => (
-                      <AthleteCard key={athlete.id} athlete={athlete} onView={setSelectedAthlete} />
+                      <AthleteCard
+                        key={athlete.id}
+                        athlete={athlete}
+                        onView={setSelectedAthlete}
+                      />
                     ))}
                   </div>
                 </section>
@@ -540,21 +690,46 @@ export default function CoachDashboard() {
                   <p className="mt-1 text-sm text-[#7E7E82]">
                     A few things to review during your next team check-in.
                   </p>
+
                   <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <button onClick={() => changeTab('alerts')} className="rounded-2xl bg-[#FFF5E7] p-4 text-left transition hover:-translate-y-1">
+                    <button
+                      type="button"
+                      onClick={() => changeTab('alerts')}
+                      className="rounded-2xl bg-[#FFF5E7] p-4 text-left transition hover:-translate-y-1"
+                    >
                       <span className="text-xl">⚠</span>
                       <p className="mt-3 text-sm font-bold">Review risk alerts</p>
-                      <p className="mt-1 text-xs text-[#7E7E82]">{highRiskCount} high-risk athlete</p>
+                      <p className="mt-1 text-xs text-[#7E7E82]">
+                        {highRiskCount} high-risk athlete
+                      </p>
                     </button>
-                    <button onClick={() => changeTab('athletes')} className="rounded-2xl bg-[#F1ECFA] p-4 text-left transition hover:-translate-y-1">
+
+                    <button
+                      type="button"
+                      onClick={() => changeTab('athletes')}
+                      className="rounded-2xl bg-[#F1ECFA] p-4 text-left transition hover:-translate-y-1"
+                    >
                       <span className="text-xl">♧</span>
-                      <p className="mt-3 text-sm font-bold">Check athlete recovery</p>
-                      <p className="mt-1 text-xs text-[#7E7E82]">Review individual scores</p>
+                      <p className="mt-3 text-sm font-bold">
+                        Check athlete recovery
+                      </p>
+                      <p className="mt-1 text-xs text-[#7E7E82]">
+                        Review individual scores
+                      </p>
                     </button>
-                    <button onClick={() => changeTab('notes')} className="rounded-2xl bg-[#EAF7EE] p-4 text-left transition hover:-translate-y-1">
+
+                    <button
+                      type="button"
+                      onClick={() => changeTab('notes')}
+                      className="rounded-2xl bg-[#EAF7EE] p-4 text-left transition hover:-translate-y-1"
+                    >
                       <span className="text-xl">▤</span>
-                      <p className="mt-3 text-sm font-bold">Update coach notes</p>
-                      <p className="mt-1 text-xs text-[#7E7E82]">Keep follow-ups organised</p>
+                      <p className="mt-3 text-sm font-bold">
+                        Update coach notes
+                      </p>
+                      <p className="mt-1 text-xs text-[#7E7E82]">
+                        Keep follow-ups organised
+                      </p>
                     </button>
                   </div>
                 </section>
@@ -572,6 +747,7 @@ export default function CoachDashboard() {
                     aria-label="Search athletes"
                     className="min-w-0 flex-1 rounded-2xl border border-[#E8E1F0] bg-white px-4 py-3 text-sm outline-none transition focus:border-[#A17BC8] focus:ring-4 focus:ring-[#E4DBF4]/60"
                   />
+
                   <select
                     value={riskFilter}
                     onChange={(event) => setRiskFilter(event.target.value)}
@@ -587,19 +763,27 @@ export default function CoachDashboard() {
 
                 <div className="mb-5 flex items-center justify-between">
                   <h3 className="text-lg font-extrabold">Team roster</h3>
-                  <span className="text-xs text-[#7E7E82]">{filteredAthletes.length} athletes</span>
+                  <span className="text-xs text-[#7E7E82]">
+                    {filteredAthletes.length} athletes
+                  </span>
                 </div>
 
                 {filteredAthletes.length ? (
                   <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                     {filteredAthletes.map((athlete) => (
-                      <AthleteCard key={athlete.id} athlete={athlete} onView={setSelectedAthlete} />
+                      <AthleteCard
+                        key={athlete.id}
+                        athlete={athlete}
+                        onView={setSelectedAthlete}
+                      />
                     ))}
                   </div>
                 ) : (
                   <div className="rounded-3xl border border-dashed border-[#D8CBE9] bg-white p-10 text-center">
                     <p className="text-lg font-bold">No athletes found</p>
-                    <p className="mt-2 text-sm text-[#7E7E82]">Try another search or risk filter.</p>
+                    <p className="mt-2 text-sm text-[#7E7E82]">
+                      Try another search or risk filter.
+                    </p>
                   </div>
                 )}
               </section>
@@ -609,11 +793,17 @@ export default function CoachDashboard() {
               <section>
                 <div className="mb-6 rounded-3xl border border-[#F5D6D6] bg-[#FFF3F2] p-5 sm:p-6">
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-xl">⚠</div>
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-xl">
+                      ⚠
+                    </div>
                     <div>
-                      <h3 className="font-extrabold text-[#8E2929]">Athlete risk monitoring</h3>
+                      <h3 className="font-extrabold text-[#8E2929]">
+                        Athlete risk monitoring
+                      </h3>
                       <p className="mt-2 text-sm leading-6 text-[#9A5656]">
-                        Review the sample indicators below and use coaching judgement before adjusting training. These illustrative risk labels are not medical diagnoses.
+                        Review the sample indicators below and use coaching
+                        judgement before adjusting training. These illustrative
+                        risk labels are not medical diagnoses.
                       </p>
                     </div>
                   </div>
@@ -628,6 +818,7 @@ export default function CoachDashboard() {
                     aria-label="Search risk alerts"
                     className="min-w-0 flex-1 rounded-2xl border border-[#E8E1F0] bg-white px-4 py-3 text-sm outline-none focus:border-[#A17BC8] focus:ring-4 focus:ring-[#E4DBF4]/60"
                   />
+
                   <select
                     value={riskFilter}
                     onChange={(event) => setRiskFilter(event.target.value)}
@@ -643,7 +834,10 @@ export default function CoachDashboard() {
                 {filteredAthletes.length ? (
                   <div className="space-y-4">
                     {filteredAthletes.map((athlete) => (
-                      <div key={athlete.id} className="rounded-3xl border border-[#ECE7F1] bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+                      <div
+                        key={athlete.id}
+                        className="rounded-3xl border border-[#ECE7F1] bg-white p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                      >
                         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                           <div className="flex items-center gap-3">
                             <div className={`flex h-12 w-12 items-center justify-center rounded-2xl font-bold ${athlete.color}`}>
@@ -651,21 +845,36 @@ export default function CoachDashboard() {
                             </div>
                             <div>
                               <h3 className="font-bold">{athlete.name}</h3>
-                              <p className="mt-1 text-xs text-[#7E7E82]">{athlete.sport} · {athlete.injury}</p>
+                              <p className="mt-1 text-xs text-[#7E7E82]">
+                                {athlete.sport} · {athlete.injury}
+                              </p>
                             </div>
                           </div>
+
                           <div className="flex items-center gap-3">
                             <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${getRiskStyle(athlete.risk)}`}>
                               {athlete.risk} Risk
                             </span>
-                            <button onClick={() => setSelectedAthlete(athlete)} className="rounded-xl bg-[#F4F0F9] px-4 py-2.5 text-xs font-bold text-[#63477F] transition hover:bg-[#E4DBF4]">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAthlete(athlete)}
+                              className="rounded-xl bg-[#F4F0F9] px-4 py-2.5 text-xs font-bold text-[#63477F] transition hover:bg-[#E4DBF4]"
+                            >
                               Review
                             </button>
                           </div>
                         </div>
+
                         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                          <ProgressBar label="Recovery" value={athlete.recovery} color="bg-[#CAECD6]" />
-                          <ProgressBar label="Training load" value={athlete.trainingLoad} color="bg-[#FDC381]" />
+                          <ProgressBar
+                            label="Recovery"
+                            value={athlete.recovery}
+                          />
+                          <ProgressBar
+                            label="Training load"
+                            value={athlete.trainingLoad}
+                            color="bg-[#FDC381]"
+                          />
                         </div>
                       </div>
                     ))}
@@ -673,7 +882,9 @@ export default function CoachDashboard() {
                 ) : (
                   <div className="rounded-3xl border border-dashed border-[#D8CBE9] bg-white p-10 text-center">
                     <p className="text-lg font-bold">No matching alerts</p>
-                    <p className="mt-2 text-sm text-[#7E7E82]">Change the filter to see other athletes.</p>
+                    <p className="mt-2 text-sm text-[#7E7E82]">
+                      Change the filter to see other athletes.
+                    </p>
                   </div>
                 )}
               </section>
@@ -682,28 +893,38 @@ export default function CoachDashboard() {
             {activeTab === 'notes' && (
               <section>
                 <div className="mb-6 rounded-3xl bg-[#E4DBF4] p-6">
-                  <h3 className="text-xl font-extrabold">Your coaching journal</h3>
+                  <h3 className="text-xl font-extrabold">
+                    Your coaching journal
+                  </h3>
                   <p className="mt-2 max-w-xl text-sm leading-6 text-[#635777]">
-                    Record training observations, follow-ups and recovery reminders for each athlete.
+                    Record training observations, follow-ups and recovery
+                    reminders for each athlete.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                   {athletes.map((athlete) => (
-                    <div key={athlete.id} className="rounded-3xl border border-[#ECE7F1] bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#D8CBE9]/20">
+                    <div
+                      key={athlete.id}
+                      className="rounded-3xl border border-[#ECE7F1] bg-white p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-[#D8CBE9]/20"
+                    >
                       <div className="flex items-center gap-3">
                         <div className={`flex h-11 w-11 items-center justify-center rounded-2xl font-bold ${athlete.color}`}>
                           {athlete.initials}
                         </div>
                         <div>
                           <h3 className="font-bold">{athlete.name}</h3>
-                          <p className="mt-1 text-xs text-[#7E7E82]">{athlete.sport}</p>
+                          <p className="mt-1 text-xs text-[#7E7E82]">
+                            {athlete.sport}
+                          </p>
                         </div>
                       </div>
 
                       <textarea
                         value={notes[athlete.id] ?? athlete.note}
-                        onChange={(event) => updateNote(athlete.id, event.target.value)}
+                        onChange={(event) =>
+                          updateNote(athlete.id, event.target.value)
+                        }
                         rows={4}
                         maxLength={2000}
                         aria-label={`Coach note for ${athlete.name}`}
@@ -724,7 +945,10 @@ export default function CoachDashboard() {
                           type="button"
                           onClick={() => {
                             try {
-                              localStorage.setItem(NOTES_STORAGE_KEY, JSON.stringify(notes))
+                              localStorage.setItem(
+                                NOTES_STORAGE_KEY,
+                                JSON.stringify(notes)
+                              )
                               setStorageError(false)
                               setNotesSaved(true)
                             } catch {
@@ -742,7 +966,8 @@ export default function CoachDashboard() {
                 </div>
 
                 <p className="mt-5 text-xs leading-5 text-[#7E7E82]">
-                  Notes are stored in this browser only. They are not shared with other coaches or synced to the backend.
+                  Notes are stored in this browser only. They are not shared
+                  with other coaches or synced to the backend.
                 </p>
               </section>
             )}
@@ -754,7 +979,10 @@ export default function CoachDashboard() {
         </main>
       </div>
 
-      <AthleteModal athlete={selectedAthlete} onClose={() => setSelectedAthlete(null)} />
+      <AthleteModal
+        athlete={selectedAthlete}
+        onClose={() => setSelectedAthlete(null)}
+      />
     </div>
   )
 }
