@@ -9,17 +9,20 @@ import Nutrition from '../components/Nutrition'
 import InjuryRisk from '../components/InjuryRisk'
 import Profile from './Profile'
 import Settings from './Settings'
+import Footsteps from '../components/Footsteps'
 
 const navItems = [
   'Overview',
   'Injury Risk',
   'Wellness Check-in',
   'Training & Activity',
+  'Footsteps',
   'AI Insights',
   'Recovery',
   'Nutrition',
   'Profile & Settings',
   'Settings',
+  
 ]
 
 const stats = [
@@ -592,6 +595,8 @@ function Dashboard() {
             <InjuryRisk />
           ) : activeItem === 'Training & Activity' ? (
             <TrainingActivity />
+          ) : activeItem === 'Footsteps' ? (
+             <Footsteps />
           ) : activeItem === 'Wellness Check-in' ? (
             <WellnessCheckIn />
           ) : activeItem === 'Recovery' ? (
