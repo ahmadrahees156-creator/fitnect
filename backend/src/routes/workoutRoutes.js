@@ -19,6 +19,9 @@ router.use(protect);
 // POST /api/workouts
 router.post("/", createWorkout);
 
+// GET /api/workouts/stats
+router.get("/stats", getWorkoutStats);
+
 // GET /api/workouts
 router.get("/", getWorkouts);
 
@@ -31,7 +34,5 @@ router.patch("/:id", updateWorkout);
 // DELETE /api/workouts/:id
 router.delete("/:id", deleteWorkout);
 
-// GET /api/workouts/stats
-router.get("/stats", getWorkoutStats);
 
 module.exports = router;
