@@ -1,8 +1,9 @@
+
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import api from '../services/api'
-import { registerUser } from '../services/authService'
+import { registerUser, getCurrentUser } from '../services/authService'
 
 function Register() {
   const navigate = useNavigate()
@@ -47,7 +48,10 @@ function Register() {
       })
 
       navigate('/verify-email', {
-        state: { email: form.email.trim().toLowerCase() },
+        state: {
+          email: form.email.trim().toLowerCase(),
+          role: form.role,
+        },
       })
     } catch (err) {
       setError(
@@ -71,6 +75,7 @@ function Register() {
 
       const response = await api.post('/auth/google', {
         idToken: credentialResponse.credential,
+        role: form.role,
       })
 
       const data = response.data
@@ -81,7 +86,30 @@ function Register() {
       }
 
       localStorage.setItem('fitnect_token', token)
-      navigate('/dashboard')
+
+      let user =
+        data.user ||
+        data.data?.user ||
+        null
+
+      if (!user?.role) {
+        const profileResponse = await getCurrentUser()
+        user =
+          profileResponse.user ||
+          profileResponse.data?.user ||
+          profileResponse.data ||
+          profileResponse
+      }
+
+      if (!user?.role) {
+        throw new Error('Could not determine your account role.')
+      }
+
+      localStorage.setItem('fitnect_user', JSON.stringify(user))
+
+      navigate(user.role === 'coach' ? '/coach' : '/dashboard', {
+        replace: true,
+      })
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -96,7 +124,6 @@ function Register() {
   return (
     <main className="min-h-screen bg-[#E4DBF4] px-3 py-4 sm:px-5 sm:py-5">
       <div className="mx-auto grid min-h-[calc(100vh-2.5rem)] max-w-6xl overflow-hidden rounded-[26px] bg-white shadow-xl lg:grid-cols-[0.92fr_1.08fr]">
-
         <section className="relative flex flex-col justify-between overflow-hidden bg-[#E4DBF4] p-6 sm:p-8 lg:p-9">
           <div className="absolute -left-12 top-36 h-48 w-48 rounded-full bg-[#FDC381]/60 blur-3xl" />
           <div className="absolute -bottom-10 right-0 h-52 w-52 rounded-full bg-[#A9CDFA]/70 blur-3xl" />
