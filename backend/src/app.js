@@ -14,6 +14,7 @@ const recoveryRoutes = require("./routes/recoveryRoutes");
 const hydrationRoutes = require("./routes/hydrationRoutes");
 const nutritionRoutes = require("./routes/nutritionRoutes");
 const nutritionGoalRoutes = require("./routes/nutritionGoalRoutes");
+const activityHistoryRoutes = require("./routes/activityHistoryRoutes");
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/api/recovery", recoveryRoutes);
 app.use("/api/hydration", hydrationRoutes);
 app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/nutrition-goals", nutritionGoalRoutes);
+app.use("/api/activity-history", activityHistoryRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
