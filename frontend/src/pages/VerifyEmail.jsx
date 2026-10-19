@@ -33,6 +33,10 @@ function VerifyEmail() {
       )
 
       const token = response.token || response.data?.token
+      const user =
+        response.user ||
+        response.data?.user ||
+        null
 
       if (!token) {
         setError(
@@ -41,9 +45,21 @@ function VerifyEmail() {
         return
       }
 
+      if (!user?.role) {
+        setError(
+          'Verification succeeded, but the server did not return your account role. Please log in to continue.'
+        )
+        return
+      }
+
       localStorage.setItem('fitnect_token', token)
+      localStorage.setItem('fitnect_user', JSON.stringify(user))
+
       setMessage('Email verified successfully.')
-      navigate('/dashboard', { replace: true })
+
+      navigate(user.role === 'coach' ? '/coach' : '/dashboard', {
+        replace: true,
+      })
     } catch (err) {
       setError(
         err.response?.data?.message ||
@@ -117,8 +133,7 @@ function VerifyEmail() {
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-gray-500">
-          Enter the six-digit code sent to your email after
-          registration.
+          Enter the six-digit code sent to your email after registration.
         </p>
 
         {error && (
@@ -200,9 +215,7 @@ function VerifyEmail() {
           disabled={resending}
           className="mt-5 w-full text-sm font-semibold text-[#8B73D9] transition hover:text-[#7156C1] hover:underline disabled:opacity-60"
         >
-          {resending
-            ? 'Requesting code...'
-            : 'Resend verification code'}
+          {resending ? 'Requesting code...' : 'Resend verification code'}
         </button>
 
         <div className="my-6 border-t border-[#EDE6F7]" />
