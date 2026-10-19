@@ -11,6 +11,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const insightsRoutes = require("./routes/insightsRoutes");
 const workoutRoutes = require("./routes/workoutRoutes");
 const recoveryRoutes = require("./routes/recoveryRoutes");
+const hydrationRoutes = require("./routes/hydrationRoutes");
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/insights", insightsRoutes);
 app.use("/api/workouts", workoutRoutes);
 app.use("/api/recovery", recoveryRoutes);
+app.use("/api/hydration", hydrationRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
