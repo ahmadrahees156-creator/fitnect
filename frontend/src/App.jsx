@@ -9,6 +9,7 @@ import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
 import { getCurrentUser } from './services/authService'
 import Profile from './pages/Profile'
+import CoachDashboard from './pages/CoachDashboard'
 
 function ProtectedRoute({ children }) {
   const [status, setStatus] = useState('loading')
@@ -77,6 +78,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+        path="/coach"
+        element={
+        <ProtectedRoute>
+         <CoachDashboard />
+       </ProtectedRoute>
+        }
+         />
         <Route
            path="/profile"
             element={
