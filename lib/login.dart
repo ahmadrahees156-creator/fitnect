@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'otpscreen.dart';
-import 'signin_screen.dart'; 
+import 'signin_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -17,7 +17,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  String _selectedRole = 'athlete';
   bool _obscurePassword = true;
   bool _isLoading = false;
 
@@ -36,7 +35,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           'name': _nameController.text.trim(),
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
-          'role': _selectedRole,
+          'role': 'athlete', 
         }),
       );
 
@@ -124,13 +123,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 6),
                   const Text(
                     'Join FitNect and take your training journey to the next level.',
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: Colors.black54, fontSize: 13),
                   ),
                   const SizedBox(height: 28),
 
+                  
                   const Text('Full name', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 6),
                   TextFormField(
@@ -146,6 +143,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 18),
 
+                  
                   const Text('Email address', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 6),
                   TextFormField(
@@ -162,63 +160,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 18),
 
-                  const Text('I want to join as', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedRole = 'athlete'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: _selectedRole == 'athlete' ? const Color(0xFFEFE8F6) : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _selectedRole == 'athlete' ? const Color(0xFF8E24AA) : const Color(0xFFE0E0E0),
-                                width: _selectedRole == 'athlete' ? 1.5 : 1,
-                              ),
-                            ),
-                            child: Text(
-                              'Athlete',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _selectedRole == 'athlete' ? const Color(0xFF8E24AA) : Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedRole = 'coach'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: _selectedRole == 'coach' ? const Color(0xFFEFE8F6) : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _selectedRole == 'coach' ? const Color(0xFF8E24AA) : const Color(0xFFE0E0E0),
-                                width: _selectedRole == 'coach' ? 1.5 : 1,
-                              ),
-                            ),
-                            child: Text(
-                              'Coach',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: _selectedRole == 'coach' ? const Color(0xFF8E24AA) : Colors.black87,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-
+                  
                   const Text('Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 6),
                   TextFormField(
@@ -237,8 +179,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     validator: (value) => value == null || value.length < 8 ? 'Password must be at least 8 characters' : null,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
+                  
                   SizedBox(
                     width: double.infinity,
                     height: 50,
