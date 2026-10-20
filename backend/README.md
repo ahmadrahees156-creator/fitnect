@@ -17,7 +17,7 @@ FitNect is a fitness and wellness application designed to help individuals track
 
 ## 2. Base URL
 * **Deployed API:** `https://fitnect-api-1k4t.onrender.com`
-* **Local API:** `http://localhost:3000` *(confirm the port configured in your environment)*
+* **Local API:** `http://localhost:5000` 
 
 All endpoints below are relative to the selected base URL.
 
