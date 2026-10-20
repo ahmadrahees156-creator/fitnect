@@ -44,9 +44,15 @@ async function googleLogin(req, res, next) {
             });
         }
 
+        // Collect both client IDs your app uses
+        const allowedAudiences = [
+            process.env.GOOGLE_WEB_CLIENT_ID,
+            process.env.GOOGLE_ANDROID_CLIENT_ID
+        ].filter(Boolean); // Filters out any undefined values
+
         const ticket = await googleClient.verifyIdToken({
             idToken: googleToken,
-            audience: webClientId
+            audience: allowedAudiences // Passing an array allows tokens from web or mobile!
         });
 
         const payload = ticket.getPayload();
