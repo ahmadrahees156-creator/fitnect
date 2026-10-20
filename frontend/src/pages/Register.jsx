@@ -45,12 +45,13 @@ function Register() {
         ...form,
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
+        role: 'athlete',
       })
 
       navigate('/verify-email', {
         state: {
           email: form.email.trim().toLowerCase(),
-          role: form.role,
+          role: 'athlete',
         },
       })
     } catch (err) {
@@ -75,7 +76,7 @@ function Register() {
 
       const response = await api.post('/auth/google', {
         idToken: credentialResponse.credential,
-        role: form.role,
+        role: 'athlete',
       })
 
       const data = response.data
@@ -87,10 +88,7 @@ function Register() {
 
       localStorage.setItem('fitnect_token', token)
 
-      let user =
-        data.user ||
-        data.data?.user ||
-        null
+      let user = data.user || data.data?.user || null
 
       if (!user?.role) {
         const profileResponse = await getCurrentUser()
@@ -105,9 +103,16 @@ function Register() {
         throw new Error('Could not determine your account role.')
       }
 
+      if (user.role !== 'athlete') {
+        localStorage.removeItem('fitnect_token')
+        throw new Error(
+          'Only athlete accounts are supported. Please contact support if you need help with your account.'
+        )
+      }
+
       localStorage.setItem('fitnect_user', JSON.stringify(user))
 
-      navigate(user.role === 'coach' ? '/coach' : '/dashboard', {
+      navigate('/dashboard', {
         replace: true,
       })
     } catch (err) {
@@ -199,7 +204,10 @@ function Register() {
 
             <form onSubmit={handleSubmit} className="mt-5 space-y-3.5">
               <div>
-                <label htmlFor="name" className="mb-1.5 block text-sm font-semibold text-[#151517]">
+                <label
+                  htmlFor="name"
+                  className="mb-1.5 block text-sm font-semibold text-[#151517]"
+                >
                   Full name
                 </label>
                 <input
@@ -217,7 +225,10 @@ function Register() {
               </div>
 
               <div>
-                <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-[#151517]">
+                <label
+                  htmlFor="email"
+                  className="mb-1.5 block text-sm font-semibold text-[#151517]"
+                >
                   Email address
                 </label>
                 <input
@@ -235,42 +246,22 @@ function Register() {
 
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-[#151517]">
-                  I want to join as
+                  Account type
                 </label>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    aria-pressed={form.role === 'athlete'}
-                    onClick={() => setForm({ ...form, role: 'athlete' })}
-                    className={`rounded-xl border py-3.5 text-sm font-bold transition ${
-                      form.role === 'athlete'
-                        ? 'border-[#9A7BD0] bg-[#EDE5FA] text-[#8059B7] ring-2 ring-[#E4DBF4]'
-                        : 'border-[#E5DCEF] bg-white text-[#151517] hover:bg-[#FBF9FE]'
-                    }`}
-                  >
-                    Athlete
-                  </button>
-
-                  <button
-                    type="button"
-                    aria-pressed={form.role === 'coach'}
-                    onClick={() => setForm({ ...form, role: 'coach' })}
-                    className={`rounded-xl border py-3.5 text-sm font-bold transition ${
-                      form.role === 'coach'
-                        ? 'border-[#9A7BD0] bg-[#EDE5FA] text-[#8059B7] ring-2 ring-[#E4DBF4]'
-                        : 'border-[#E5DCEF] bg-white text-[#151517] hover:bg-[#FBF9FE]'
-                    }`}
-                  >
-                    Coach
-                  </button>
+                <div className="w-full rounded-xl border border-[#9A7BD0] bg-[#EDE5FA] py-3.5 text-center text-sm font-bold text-[#8059B7] ring-2 ring-[#E4DBF4]">
+                  Athlete
                 </div>
               </div>
 
               <div>
-                <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-[#151517]">
+                <label
+                  htmlFor="password"
+                  className="mb-1.5 block text-sm font-semibold text-[#151517]"
+                >
                   Password
                 </label>
+
                 <div className="flex overflow-hidden rounded-xl border border-[#E5DCEF] bg-[#FBF9FE] focus-within:border-[#A58AD2] focus-within:ring-2 focus-within:ring-[#E4DBF4]">
                   <input
                     id="password"
@@ -312,7 +303,9 @@ function Register() {
             <div className="flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google sign-in failed. Please try again.')}
+                onError={() =>
+                  setError('Google sign-in failed. Please try again.')
+                }
                 text="continue_with"
                 shape="rectangular"
                 theme="outline"
@@ -329,7 +322,10 @@ function Register() {
 
             <p className="mt-4 text-center text-sm text-gray-600">
               Already have an account?{' '}
-              <Link to="/login" className="font-bold text-[#8059B7] hover:underline">
+              <Link
+                to="/login"
+                className="font-bold text-[#8059B7] hover:underline"
+              >
                 Log in
               </Link>
             </p>

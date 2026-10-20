@@ -33,10 +33,7 @@ function VerifyEmail() {
       )
 
       const token = response.token || response.data?.token
-      const user =
-        response.user ||
-        response.data?.user ||
-        null
+      const user = response.user || response.data?.user || null
 
       if (!token) {
         setError(
@@ -52,14 +49,16 @@ function VerifyEmail() {
         return
       }
 
+      if (user.role !== 'athlete') {
+        setError('Only athlete accounts are supported.')
+        return
+      }
+
       localStorage.setItem('fitnect_token', token)
       localStorage.setItem('fitnect_user', JSON.stringify(user))
 
       setMessage('Email verified successfully.')
-
-      navigate(user.role === 'coach' ? '/coach' : '/dashboard', {
-        replace: true,
-      })
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(
         err.response?.data?.message ||

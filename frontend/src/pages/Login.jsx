@@ -23,18 +23,27 @@ function Login() {
 
     localStorage.setItem('fitnect_token', token)
 
-    const response = await getCurrentUser()
-    const user = response.user || response.data?.user || response.data || response
+    try {
+      const response = await getCurrentUser()
+      const user =
+        response.user || response.data?.user || response.data || response
 
-    if (!user?.role) {
-      throw new Error('Could not determine your account role.')
+      if (!user?.role) {
+        throw new Error('Could not determine your account role.')
+      }
+
+      if (user.role !== 'athlete') {
+        throw new Error('Only athlete accounts are supported.')
+      }
+
+      localStorage.setItem('fitnect_user', JSON.stringify(user))
+
+      navigate('/dashboard', { replace: true })
+    } catch (err) {
+      localStorage.removeItem('fitnect_token')
+      localStorage.removeItem('fitnect_user')
+      throw err
     }
-
-    localStorage.setItem('fitnect_user', JSON.stringify(user))
-
-    navigate(user.role === 'coach' ? '/coach' : '/dashboard', {
-      replace: true,
-    })
   }
 
   const handleChange = (e) => {
@@ -98,7 +107,10 @@ function Login() {
           <div className="absolute -left-12 top-36 h-48 w-48 rounded-full bg-[#FDC381]/60 blur-3xl" />
           <div className="absolute bottom-0 right-0 h-52 w-52 rounded-full bg-[#A9CDFA]/70 blur-3xl" />
 
-          <Link to="/" className="relative z-10 w-fit text-2xl font-extrabold tracking-tight text-[#151517]">
+          <Link
+            to="/"
+            className="relative z-10 w-fit text-2xl font-extrabold tracking-tight text-[#151517]"
+          >
             Fit<span className="text-[#8B73D9]">Nect</span>
           </Link>
 
@@ -127,8 +139,12 @@ function Login() {
             </div>
 
             <div className="mt-4 rounded-2xl bg-white/75 p-3.5">
-              <p className="text-sm font-bold text-[#151517]">Every day counts.</p>
-              <p className="mt-1 text-xs text-gray-600">Train smart. Recover well.</p>
+              <p className="text-sm font-bold text-[#151517]">
+                Every day counts.
+              </p>
+              <p className="mt-1 text-xs text-gray-600">
+                Train smart. Recover well.
+              </p>
             </div>
           </div>
 
@@ -152,16 +168,23 @@ function Login() {
             </p>
 
             {error && (
-              <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+              <div
+                role="alert"
+                className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+              >
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="mt-7 space-y-5">
               <div>
-                <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-[#151517]">
+                <label
+                  htmlFor="email"
+                  className="mb-1.5 block text-sm font-semibold text-[#151517]"
+                >
                   Email address
                 </label>
+
                 <input
                   id="email"
                   name="email"
@@ -176,7 +199,10 @@ function Login() {
               </div>
 
               <div>
-                <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-[#151517]">
+                <label
+                  htmlFor="password"
+                  className="mb-1.5 block text-sm font-semibold text-[#151517]"
+                >
                   Password
                 </label>
 
@@ -192,6 +218,7 @@ function Login() {
                     required
                     className="min-w-0 flex-1 bg-transparent px-3.5 py-3.5 text-sm outline-none"
                   />
+
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -220,7 +247,9 @@ function Login() {
             <div className="flex justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
-                onError={() => setError('Google login failed. Please try again.')}
+                onError={() =>
+                  setError('Google login failed. Please try again.')
+                }
                 text="continue_with"
                 shape="rectangular"
                 theme="outline"
@@ -237,7 +266,10 @@ function Login() {
 
             <p className="mt-7 text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <Link to="/register" className="font-bold text-[#8059B7] hover:underline">
+              <Link
+                to="/register"
+                className="font-bold text-[#8059B7] hover:underline"
+              >
                 Create account
               </Link>
             </p>
