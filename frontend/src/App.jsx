@@ -8,14 +8,12 @@ import Login from './pages/Login'
 import VerifyEmail from './pages/VerifyEmail'
 import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
-import CoachDashboard from './pages/CoachDashboard'
 import Profile from './pages/Profile'
 
 import { getCurrentUser } from './services/authService'
 
 function ProtectedRoute({ children, allowedRole }) {
   const [status, setStatus] = useState('loading')
-  const [user, setUser] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -37,9 +35,19 @@ function ProtectedRoute({ children, allowedRole }) {
           throw new Error('User role was not returned by the server.')
         }
 
+        if (currentUser.role !== 'athlete') {
+          localStorage.removeItem('fitnect_token')
+          localStorage.removeItem('fitnect_user')
+
+          if (active) setStatus('unauthorized')
+          return
+        }
+
         if (active) {
-          localStorage.setItem('fitnect_user', JSON.stringify(currentUser))
-          setUser(currentUser)
+          localStorage.setItem(
+            'fitnect_user',
+            JSON.stringify(currentUser)
+          )
           setStatus('authorized')
         }
       } catch {
@@ -69,13 +77,8 @@ function ProtectedRoute({ children, allowedRole }) {
     return <Navigate to="/login" replace />
   }
 
-  if (allowedRole && user?.role !== allowedRole) {
-    return (
-      <Navigate
-        to={user?.role === 'coach' ? '/coach' : '/dashboard'}
-        replace
-      />
-    )
+  if (allowedRole && allowedRole !== 'athlete') {
+    return <Navigate to="/dashboard" replace />
   }
 
   return children
@@ -99,18 +102,9 @@ function App() {
         />
 
         <Route
-          path="/coach"
-          element={
-            <ProtectedRoute allowedRole="coach">
-              <CoachDashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/profile"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRole="athlete">
               <Profile />
             </ProtectedRoute>
           }
@@ -119,6 +113,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+
+        <Route path="/coach" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
