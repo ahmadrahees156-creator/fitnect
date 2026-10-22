@@ -119,8 +119,61 @@ async function sendOTPEmail({ email, name, otp }) {
 }
 
 
+async function sendPasswordResetEmail(user, resetUrl) {
+    return sendEmail({
+        to: user.email,
+        subject: "Reset your FitNect password",
+        htmlContent: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
+                <h2>Password reset request</h2>
+                <p>Hello ${escapeHtml(user.name)},</p>
+                <p>We received a request to reset your FitNect password.</p>
+                <p>
+                    <a href="${escapeHtml(resetUrl)}"
+                       style="display:inline-block;padding:12px 20px;
+                       background:#2563eb;color:#fff;text-decoration:none;
+                       border-radius:6px">
+                        Reset password
+                    </a>
+                </p>
+                <p>This link expires in 15 minutes and can only be used once.</p>
+                <p>If you did not request this, you can ignore this email.</p>
+                <p>— Team FitNect</p>
+            </div>
+        `,
+        textContent:
+            `Hello ${user.name}, reset your FitNect password using this link: ` +
+            `${resetUrl}. The link expires in 15 minutes and can only be used once.`
+    });
+}
+
+async function sendPasswordChangedEmail(user) {
+    return sendEmail({
+        to: user.email,
+        subject: "Your FitNect password was changed",
+        htmlContent: `
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto">
+                <h2>Password changed</h2>
+                <p>Hello ${escapeHtml(user.name)},</p>
+                <p>Your FitNect password has been changed.</p>
+                <p>If you did not make this change, contact FitNect support
+                   and secure your account.</p>
+                <p>— Team FitNect</p>
+            </div>
+        `,
+        textContent:
+            `Hello ${user.name}, your FitNect password has been changed. ` +
+            `If you did not make this change, contact FitNect support.`
+    });
+}
+
+
+
 module.exports = {
     sendWelcomeEmail,
     sendLoginAlert,
-    sendOTPEmail
+    sendOTPEmail,
+    sendPasswordResetEmail,
+    sendPasswordChangedEmail
+    
 };
