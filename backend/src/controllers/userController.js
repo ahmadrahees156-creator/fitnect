@@ -34,39 +34,9 @@ async function getMyProfile(req, res, next) {
 async function updateMyProfile(req, res, next) {
     try {
         const { name, avatar } = req.body;
+        const updates = {};
 
-        // Only allow fields that belong in profile editing.
-        const allowedFields = ["name", "avatar"];
-        const suppliedFields = Object.keys(req.body || {});
-
-        const invalidFields = suppliedFields.filter(
-            field => !allowedFields.includes(field)
-        );
-
-        if (invalidFields.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: "These fields cannot be updated through this endpoint",
-                fields: invalidFields
-            });
-        }
-
-        if (suppliedFields.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Provide at least one field to update"
-            });
-        }
-
-        const user = await User.findById(req.user.id);
-
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User account not found"
-            });
-        }
-
+        // Only allow explicitly supported fields.
         if (name !== undefined) {
             if (typeof name !== "string") {
                 return res.status(400).json({
@@ -80,54 +50,42 @@ async function updateMyProfile(req, res, next) {
             if (cleanName.length < 2 || cleanName.length > 60) {
                 return res.status(400).json({
                     success: false,
-                    message: "Name must contain between 2 and 60 characters"
+                    message: "Name must be between 2 and 60 characters"
                 });
             }
 
-            user.name = cleanName;
+            updates.name = cleanName;
         }
 
         if (avatar !== undefined) {
-            if (typeof avatar !== "string") {
+            if (typeof avatar !== "string" || avatar.length > 2048) {
                 return res.status(400).json({
                     success: false,
-                    message: "Avatar must be a string"
+                    message: "Avatar must be a string of at most 2048 characters"
                 });
             }
 
-            const cleanAvatar = avatar.trim();
-
-            // Empty string removes the current avatar URL.
-            // This endpoint accepts a URL, not an uploaded image file.
-            if (cleanAvatar.length > 2048) {
-                return res.status(400).json({
-                    success: false,
-                    message: "Avatar value is too long"
-                });
-            }
-
-            if (cleanAvatar !== "") {
-                try {
-                    const avatarUrl = new URL(cleanAvatar);
-
-                    if (
-                        !["http:", "https:"].includes(avatarUrl.protocol) ||
-                        !avatarUrl.hostname
-                    ) {
-                        throw new Error("Invalid avatar URL");
-                    }
-                } catch {
-                    return res.status(400).json({
-                        success: false,
-                        message: "Avatar must be a valid HTTP or HTTPS URL"
-                    });
-                }
-            }
-
-            user.avatar = cleanAvatar;
+            updates.avatar = avatar.trim();
         }
 
-        // Save through the document so schema validation runs.
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Provide at least one supported field: name or avatar"
+            });
+        }
+
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User account not found"
+            });
+        }
+
+        // Assign only the validated fields.
+        Object.assign(user, updates);
         await user.save();
 
         return res.status(200).json({
