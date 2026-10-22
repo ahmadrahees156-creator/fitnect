@@ -40,7 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Back to Dashboard Button
+              
               OutlinedButton.icon(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.arrow_back, size: 16, color: Colors.black87),
@@ -69,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Profile Card Header Banner
+              
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -129,7 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Personal Information Section
+              
               const Text('Personal information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
               const Text('Your basic account details.', style: TextStyle(fontSize: 12, color: Colors.black54)),
               const SizedBox(height: 16),
@@ -145,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildTextField('Weight (kg)', _weightController, true, hint: 'e.g. 70'),
               const SizedBox(height: 14),
 
-              // Fitness Level Dropdown
+              
               const Text('Fitness level', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
               const SizedBox(height: 6),
               Container(
@@ -168,7 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Fitness Preferences Section
+              
               const Text('Fitness preferences', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
               const Text('Choose the goal you want to focus on.', style: TextStyle(fontSize: 12, color: Colors.black54)),
               const SizedBox(height: 16),
