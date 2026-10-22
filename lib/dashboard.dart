@@ -8,7 +8,7 @@ class DashboardScreen extends StatelessWidget {
 
   const DashboardScreen({
     super.key,
-    this.userName = 'Athlete', // Fallback default
+    this.userName = 'Athlete', 
     this.userEmail = '',
   });
 
