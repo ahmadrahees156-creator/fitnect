@@ -3,18 +3,25 @@ import 'sidebar.dart';
 import 'profile.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final String userName;
+  final String userEmail;
+
+  const DashboardScreen({
+    super.key,
+    this.userName = 'Athlete', // Fallback default
+    this.userEmail = '',
+  });
 
   @override
   Widget build(BuildContext context) {
     const backgroundColor = Color(0xFFF7F5FA);
+    final String initialLetter = userName.isNotEmpty ? userName[0].toUpperCase() : 'A';
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.black87),
@@ -29,14 +36,18 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => ProfileScreen(
+                      userName: userName,
+                      userEmail: userEmail,
+                    ),
+                  ),
                 );
               },
               child: Container(
@@ -47,18 +58,17 @@ class DashboardScreen extends StatelessWidget {
                   color: Color(0xFFFFCC80),
                 ),
                 alignment: Alignment.center,
-                child: const Text('A', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 14)),
+                child: Text(initialLetter, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87, fontSize: 14)),
               ),
             ),
           ),
         ],
       ),
-      drawer: const SidebarDrawer(),
+      drawer: SidebarDrawer(userName: userName, userEmail: userEmail),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -74,9 +84,9 @@ class DashboardScreen extends StatelessWidget {
                     style: TextStyle(color: Color(0xFF49454F), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Welcome back, amy.\nLet\'s check in with your body.',
-                    style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.w900, height: 1.2),
+                  Text(
+                    'Welcome back, ${userName.toLowerCase()}.\nLet\'s check in with your body.',
+                    style: const TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.w900, height: 1.2),
                   ),
                   const SizedBox(height: 12),
                   const Text(
@@ -98,7 +108,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   Center(
                     child: Image.asset(
-                      'assets/logo.png', 
+                      'assets/logo.png',
                       height: 180,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => const Icon(Icons.directions_run, size: 100, color: Color(0xFF8E24AA)),
