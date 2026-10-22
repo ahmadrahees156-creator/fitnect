@@ -55,6 +55,12 @@ Content-Type: application/json
 | GET | `/api/users/me` | Retrieve the authenticated user's profile |
 | PATCH | `/api/users/me` | Updates the authenticated user's editable profile fields |
 
+| PATCH | `/api/users/me` | Update the authenticated user's name and avatar |
+
+**Profile updates:** The endpoint accepts `name` and `avatar` as optional fields. At least one must be supplied. Name must contain 2–60 characters after trimming. Avatar must be a string of at most 2048 characters. Email, role, password, and email-verification status cannot be changed through this endpoint. The authenticated user's identity is obtained from the JWT.
+
+
+
 ### C. Workout Tracking
 
 | Method | Endpoint | Purpose |
