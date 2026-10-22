@@ -1,21 +1,36 @@
 import 'package:flutter/material.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final String userName;
+  final String userEmail;
+
+  const ProfileScreen({
+    super.key,
+    required this.userName,
+    required this.userEmail,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final TextEditingController _nameController = TextEditingController(text: 'amy');
-  final TextEditingController _emailController = TextEditingController(text: 'arushisinghal1706@gmail.com');
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
   
   String _selectedFitnessLevel = 'Beginner';
   String _selectedGoal = 'Build strength';
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with the actual logged-in user details
+    _nameController = TextEditingController(text: widget.userName);
+    _emailController = TextEditingController(text: widget.userEmail);
+  }
 
   @override
   void dispose() {
@@ -32,6 +47,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     const backgroundColor = Color(0xFFF7F5FA);
     const primaryPurple = Color(0xFF8E24AA);
 
+    // Get initial letter for avatar dynamically
+    final String initialLetter = widget.userName.isNotEmpty 
+        ? widget.userName[0].toUpperCase() 
+        : 'U';
+
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -40,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
+              // Back to Dashboard Button
               OutlinedButton.icon(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.arrow_back, size: 16, color: Colors.black87),
@@ -69,7 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 20),
 
-              
+              // Profile Card Header Banner
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -94,17 +114,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: const Color(0xFFFFCC80),
                           ),
                           alignment: Alignment.center,
-                          child: const Text('A', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          child: Text(initialLetter, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87)),
                         ),
                         const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('FITNESS MEMBER', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
-                            const SizedBox(height: 2),
-                            Text(_nameController.text, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                            Text(_emailController.text, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('FITNESS MEMBER', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                              const SizedBox(height: 2),
+                              Text(_nameController.text, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                              Text(_emailController.text, style: const TextStyle(color: Colors.white70, fontSize: 12), overflow: TextOverflow.ellipsis),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -129,7 +151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 24),
 
-              
+              // Personal Information Section
               const Text('Personal information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
               const Text('Your basic account details.', style: TextStyle(fontSize: 12, color: Colors.black54)),
               const SizedBox(height: 16),
@@ -145,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildTextField('Weight (kg)', _weightController, true, hint: 'e.g. 70'),
               const SizedBox(height: 14),
 
-              
+              // Fitness Level Dropdown
               const Text('Fitness level', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
               const SizedBox(height: 6),
               Container(
@@ -168,7 +190,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 28),
 
-              
+              // Fitness Preferences Section
               const Text('Fitness preferences', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
               const Text('Choose the goal you want to focus on.', style: TextStyle(fontSize: 12, color: Colors.black54)),
               const SizedBox(height: 16),
@@ -235,18 +257,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             if (isSelected)
-              const ContainerIcon(child: Icon(Icons.check_circle, color: Color(0xFF8E24AA)))
+              const Icon(Icons.check_circle, color: Color(0xFF8E24AA)),
           ],
         ),
       ),
     );
   }
-}
-
-class ContainerIcon extends StatelessWidget {
-  final Widget child;
-  const ContainerIcon({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) => child;
 }
