@@ -3,7 +3,14 @@ import 'profile.dart';
 import 'signin_screen.dart';
 
 class SidebarDrawer extends StatelessWidget {
-  const SidebarDrawer({super.key});
+  final String userName;
+  final String userEmail;
+
+  const SidebarDrawer({
+    super.key,
+    required this.userName,
+    required this.userEmail,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +22,6 @@ class SidebarDrawer extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: Row(
@@ -52,8 +58,16 @@ class SidebarDrawer extends StatelessWidget {
                   _buildDrawerItem(context, 'Recovery', false, () => Navigator.pop(context)),
                   _buildDrawerItem(context, 'Nutrition', false, () => Navigator.pop(context)),
                   _buildDrawerItem(context, 'Profile', false, () {
-                    Navigator.pop(context); 
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfileScreen(
+                          userName: userName,
+                          userEmail: userEmail,
+                        ),
+                      ),
+                    );
                   }),
                   _buildDrawerItem(context, 'Settings', false, () => Navigator.pop(context)),
                 ],
