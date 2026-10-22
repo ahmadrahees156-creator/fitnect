@@ -1,7 +1,9 @@
+import 'package:fitnect/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_sign_in/google_sign_in.dart';
+
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -45,7 +47,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
           );
         }
       } else {
@@ -64,9 +66,9 @@ class _SignInScreenState extends State<SignInScreen> {
    try {
     final GoogleSignIn googleSignIn = GoogleSignIn();
     
-    // Pops up the native Google account chooser
+    
     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-    if (googleUser == null) return; // User cancelled
+    if (googleUser == null) return; 
 
     final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
     final String? idToken = googleAuth.idToken;
