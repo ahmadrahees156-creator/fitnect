@@ -14,7 +14,7 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        // Three lines drawer trigger on the top-left
+        
         leading: Builder(
           builder: (context) => IconButton(
             icon: const Icon(Icons.menu, color: Colors.black87),
@@ -29,7 +29,7 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
         actions: [
-          // Profile Avatar Icon on the top-right
+          
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
@@ -58,7 +58,7 @@ class DashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Wellness Check-in Welcome Card
+            
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -98,7 +98,7 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   Center(
                     child: Image.asset(
-                      'assets/logo.png', // Or your runner illustration asset
+                      'assets/logo.png', 
                       height: 180,
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) => const Icon(Icons.directions_run, size: 100, color: Color(0xFF8E24AA)),
