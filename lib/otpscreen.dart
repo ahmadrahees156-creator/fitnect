@@ -1,3 +1,4 @@
+import 'package:fitnect/dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -89,7 +90,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
           );
         }
       } else {
