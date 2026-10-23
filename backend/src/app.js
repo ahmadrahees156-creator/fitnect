@@ -18,6 +18,7 @@ const activityHistoryRoutes = require("./routes/activityHistoryRoutes");
 const workoutLibraryRoutes = require("./routes/workoutLibraryRoutes");
 const coachAthleteRoutes = require("./routes/coachAthleteRoutes");
 const injuryRiskRoutes = require("./routes/injuryRiskRoutes");
+const fitnessProfileRoutes = require("./routes/fitnessProfileRoutes");
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/api/activity-history", activityHistoryRoutes);
 app.use("/api/workout-library", workoutLibraryRoutes);
 app.use("/api/coach-athletes", coachAthleteRoutes);
 app.use("/api/injury-risk", injuryRiskRoutes);
+app.use("/api/fitness-profile", fitnessProfileRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

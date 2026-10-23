@@ -43,12 +43,23 @@ Content-Type: application/json
 | POST | `/api/auth/resend-otp` | Request another verification OTP |
 | POST | `/api/auth/login` | Log in using credentials |
 | POST | `/api/auth/google` | Sign in using Google authentication |
+| PATCH | `/api/auth/change-password` | Change password while logged in |
+| POST | `/api/auth/forgot-password` | Request a password-reset email |
+| POST | `/api/auth/reset-password` | Set a new password |
+
 
 ### B. User Profile
 
 | Method | Endpoint | Purpose |
 | :--- | :--- | :--- |
 | GET | `/api/users/me` | Retrieve the authenticated user's profile |
+| PATCH | `/api/users/me` | Updates the authenticated user's editable profile fields |
+
+| PATCH | `/api/users/me` | Update the authenticated user's name and avatar |
+
+**Profile updates:** The endpoint accepts `name` and `avatar` as optional fields. At least one must be supplied. Name must contain 2–60 characters after trimming. Avatar must be a string of at most 2048 characters. Email, role, password, and email-verification status cannot be changed through this endpoint. The authenticated user's identity is obtained from the JWT.
+
+
 
 ### C. Workout Tracking
 
@@ -149,6 +160,15 @@ Content-Type: application/json
 | GET | `/api/coach-athletes/coaches` | Athlete lists active coaches |
 
 *Only active coach–athlete relationships should grant access to an athlete's private data. A coach role by itself must not grant access to every athlete.*
+
+### L. Fitness Profile & Onboarding
+
+| Method | Endpoint | Purpose |
+| :--- | :--- | :--- |
+| GET | `/api/fitness-profile/me` | Retrieve the logged-in user's fitness profile and onboarding status |
+| PUT | `/api/fitness-profile/me` | Create or update the authenticated user's fitness profile |
+
+*Stores the authenticated user's fitness information and calculates BMI to support future personalized workout and nutrition recommendations.*
 
 ## 4. Common HTTP Status Codes
 
