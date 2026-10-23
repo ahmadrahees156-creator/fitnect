@@ -161,6 +161,15 @@ Content-Type: application/json
 
 *Only active coach–athlete relationships should grant access to an athlete's private data. A coach role by itself must not grant access to every athlete.*
 
+### L. Fitness Profile & Onboarding
+
+| Method | Endpoint | Purpose |
+| :--- | :--- | :--- |
+| GET | `/api/fitness-profile/me` | Retrieve the logged-in user's fitness profile and onboarding status |
+| PUT | `/api/fitness-profile/me` | Create or update the authenticated user's fitness profile |
+
+*Stores the authenticated user's fitness information and calculates BMI to support future personalized workout and nutrition recommendations.*
+
 ## 4. Common HTTP Status Codes
 
 | Status | Meaning |
