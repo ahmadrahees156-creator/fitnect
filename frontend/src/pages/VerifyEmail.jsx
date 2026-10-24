@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { resendOtp, verifyEmail } from '../services/authService'
+import { getMyFitnessProfile } from '../services/fitnessProfileService'
 
 function VerifyEmail() {
   const location = useLocation()
@@ -57,8 +58,10 @@ function VerifyEmail() {
       localStorage.setItem('fitnect_token', token)
       localStorage.setItem('fitnect_user', JSON.stringify(user))
 
+      // Email verification completes a new registration; require onboarding next.
+      localStorage.setItem('fitnect_user', JSON.stringify({ ...user, onboardingCompleted: false }))
       setMessage('Email verified successfully.')
-      navigate('/dashboard', { replace: true })
+      navigate('/onboarding', { replace: true })
     } catch (err) {
       setError(
         err.response?.data?.message ||

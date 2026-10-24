@@ -9,10 +9,12 @@ import VerifyEmail from './pages/VerifyEmail'
 import MainLayout from './layouts/MainLayout'
 import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
+import Onboarding from './pages/Onboarding'
+import { getMyFitnessProfile } from './services/fitnessProfileService'
 
 import { getCurrentUser } from './services/authService'
 
-function ProtectedRoute({ children, allowedRole }) {
+function ProtectedRoute({ children, allowedRole, requireOnboarding = false }) {
   const [status, setStatus] = useState('loading')
 
   useEffect(() => {
@@ -43,12 +45,22 @@ function ProtectedRoute({ children, allowedRole }) {
           return
         }
 
+        let onboardingCompleted = currentUser.onboardingCompleted === true
+        if (requireOnboarding) {
+          try {
+            const fitnessData = await getMyFitnessProfile()
+            onboardingCompleted = fitnessData.onboardingCompleted === true
+          } catch {
+            onboardingCompleted = false
+          }
+        }
+
         if (active) {
           localStorage.setItem(
             'fitnect_user',
-            JSON.stringify(currentUser)
+            JSON.stringify({ ...currentUser, onboardingCompleted })
           )
-          setStatus('authorized')
+          setStatus(requireOnboarding && !onboardingCompleted ? 'onboarding' : 'authorized')
         }
       } catch {
         localStorage.removeItem('fitnect_token')
@@ -77,6 +89,10 @@ function ProtectedRoute({ children, allowedRole }) {
     return <Navigate to="/login" replace />
   }
 
+  if (status === 'onboarding') {
+    return <Navigate to="/onboarding" replace />
+  }
+
   if (allowedRole && allowedRole !== 'athlete') {
     return <Navigate to="/dashboard" replace />
   }
@@ -93,9 +109,18 @@ function App() {
         </Route>
 
         <Route
-          path="/dashboard"
+          path="/onboarding"
           element={
             <ProtectedRoute allowedRole="athlete">
+              <Onboarding />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute allowedRole="athlete" requireOnboarding>
               <Dashboard />
             </ProtectedRoute>
           }
@@ -104,7 +129,7 @@ function App() {
         <Route
           path="/profile"
           element={
-            <ProtectedRoute allowedRole="athlete">
+            <ProtectedRoute allowedRole="athlete" requireOnboarding>
               <Profile />
             </ProtectedRoute>
           }

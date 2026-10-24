@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import api from '../services/api'
 import { registerUser, getCurrentUser } from '../services/authService'
+import { getMyFitnessProfile } from '../services/fitnessProfileService'
 
 function Register() {
   const navigate = useNavigate()
@@ -112,9 +113,13 @@ function Register() {
 
       localStorage.setItem('fitnect_user', JSON.stringify(user))
 
-      navigate('/dashboard', {
-        replace: true,
-      })
+      // Google OAuth from the registration page is a signup flow.
+      // Always collect the fitness profile before showing the dashboard.
+      localStorage.setItem(
+        'fitnect_user',
+        JSON.stringify({ ...user, onboardingCompleted: false })
+      )
+      navigate('/onboarding', { replace: true })
     } catch (err) {
       setError(
         err.response?.data?.message ||

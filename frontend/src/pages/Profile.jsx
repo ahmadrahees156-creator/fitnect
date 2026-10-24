@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '../services/authService'
+import { getMyFitnessProfile, saveMyFitnessProfile } from '../services/fitnessProfileService'
 
 const initialProfile = {
   name: '',
@@ -12,6 +13,12 @@ const initialProfile = {
   age: '',
   height: '',
   weight: '',
+  heightCm: '',
+  weightKg: '',
+  activityLevel: 'moderate',
+  experienceLevel: 'beginner',
+  workoutLocation: 'gym',
+  dietaryPreference: 'vegetarian',
 }
 
 function Profile() {
@@ -38,6 +45,14 @@ function Profile() {
           }
         })()
 
+        let fitness = {}
+        try {
+          const fitnessResponse = await getMyFitnessProfile()
+          fitness = fitnessResponse.profile || {}
+        } catch {
+          fitness = {}
+        }
+
         if (active) {
           setProfile({
             ...initialProfile,
@@ -47,9 +62,15 @@ function Profile() {
             role: user.role || savedUser.role || 'athlete',
             fitnessLevel: savedUser.fitnessLevel || 'Beginner',
             goal: savedUser.goal || 'Build strength',
-            age: savedUser.age || '',
-            height: savedUser.height || '',
-            weight: savedUser.weight || '',
+            age: fitness.age ?? savedUser.age ?? '',
+            height: fitness.heightCm ?? savedUser.height ?? '',
+            weight: fitness.weightKg ?? savedUser.weight ?? '',
+            heightCm: fitness.heightCm ?? '',
+            weightKg: fitness.weightKg ?? '',
+            activityLevel: fitness.activityLevel || 'moderate',
+            experienceLevel: fitness.experienceLevel || 'beginner',
+            workoutLocation: fitness.workoutLocation || 'gym',
+            dietaryPreference: fitness.dietaryPreference || 'vegetarian',
           })
 
           localStorage.setItem(
@@ -96,10 +117,20 @@ function Profile() {
     setProfile((previous) => ({ ...previous, [name]: value }))
   }
 
-  const handleSave = (event) => {
+  const handleSave = async (event) => {
     event.preventDefault()
 
     try {
+      await saveMyFitnessProfile({
+        age: Number(profile.age),
+        heightCm: Number(profile.heightCm || profile.height),
+        weightKg: Number(profile.weightKg || profile.weight),
+        goal: profile.goal || 'general_fitness',
+        activityLevel: profile.activityLevel || 'moderate',
+        experienceLevel: profile.experienceLevel || 'beginner',
+        workoutLocation: profile.workoutLocation || 'gym',
+        dietaryPreference: profile.dietaryPreference || 'vegetarian',
+      })
       const savedUser = JSON.parse(
         localStorage.getItem('fitnect_user') || '{}',
       )
@@ -119,9 +150,9 @@ function Profile() {
       )
 
       setEditMode(false)
-      setMessage('Profile preview saved on this device.')
-    } catch {
-      setMessage('Could not save your profile on this device.')
+      setMessage('Profile saved successfully.')
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Could not save your profile. Complete your fitness onboarding first if this is a new account.')
     }
   }
 
