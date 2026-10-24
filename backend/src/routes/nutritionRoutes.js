@@ -6,6 +6,7 @@ const { protect } = require("../middleware/authMiddleware");
 
 const {
   addNutrition,
+  addFoodFromCatalogue,
   getTodayNutrition,
   getNutritionHistory,
 } = require("../controllers/nutritionController");
@@ -13,6 +14,7 @@ const {
 router.use(protect);
 
 router.post("/", addNutrition);
+router.post("/from-catalogue", addFoodFromCatalogue);
 router.get("/today", getTodayNutrition);
 router.get("/history", getNutritionHistory);
 
