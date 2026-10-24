@@ -19,6 +19,7 @@ const workoutLibraryRoutes = require("./routes/workoutLibraryRoutes");
 const coachAthleteRoutes = require("./routes/coachAthleteRoutes");
 const injuryRiskRoutes = require("./routes/injuryRiskRoutes");
 const fitnessProfileRoutes = require("./routes/fitnessProfileRoutes");
+const foodRoutes = require("./routes/foodRoutes");
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use("/api/recovery", recoveryRoutes);
 app.use("/api/hydration", hydrationRoutes);
 app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/nutrition-goals", nutritionGoalRoutes);
+app.use("/api/foods", foodRoutes);
 app.use("/api/activity-history", activityHistoryRoutes);
 app.use("/api/workout-library", workoutLibraryRoutes);
 app.use("/api/coach-athletes", coachAthleteRoutes);
