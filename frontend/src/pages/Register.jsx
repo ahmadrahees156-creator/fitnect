@@ -113,15 +113,13 @@ function Register() {
 
       localStorage.setItem('fitnect_user', JSON.stringify(user))
 
-      let completed = user.onboardingCompleted === true
-      try {
-        const fitnessProfile = await getMyFitnessProfile()
-        completed = fitnessProfile.onboardingCompleted === true
-      } catch {
-        completed = false
-      }
-      localStorage.setItem('fitnect_user', JSON.stringify({ ...user, onboardingCompleted: completed }))
-      navigate(completed ? '/dashboard' : '/onboarding', { replace: true })
+      // Google OAuth from the registration page is a signup flow.
+      // Always collect the fitness profile before showing the dashboard.
+      localStorage.setItem(
+        'fitnect_user',
+        JSON.stringify({ ...user, onboardingCompleted: false })
+      )
+      navigate('/onboarding', { replace: true })
     } catch (err) {
       setError(
         err.response?.data?.message ||
