@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
-import { getWorkouts } from '../services/workoutService'
+import { createWorkout, getWorkouts } from '../services/workoutService'
 
 const categoryOptions = [
   { label: 'All categories', value: 'All' },
@@ -32,6 +32,18 @@ function TrainingActivity() {
   const [workouts, setWorkouts] = useState([])
   const [category, setCategory] = useState('All')
   const [selectedId, setSelectedId] = useState(null)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [newWorkout, setNewWorkout] = useState({
+    title: '',
+    category: 'strength',
+    date: new Date().toISOString().slice(0, 10),
+    durationMinutes: '',
+    notes: '',
+    exercises: [{ name: '', sets: '', reps: '', weightKg: '' }],
+  })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -69,7 +81,7 @@ function TrainingActivity() {
     return () => {
       active = false
     }
-  }, [category])
+  }, [category, refreshKey])
 
   const filteredWorkouts = useMemo(() => {
     if (category === 'All') return workouts
@@ -92,6 +104,77 @@ function TrainingActivity() {
   const exerciseList = Array.isArray(selectedWorkout?.exercises)
     ? selectedWorkout.exercises
     : []
+
+  function updateWorkoutField(field, value) {
+    setNewWorkout((current) => ({ ...current, [field]: value }))
+  }
+
+  function updateExercise(index, field, value) {
+    setNewWorkout((current) => ({
+      ...current,
+      exercises: current.exercises.map((exercise, exerciseIndex) =>
+        exerciseIndex === index ? { ...exercise, [field]: value } : exercise
+      ),
+    }))
+  }
+
+  function resetWorkoutForm() {
+    setNewWorkout({
+      title: '',
+      category: 'strength',
+      date: new Date().toISOString().slice(0, 10),
+      durationMinutes: '',
+      notes: '',
+      exercises: [{ name: '', sets: '', reps: '', weightKg: '' }],
+    })
+    setFormError('')
+  }
+
+  async function handleCreateWorkout(event) {
+    event.preventDefault()
+    setFormError('')
+
+    const exercises = newWorkout.exercises
+      .filter((exercise) => exercise.name.trim())
+      .map((exercise) => ({
+        name: exercise.name.trim(),
+        ...(exercise.sets !== '' ? { sets: Number(exercise.sets) } : {}),
+        ...(exercise.reps !== '' ? { reps: Number(exercise.reps) } : {}),
+        ...(exercise.weightKg !== '' ? { weightKg: Number(exercise.weightKg) } : {}),
+      }))
+
+    if (!newWorkout.title.trim() || !newWorkout.durationMinutes) {
+      setFormError('Please enter a workout title and duration.')
+      return
+    }
+
+    if (exercises.length === 0) {
+      setFormError('Add at least one exercise with a name.')
+      return
+    }
+
+    setSaving(true)
+    try {
+      await createWorkout({
+        title: newWorkout.title.trim(),
+        category: newWorkout.category,
+        date: newWorkout.date || undefined,
+        durationMinutes: Number(newWorkout.durationMinutes),
+        notes: newWorkout.notes.trim(),
+        exercises,
+      })
+      setShowAddForm(false)
+      resetWorkoutForm()
+      setCategory('All')
+      setRefreshKey((key) => key + 1)
+    } catch (err) {
+      setFormError(
+        err.response?.data?.message || 'Could not save this workout. Please try again.'
+      )
+    } finally {
+      setSaving(false)
+    }
+  }
 
   function formatExercise(exercise) {
     const details = []
@@ -160,7 +243,7 @@ function TrainingActivity() {
           </p>
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-3">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <select
             aria-label="Filter by category"
             value={category}
@@ -176,6 +259,16 @@ function TrainingActivity() {
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => {
+              resetWorkoutForm()
+              setShowAddForm(true)
+            }}
+            className="rounded-xl bg-[#332743] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#4A365D]"
+          >
+            + Add Workout
+          </button>
         </div>
 
         {loading && (
@@ -279,6 +372,173 @@ function TrainingActivity() {
           </div>
         )}
       </section>
+
+      {showAddForm && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-[#21172D]/45 p-0 backdrop-blur-sm sm:items-center sm:p-5"
+          onClick={(event) => {
+            if (event.target === event.currentTarget && !saving) setShowAddForm(false)
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-workout-title"
+            className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[26px] bg-[#FCFAFE] p-5 shadow-2xl sm:rounded-[26px] sm:p-7"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">Training library</p>
+                <h2 id="add-workout-title" className="mt-2 text-2xl font-bold text-[#302442]">Add a workout</h2>
+                <p className="mt-1 text-sm text-[#92879F]">Save a session to your FitNect account.</p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close add workout"
+                disabled={saving}
+                onClick={() => setShowAddForm(false)}
+                className="rounded-xl border border-[#E8DDF0] bg-white px-3 py-2 text-[#735A86] hover:bg-[#F3EDF9] disabled:opacity-50"
+              >✕</button>
+            </div>
+
+            <form onSubmit={handleCreateWorkout} className="mt-6 space-y-5">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="space-y-1.5 text-sm font-semibold text-[#5D496F]">
+                  Workout title *
+                  <input
+                    required
+                    value={newWorkout.title}
+                    onChange={(event) => updateWorkoutField('title', event.target.value)}
+                    placeholder="e.g. Upper body day"
+                    className={`${selectClass} w-full`}
+                  />
+                </label>
+                <label className="space-y-1.5 text-sm font-semibold text-[#5D496F]">
+                  Category *
+                  <select
+                    value={newWorkout.category}
+                    onChange={(event) => updateWorkoutField('category', event.target.value)}
+                    className={`${selectClass} w-full`}
+                  >
+                    {categoryOptions.filter((option) => option.value !== 'All').map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="space-y-1.5 text-sm font-semibold text-[#5D496F]">
+                  Duration (minutes) *
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    value={newWorkout.durationMinutes}
+                    onChange={(event) => updateWorkoutField('durationMinutes', event.target.value)}
+                    placeholder="45"
+                    className={`${selectClass} w-full`}
+                  />
+                </label>
+                <label className="space-y-1.5 text-sm font-semibold text-[#5D496F]">
+                  Date
+                  <input
+                    type="date"
+                    value={newWorkout.date}
+                    onChange={(event) => updateWorkoutField('date', event.target.value)}
+                    className={`${selectClass} w-full`}
+                  />
+                </label>
+              </div>
+
+              <div>
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-bold text-[#493456]">Exercises *</h3>
+                  <button
+                    type="button"
+                    onClick={() => setNewWorkout((current) => ({
+                      ...current,
+                      exercises: [...current.exercises, { name: '', sets: '', reps: '', weightKg: '' }],
+                    }))}
+                    className="rounded-lg border border-[#E8DDF0] bg-white px-3 py-2 text-xs font-bold text-[#735A86] hover:bg-[#F3EDF9]"
+                  >+ Add exercise</button>
+                </div>
+                <div className="space-y-3">
+                  {newWorkout.exercises.map((exercise, index) => (
+                    <div key={index} className="rounded-2xl border border-[#ECE6F2] bg-white p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#806991]">Exercise {index + 1}</span>
+                        {newWorkout.exercises.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setNewWorkout((current) => ({
+                              ...current,
+                              exercises: current.exercises.filter((_, exerciseIndex) => exerciseIndex !== index),
+                            }))}
+                            className="text-xs font-semibold text-[#9B4545]"
+                          >Remove</button>
+                        )}
+                      </div>
+                      <input
+                        aria-label={`Exercise ${index + 1} name`}
+                        value={exercise.name}
+                        onChange={(event) => updateExercise(index, 'name', event.target.value)}
+                        placeholder="Exercise name (e.g. Squats)"
+                        className={`${selectClass} w-full`}
+                      />
+                      <div className="mt-3 grid grid-cols-3 gap-2">
+                        {[
+                          { field: 'sets', label: 'Sets', placeholder: '3' },
+                          { field: 'reps', label: 'Reps', placeholder: '12' },
+                          { field: 'weightKg', label: 'Weight (kg)', placeholder: '20' },
+                        ].map((item) => (
+                          <label key={item.field} className="space-y-1 text-xs font-semibold text-[#8D7C9C]">
+                            {item.label}
+                            <input
+                              type="number"
+                              min="0"
+                              value={exercise[item.field]}
+                              onChange={(event) => updateExercise(index, item.field, event.target.value)}
+                              placeholder={item.placeholder}
+                              className={`${selectClass} w-full min-w-0 px-2`}
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <label className="block space-y-1.5 text-sm font-semibold text-[#5D496F]">
+                Notes (optional)
+                <textarea
+                  rows="3"
+                  value={newWorkout.notes}
+                  onChange={(event) => updateWorkoutField('notes', event.target.value)}
+                  placeholder="How did the session feel?"
+                  className={`${selectClass} w-full resize-y`}
+                />
+              </label>
+
+              {formError && (
+                <p role="alert" className="rounded-xl border border-[#F0C9C9] bg-[#FFF7F7] px-4 py-3 text-sm text-[#9B4545]">{formError}</p>
+              )}
+
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => setShowAddForm(false)}
+                  className="rounded-xl border border-[#E8DDF0] bg-white px-5 py-3 text-sm font-bold text-[#735A86] hover:bg-[#F3EDF9] disabled:opacity-50"
+                >Cancel</button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-xl bg-[#332743] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#4A365D] disabled:cursor-not-allowed disabled:opacity-60"
+                >{saving ? 'Saving workout...' : 'Save workout'}</button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
 
       {selectedWorkout && (
         <div
