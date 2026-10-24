@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import api from '../services/api'
 import { loginUser, getCurrentUser } from '../services/authService'
+import { getMyFitnessProfile } from '../services/fitnessProfileService'
 
 function Login() {
   const navigate = useNavigate()
@@ -38,7 +39,15 @@ function Login() {
 
       localStorage.setItem('fitnect_user', JSON.stringify(user))
 
-      navigate('/dashboard', { replace: true })
+      let completed = user.onboardingCompleted === true
+      try {
+        const fitnessProfile = await getMyFitnessProfile()
+        completed = fitnessProfile.onboardingCompleted === true
+      } catch {
+        completed = false
+      }
+      localStorage.setItem('fitnect_user', JSON.stringify({ ...user, onboardingCompleted: completed }))
+      navigate(completed ? '/dashboard' : '/onboarding', { replace: true })
     } catch (err) {
       localStorage.removeItem('fitnect_token')
       localStorage.removeItem('fitnect_user')
