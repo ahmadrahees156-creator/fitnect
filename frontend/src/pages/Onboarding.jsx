@@ -4,6 +4,7 @@ import { getMyFitnessProfile, saveMyFitnessProfile } from '../services/fitnessPr
 
 const initialForm = {
   age: '',
+  gender: 'prefer_not_to_say',
   heightCm: '',
   weightKg: '',
   goal: 'general_fitness',
@@ -96,7 +97,12 @@ function Onboarding() {
         {error && <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         {loading ? <p className="py-12 text-center text-sm text-gray-500">Loading your details...</p> : (
           <form onSubmit={handleSubmit} className="mt-7 space-y-7">
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="block text-sm font-semibold">Gender
+                <select className={inputClass + ' mt-2'} name="gender" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} required>
+                  <option value="female">Female</option><option value="male">Male</option><option value="non_binary">Non-binary</option><option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+              </label>
               {fields.map((field) => (
                 <label key={field.name} className="block text-sm font-semibold">
                   {field.label}
