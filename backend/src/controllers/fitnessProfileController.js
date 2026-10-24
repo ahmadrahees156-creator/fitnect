@@ -32,6 +32,7 @@ exports.getMyFitnessProfile = async (req, res, next) => {
       onboardingCompleted: profile.onboardingCompleted,
       profile: {
         age: profile.age,
+        gender: profile.gender || "prefer_not_to_say",
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         bmi: profile.bmi,
@@ -54,6 +55,7 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
   try {
     const {
       age,
+      gender,
       heightCm,
       weightKg,
       goal,
@@ -168,6 +170,7 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
       onboardingCompleted: profile.onboardingCompleted,
       profile: {
         age: profile.age,
+        gender: profile.gender || "prefer_not_to_say",
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         bmi: profile.bmi,
