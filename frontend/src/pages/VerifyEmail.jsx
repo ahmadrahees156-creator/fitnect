@@ -58,16 +58,10 @@ function VerifyEmail() {
       localStorage.setItem('fitnect_token', token)
       localStorage.setItem('fitnect_user', JSON.stringify(user))
 
-      let completed = user.onboardingCompleted === true
-      try {
-        const fitnessProfile = await getMyFitnessProfile()
-        completed = fitnessProfile.onboardingCompleted === true
-      } catch {
-        completed = false
-      }
-      localStorage.setItem('fitnect_user', JSON.stringify({ ...user, onboardingCompleted: completed }))
+      // Email verification completes a new registration; require onboarding next.
+      localStorage.setItem('fitnect_user', JSON.stringify({ ...user, onboardingCompleted: false }))
       setMessage('Email verified successfully.')
-      navigate(completed ? '/dashboard' : '/onboarding', { replace: true })
+      navigate('/onboarding', { replace: true })
     } catch (err) {
       setError(
         err.response?.data?.message ||
