@@ -650,34 +650,7 @@ export default function WellnessCheckIn() {
         </div>
       </div>
 
-      <div className={cardClass}>
-        <SectionHeading
-          number="05"
-          title="A note to yourself"
-          subtitle="Anything else you want to remember about today?"
-          right={<span className="text-xl">✎</span>}
-        />
-
-        <textarea
-          id="wellnessNotes"
-          rows={4}
-          maxLength={500}
-          value={form.notes}
-          onChange={(event) => handleChange('notes', event.target.value)}
-          placeholder="A tough session, a small win, how you feel today..."
-          className={`${inputClass} mt-5 min-h-28 resize-y leading-6`}
-        />
-
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <p className="text-xs text-[#7E7E82]">
-            Just for your personal wellness journal.
-          </p>
-          <p className="shrink-0 text-xs font-medium text-[#7E7E82]">
-            {form.notes.length}/500
-          </p>
-        </div>
-      </div>
-
+        
       <footer className="rounded-2xl border border-[#EAE4F1] bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
