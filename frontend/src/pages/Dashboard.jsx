@@ -14,6 +14,7 @@ import Nutrition from '../components/Nutrition'
 import InjuryRisk from '../components/InjuryRisk'
 import Footsteps from '../components/Footsteps'
 import Profile from './Profile'
+import Settings from './Settings'
 
 const navItems = [
   { id: 'overview', label: 'Overview' },
@@ -379,12 +380,7 @@ function Dashboard() {
       case 'profile':
         return <Profile onBack={() => setActiveSection('overview')} />
       case 'settings':
-        return (
-          <section className="rounded-3xl border border-[#EEEAF3] bg-white p-8">
-            <h1 className="text-2xl font-bold text-[#151517]">Settings</h1>
-            <p className="mt-2 text-[#7E7E82]">Settings options will be available here soon.</p>
-          </section>
-        )
+        return <Settings />
       default:
         return renderOverview()
     }
