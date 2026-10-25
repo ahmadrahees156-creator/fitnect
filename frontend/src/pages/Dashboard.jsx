@@ -377,7 +377,7 @@ function Dashboard() {
       case 'nutrition':
         return <Nutrition />
       case 'profile':
-        return <Profile />
+        return <Profile onBack={() => setActiveSection('overview')} />
       case 'settings':
         return (
           <section className="rounded-3xl border border-[#EEEAF3] bg-white p-8">
