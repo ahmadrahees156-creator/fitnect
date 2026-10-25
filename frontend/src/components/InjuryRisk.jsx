@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { predictInjuryRisk } from '../services/injuryRiskService'
+import { getMyFitnessProfile } from '../services/fitnessProfileService'
 
 const initialForm = {
   heart_rate: '',
@@ -152,6 +153,51 @@ function InjuryRisk() {
   const [result, setResult] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileMessage, setProfileMessage] = useState('')
+
+  useEffect(() => {
+    let active = true
+
+    const loadProfileDefaults = async () => {
+      try {
+        const response = await getMyFitnessProfile()
+        const profile = response?.profile || {}
+        const heightCm = Number(profile.heightCm)
+        const weightKg = Number(profile.weightKg)
+        const calculatedBmi =
+          heightCm > 0 && weightKg > 0
+            ? Number((weightKg / ((heightCm / 100) ** 2)).toFixed(1))
+            : ''
+        const rawGender = String(profile.gender || '').toLowerCase()
+        const modelGender =
+          rawGender === 'male' ? 'Male' : rawGender === 'female' ? 'Female' : ''
+
+        if (active) {
+          setForm((current) => ({
+            ...current,
+            age: profile.age != null ? String(profile.age) : current.age,
+            bmi: profile.bmi != null && Number(profile.bmi) > 0
+              ? String(Number(profile.bmi).toFixed(1))
+              : calculatedBmi !== '' ? String(calculatedBmi) : current.bmi,
+            gender: modelGender || current.gender,
+          }))
+          if (!profile.age || (!calculatedBmi && !(Number(profile.bmi) > 0))) {
+            setProfileMessage('Some profile details are missing. Complete your fitness profile to autofill age and BMI.')
+          }
+        }
+      } catch {
+        if (active) {
+          setProfileMessage('Could not load your saved fitness profile. You can still enter age and BMI manually.')
+        }
+      } finally {
+        if (active) setProfileLoading(false)
+      }
+    }
+
+    loadProfileDefaults()
+    return () => { active = false }
+  }, [])
 
   const updateField = (name, value) => {
     setForm((current) => ({ ...current, [name]: value }))
@@ -283,6 +329,13 @@ function InjuryRisk() {
           onSubmit={handleSubmit}
           className="rounded-[24px] border border-[#ECE6F2] bg-white p-5 sm:p-7"
         >
+          {profileLoading ? (
+            <p className="mb-4 rounded-xl bg-[#F8F3FC] px-4 py-3 text-sm text-[#795B96]">Loading saved profile details…</p>
+          ) : profileMessage ? (
+            <p role="status" className="mb-4 rounded-xl bg-[#F8F3FC] px-4 py-3 text-sm text-[#795B96]">{profileMessage}</p>
+          ) : (
+            <p className="mb-4 rounded-xl bg-[#F2FBF5] px-4 py-3 text-sm text-[#397B58]">Age and BMI were prefilled from your saved profile where available. Confirm today's training and recovery values below.</p>
+          )}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {numericFields.map((field) => (
               <label key={field.name} className="block">
@@ -304,6 +357,7 @@ function InjuryRisk() {
                   onChange={(event) =>
                     updateField(field.name, event.target.value)
                   }
+                  readOnly={field.name === 'age' || field.name === 'bmi'}
                   required
                   className="mt-2 w-full rounded-xl border border-[#E9E1EF] bg-[#FCFAFD] px-3.5 py-3 text-sm text-[#40304F] outline-none transition placeholder:text-[#B5A9BF] focus:border-[#B99ACF] focus:ring-2 focus:ring-[#F1E8F8]"
                   placeholder="Enter value"
