@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const STORAGE_KEY = 'fitnect_settings'
 
@@ -101,6 +102,7 @@ function SettingsRow({ title, description, checked, onChange }) {
 }
 
 export default function Settings() {
+  const navigate = useNavigate()
   const [settings, setSettings] = useState(readSavedSettings)
   const [savedSettings, setSavedSettings] = useState(readSavedSettings)
   const [feedback, setFeedback] = useState({ type: '', message: '' })
@@ -202,6 +204,54 @@ export default function Settings() {
           {feedback.message}
         </div>
       )}
+
+      <section className="rounded-3xl border border-[#EDE7F4] bg-white p-5 shadow-sm sm:p-7">
+        <SectionHeading
+          eyebrow="Account protection"
+          title="Account & security"
+          description="Manage your password and keep your account secure."
+        />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-[#F0EBF5] p-4 sm:p-5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E4DBF4] text-[#302442]">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
+                <rect x="5" y="10" width="14" height="10" rx="2" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 10V7a4 4 0 0 1 8 0v3" />
+              </svg>
+            </div>
+            <h3 className="mt-4 font-semibold text-[#302442]">Change password</h3>
+            <p className="mt-1 text-sm leading-6 text-[#7E7E82]">
+              Update your password while you are signed in.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/change-password')}
+              className="mt-4 rounded-xl bg-[#302442] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#48345E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F373D4] focus-visible:ring-offset-2"
+            >
+              Change password
+            </button>
+          </div>
+          <div className="rounded-2xl border border-[#F0EBF5] p-4 sm:p-5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FCE5F6] text-[#9E367F]">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.5 7.5h17v11h-17z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4 8 8 6 8-6M8 4.5h8" />
+              </svg>
+            </div>
+            <h3 className="mt-4 font-semibold text-[#302442]">Forgot password?</h3>
+            <p className="mt-1 text-sm leading-6 text-[#7E7E82]">
+              Request a password-reset link through your registered email.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate('/forgot-password')}
+              className="mt-4 rounded-xl border border-[#E4DBF4] bg-white px-4 py-2.5 text-sm font-semibold text-[#62566F] transition hover:bg-[#F8F5FC] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F373D4] focus-visible:ring-offset-2"
+            >
+              Reset via email
+            </button>
+          </div>
+        </div>
+      </section>
 
       <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-6">
