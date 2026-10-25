@@ -29,3 +29,18 @@ export const updateCurrentUser = async (userData) => {
   const response = await api.patch('/users/me', userData)
   return response.data
 }
+
+export const forgotPassword = async (email) => {
+  const response = await api.post('/auth/forgot-password', { email })
+  return response.data
+}
+
+export const resetPassword = async (payload) => {
+  const response = await api.post('/auth/reset-password', payload)
+  return response.data
+}
+
+export const changePassword = async (payload) => {
+  const response = await api.patch('/auth/change-password', payload)
+  return response.data
+}
