@@ -110,6 +110,20 @@ function Onboarding() {
                 </label>
               ))}
             </div>
+            {Number(form.heightCm) > 0 && Number(form.weightKg) > 0 && (
+              <div className="rounded-2xl border border-[#CAECD6] bg-[#F2FBF5] p-4 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#397B58]">Your estimated BMI</p>
+                  <p className="mt-1 text-sm text-[#4F6657]">Calculated automatically from your height and weight.</p>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2 sm:mt-0">
+                  <span className="text-3xl font-extrabold text-[#245C3D]">
+                    {(Number(form.weightKg) / ((Number(form.heightCm) / 100) ** 2)).toFixed(1)}
+                  </span>
+                  <span className="text-xs font-semibold text-[#397B58]">kg/m²</span>
+                </div>
+              </div>
+            )}
             <div className="grid gap-5 sm:grid-cols-2">
               {choices.map((choice) => (
                 <label key={choice.name} className="block text-sm font-semibold">
