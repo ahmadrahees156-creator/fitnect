@@ -406,8 +406,8 @@ function Profile({ onBack }) {
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8B73A8]">Body mass index</p>
                 <div className="mt-2 flex items-baseline gap-2">
                   <span className="text-3xl font-extrabold text-[#302442]">
-                    {Number(profile.heightCm || profile.height) > 0 && Number(profile.weightKg || profile.weight) > 0
-                      ? (Number(profile.weightKg || profile.weight) / ((Number(profile.heightCm || profile.height) / 100) ** 2)).toFixed(1)
+                    {Number(profile.height || profile.heightCm) > 0 && Number(profile.weight || profile.weightKg) > 0
+                      ? (Number(profile.weight || profile.weightKg) / ((Number(profile.height || profile.heightCm) / 100) ** 2)).toFixed(1)
                       : '—'}
                   </span>
                   <span className="text-xs font-semibold text-[#81758D]">kg/m²</span>
