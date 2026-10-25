@@ -21,6 +21,7 @@ const goalFromApi = {
 const initialProfile = {
   name: '',
   email: '',
+  avatar: '',
   role: 'athlete',
   fitnessLevel: 'Beginner',
   goal: 'Build strength',
@@ -35,7 +36,7 @@ const initialProfile = {
   dietaryPreference: 'vegetarian',
 }
 
-function Profile() {
+function Profile({ onBack }) {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(initialProfile)
   const [editMode, setEditMode] = useState(false)
@@ -73,6 +74,7 @@ function Profile() {
             ...savedUser,
             name: user.name || user.fullName || savedUser.name || '',
             email: user.email || savedUser.email || '',
+            avatar: user.avatar || savedUser.avatar || '',
             role: user.role || savedUser.role || 'athlete',
             fitnessLevel: savedUser.fitnessLevel || 'Beginner',
             goal: goalFromApi[fitness.goal] || savedUser.goal || 'Build strength',
@@ -105,6 +107,7 @@ function Profile() {
                 ...user,
                 name: user.name || user.fullName || '',
                 email: user.email || '',
+                avatar: user.avatar || '',
                 role: user.role || 'athlete',
               }))
             } else {
@@ -238,7 +241,7 @@ function Profile() {
       <div className="relative z-10 mx-auto max-w-5xl">
         <button
           type="button"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => (onBack ? onBack() : navigate('/dashboard'))}
           className="mb-4 inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white/50 px-4 py-2 text-sm font-semibold text-[#74578E] shadow-sm backdrop-blur transition duration-300 hover:-translate-x-1 hover:bg-white hover:text-[#4F356B]"
         >
           <span aria-hidden="true">←</span>
@@ -263,8 +266,10 @@ function Profile() {
             <div className="pointer-events-none absolute -bottom-24 left-1/3 h-40 w-40 rounded-full bg-[#8B5CF6]/20 blur-3xl" />
 
             <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-4 border-white/30 bg-gradient-to-br from-[#B794F6] via-[#8B5CF6] to-[#5B3A91] text-2xl font-extrabold text-white shadow-[0_0_30px_rgba(167,139,250,0.4)] ring-4 ring-white/10 transition duration-300 hover:scale-105 sm:h-24 sm:w-24 sm:text-3xl">
-                {initials}
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white/30 bg-gradient-to-br from-[#B794F6] via-[#8B5CF6] to-[#5B3A91] text-2xl font-extrabold text-white shadow-[0_0_30px_rgba(167,139,250,0.4)] ring-4 ring-white/10 transition duration-300 hover:scale-105 sm:h-24 sm:w-24 sm:text-3xl">
+                {profile.avatar ? (
+                  <img src={profile.avatar} alt={`${profile.name || 'Your'} profile`} referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                ) : initials}
               </div>
 
               <div className="min-w-0 flex-1">

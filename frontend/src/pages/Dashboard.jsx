@@ -377,7 +377,7 @@ function Dashboard() {
       case 'nutrition':
         return <Nutrition />
       case 'profile':
-        return <Profile />
+        return <Profile onBack={() => setActiveSection('overview')} />
       case 'settings':
         return (
           <section className="rounded-3xl border border-[#EEEAF3] bg-white p-8">
@@ -470,10 +470,14 @@ function Dashboard() {
             )}
             <button
               onClick={() => goToSection('profile')}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FDC381] font-bold text-[#151517]"
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#FDC381] font-bold text-[#151517]"
               aria-label="Open profile"
             >
-              {displayName.charAt(0).toUpperCase()}
+              {user?.avatar ? (
+                <img src={user.avatar} alt="Profile" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+              ) : (
+                displayName.charAt(0).toUpperCase()
+              )}
             </button>
           </div>
         </header>
