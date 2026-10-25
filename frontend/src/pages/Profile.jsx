@@ -239,14 +239,23 @@ function Profile({ onBack }) {
       <div className="pointer-events-none absolute -right-24 top-80 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl" />
 
       <div className="relative z-10 mx-auto max-w-5xl">
-        <button
-          type="button"
-          onClick={() => (onBack ? onBack() : navigate('/dashboard'))}
-          className="mb-4 inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white/50 px-4 py-2 text-sm font-semibold text-[#74578E] shadow-sm backdrop-blur transition duration-300 hover:-translate-x-1 hover:bg-white hover:text-[#4F356B]"
-        >
-          <span aria-hidden="true">←</span>
-          Back to dashboard
-        </button>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => (onBack ? onBack() : navigate('/dashboard'))}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white/50 px-4 py-2 text-sm font-semibold text-[#74578E] shadow-sm backdrop-blur transition duration-300 hover:-translate-x-1 hover:bg-white hover:text-[#4F356B]"
+          >
+            <span aria-hidden="true">←</span>
+            Back to dashboard
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/change-password')}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#FDC381] px-4 py-2 text-sm font-bold text-[#151517] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#F8B466]"
+          >
+            Change password <span aria-hidden="true">→</span>
+          </button>
+        </div>
 
         <div className="mb-5">
           <p className="mb-1.5 text-xs font-bold uppercase tracking-[0.22em] text-[#9679AF]">
