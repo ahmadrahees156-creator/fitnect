@@ -357,7 +357,7 @@ function InjuryRisk() {
                   onChange={(event) =>
                     updateField(field.name, event.target.value)
                   }
-                  readOnly={field.name === 'age' || field.name === 'bmi'}
+                  readOnly={(field.name === 'age' || field.name === 'bmi') && Boolean(form[field.name])}
                   required
                   className="mt-2 w-full rounded-xl border border-[#E9E1EF] bg-[#FCFAFD] px-3.5 py-3 text-sm text-[#40304F] outline-none transition placeholder:text-[#B5A9BF] focus:border-[#B99ACF] focus:ring-2 focus:ring-[#F1E8F8]"
                   placeholder="Enter value"
