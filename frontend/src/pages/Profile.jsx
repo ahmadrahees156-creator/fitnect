@@ -36,7 +36,7 @@ const initialProfile = {
   dietaryPreference: 'vegetarian',
 }
 
-function Profile() {
+function Profile({ onBack }) {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(initialProfile)
   const [editMode, setEditMode] = useState(false)
@@ -241,7 +241,7 @@ function Profile() {
       <div className="relative z-10 mx-auto max-w-5xl">
         <button
           type="button"
-          onClick={() => navigate('/dashboard')}
+          onClick={() => (onBack ? onBack() : navigate('/dashboard'))}
           className="mb-4 inline-flex items-center gap-2 rounded-xl border border-white/70 bg-white/50 px-4 py-2 text-sm font-semibold text-[#74578E] shadow-sm backdrop-blur transition duration-300 hover:-translate-x-1 hover:bg-white hover:text-[#4F356B]"
         >
           <span aria-hidden="true">←</span>
