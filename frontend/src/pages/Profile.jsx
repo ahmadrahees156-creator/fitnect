@@ -1,8 +1,22 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getCurrentUser } from '../services/authService'
+import { getCurrentUser, updateCurrentUser } from '../services/authService'
 import { getMyFitnessProfile, saveMyFitnessProfile } from '../services/fitnessProfileService'
+
+const goalToApi = {
+  'Build strength': 'strength',
+  'Lose weight': 'weight_management',
+  'Improve endurance': 'endurance',
+}
+
+const goalFromApi = {
+  strength: 'Build strength',
+  weight_gain: 'Build strength',
+  weight_management: 'Lose weight',
+  endurance: 'Improve endurance',
+  general_fitness: 'Build strength',
+}
 
 const initialProfile = {
   name: '',
@@ -61,7 +75,7 @@ function Profile() {
             email: user.email || savedUser.email || '',
             role: user.role || savedUser.role || 'athlete',
             fitnessLevel: savedUser.fitnessLevel || 'Beginner',
-            goal: savedUser.goal || 'Build strength',
+            goal: goalFromApi[fitness.goal] || savedUser.goal || 'Build strength',
             age: fitness.age ?? savedUser.age ?? '',
             height: fitness.heightCm ?? savedUser.height ?? '',
             weight: fitness.weightKg ?? savedUser.weight ?? '',
@@ -119,15 +133,29 @@ function Profile() {
 
   const handleSave = async (event) => {
     event.preventDefault()
+    setMessage('')
+
+    const age = Number(profile.age)
+    const heightCm = Number(profile.heightCm || profile.height)
+    const weightKg = Number(profile.weightKg || profile.weight)
+
+    if (!profile.name.trim() || !age || !heightCm || !weightKg) {
+      setMessage('Please enter your name, age, height, and weight before saving.')
+      return
+    }
 
     try {
+      const userResponse = await updateCurrentUser({ name: profile.name.trim() })
+      const updatedUser =
+        userResponse.user || userResponse.data?.user || userResponse.data || userResponse
+
       await saveMyFitnessProfile({
-        age: Number(profile.age),
-        heightCm: Number(profile.heightCm || profile.height),
-        weightKg: Number(profile.weightKg || profile.weight),
-        goal: profile.goal || 'general_fitness',
+        age,
+        heightCm,
+        weightKg,
+        goal: goalToApi[profile.goal] || 'general_fitness',
         activityLevel: profile.activityLevel || 'moderate',
-        experienceLevel: profile.experienceLevel || 'beginner',
+        experienceLevel: ({ Beginner: 'beginner', Intermediate: 'intermediate', Advanced: 'advanced' })[profile.fitnessLevel] || profile.experienceLevel || 'beginner',
         workoutLocation: profile.workoutLocation || 'gym',
         dietaryPreference: profile.dietaryPreference || 'vegetarian',
       })
@@ -139,8 +167,9 @@ function Profile() {
         'fitnect_user',
         JSON.stringify({
           ...savedUser,
-          name: profile.name,
-          email: profile.email,
+          ...updatedUser,
+          name: updatedUser.name || profile.name.trim(),
+          email: updatedUser.email || profile.email,
           fitnessLevel: profile.fitnessLevel,
           goal: profile.goal,
           age: profile.age,
@@ -301,7 +330,7 @@ function Profile() {
                 name="email"
                 value={profile.email}
                 onChange={handleChange}
-                disabled={!editMode}
+                disabled={true}
                 type="email"
                 placeholder="you@example.com"
               />
@@ -452,9 +481,8 @@ function Profile() {
         </section>
 
         <p className="mt-4 px-3 text-center text-xs leading-5 text-[#8A7A9B]">
-          Profile edits are currently saved on this device. Permanent
-          account updates will be connected when the backend provides a
-          profile update API.
+          Your name and fitness preferences are saved to your FitNect account.
+          Email address is read-only.
         </p>
       </div>
     </main>
