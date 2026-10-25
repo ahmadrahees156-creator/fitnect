@@ -238,6 +238,15 @@ function Login() {
                 </div>
               </div>
 
+              <div className="-mt-2 text-right">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm font-semibold text-[#8059B7] transition hover:text-[#5E3D91] hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading || googleLoading}
