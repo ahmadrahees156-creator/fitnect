@@ -48,6 +48,7 @@ app.use("/api/injury-risk", injuryRiskRoutes);
 app.use("/api/fitness-profile", fitnessProfileRoutes);
 app.use("/api/fitness-recommendations", fitnessRecommendationRoutes);
 app.use("/api/nutrition-engine", nutritionApiRoutes);
+app.use("/api/nutrition-api", nutritionApiRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

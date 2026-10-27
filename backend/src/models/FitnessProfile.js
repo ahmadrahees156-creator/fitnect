@@ -11,6 +11,12 @@ const fitnessProfileSchema = new mongoose.Schema(
       index: true
     },
 
+    gender: {
+      type: String,
+      enum: ["female", "male", "non_binary", "prefer_not_to_say"],
+      default: "prefer_not_to_say"
+    },
+
     age: {
       type: Number,
       required: true,
