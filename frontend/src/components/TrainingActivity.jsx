@@ -96,18 +96,18 @@ function TrainingActivity() {
   function formatLibraryText(value) {
     if (typeof value !== 'string') return ''
     return value
-      .replace(/\\r\\n/g, '\\n')
-      .replace(/[ \\t]+/g, ' ')
-      .replace(/\\n{3,}/g, '\\n\\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
       .trim()
   }
 
   function formatLibraryLabel(value = 'General') {
     return String(value)
       .replace(/[-_]+/g, ' ')
-      .replace(/\\s+/g, ' ')
+      .replace(/\s+/g, ' ')
       .trim()
-      .replace(/\\b\\w/g, (letter) => letter.toUpperCase()) || 'General'
+      .replace(/\b\w/g, (letter) => letter.toUpperCase()) || 'General'
   }
 
   useEffect(() => {
