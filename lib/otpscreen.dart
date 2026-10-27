@@ -92,8 +92,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) =>  UserDetailsScreen(
-              initialName: '',
+            MaterialPageRoute(builder: (context) =>  DetailsScreen(
+              userName: '',
               userEmail: email,
               token: token,
             ),
