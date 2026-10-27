@@ -555,7 +555,7 @@ function TrainingActivity() {
                   cardio: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1000&q=85',
                   flexibility: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1000&q=85',
                   yoga: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1000&q=85',
-                  sports: 'https://images.unsplash.com/photo-146_many?auto=format&fit=crop&w=1000&q=85',
+                  sports: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1000&q=85',
                   other: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=85',
                 }
                 const fallbackImage = categoryImages[item.category] || categoryImages.other
