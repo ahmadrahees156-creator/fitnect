@@ -8,16 +8,14 @@ app = Flask(__name__)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.abspath(
-    os.path.join(HERE, "..", "severe_injury_model.joblib")
-)
+    os.path.join(HERE, "..", "severe_injury_model.joblib"))
 
 print("Model path:", MODEL_PATH)
 print("File exists:", os.path.exists(MODEL_PATH))
 
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(
-        f"Model file nahi mili: {MODEL_PATH}"
-    )
+        f"Model file nahi mili: {MODEL_PATH}")
 
 saved = joblib.load(MODEL_PATH)
 
@@ -25,12 +23,22 @@ LR_MODEL = saved["lr"]
 HGB_MODEL = saved["hgb"]
 FEATURES = saved["features"]
 
+REC_PATH = os.path.abspath(os.path.join(HERE, "..", "recovery_model.joblib"))
+
+if not os.path.exists(REC_PATH):
+    raise FileNotFoundError(f"Recovery model file nahi mili: {REC_PATH}")
+
+rec_saved = joblib.load(REC_PATH)
+
+REC_LR = rec_saved["lr"]
+REC_HGB = rec_saved["hgb"]
+REC_FEATURES = rec_saved["features"]
+
 REQUIRED = [
     "heart_rate",
     "stress_level",
     "hydration_level",
     "sleep_quality",
-    "recovery_score",
     "step_count",
     "training_load",
     "training_intensity",
@@ -41,7 +49,9 @@ REQUIRED = [
     "age",
     "bmi",
 ]
+
 OPTIONAL = [
+    "recovery_score",
     "cadence",
     "jump_height",
     "playing_surface",
@@ -150,8 +160,7 @@ def home():
         "required_features": REQUIRED,
         "optional_features": OPTIONAL,
         "model_features": FEATURES,
-        "threshold": 0.5
-    })
+        "threshold": 0.5})
 
 
 @app.route("/predict", methods=["POST"])
@@ -161,10 +170,26 @@ def predict():
 
         if data is None:
             return jsonify({
-                "error": "Valid JSON body bhejo."
-            }), 400
+                "error": "Valid JSON body bhejo."}), 400
 
         X_input = prepare_input(data)
+
+        rec_X = X_input[REC_FEATURES]
+        recovery_estimated = float(np.clip((REC_LR.predict(rec_X)[0] + REC_HGB.predict(rec_X)[0]) / 2, 0, 100))
+
+        if pd.isna(X_input.loc[0, "recovery_score"]):
+            X_input.loc[0, "recovery_score"] = recovery_estimated
+            recovery_source = "estimated"
+        else:
+            recovery_source = "user"
+
+        recovery_used = float(X_input.loc[0, "recovery_score"])
+        if recovery_used < 46:
+            recovery_band = "Low"
+        elif recovery_used < 63:
+            recovery_band = "Moderate"
+        else:
+            recovery_band = "High"
 
         lr_prob = LR_MODEL.predict_proba(X_input)[:, 1][0]
         hgb_prob = HGB_MODEL.predict_proba(X_input)[:, 1][0]
@@ -183,11 +208,14 @@ def predict():
             "prediction": (
                 "Severe Injury Risk"
                 if alert == 1
-                else "No Severe Injury Alert"
-            ),
+                else "No Severe Injury Alert"),
             "severe_risk_probability": round(severe_prob, 4),
             "severe_risk_percent": round(severe_prob * 100, 2),
             "risk_level": risk_level,
+            "recovery_score_estimated": round(recovery_estimated, 1),
+            "recovery_score_used": round(recovery_used, 1),
+            "recovery_source": recovery_source,
+            "recovery_band": recovery_band,
             "alert": alert,
             "threshold": 0.5,
             "history_available": False
@@ -205,4 +233,6 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=False)
+        port = int(os.environ.get("PORT", 5000))
+        app.run(host="0.0.0.0", port=port, debug=False)
+
