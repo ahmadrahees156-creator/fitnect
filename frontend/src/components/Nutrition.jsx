@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   addNutritionEntry,
+  searchNutritionFoods,
+  getFoodNutrition,
   getTodayNutrition,
   getNutritionGoalsProgress,
   saveNutritionGoals,
@@ -51,6 +53,55 @@ function getErrorMessage(error, fallback) {
     error?.response?.data?.error ||
     fallback
   )
+}
+
+
+function normalizeFoodResults(response) {
+  const candidates = [
+    response?.data?.foods,
+    response?.data?.results,
+    response?.foods,
+    response?.results,
+    response?.data,
+  ]
+
+  return candidates.find(Array.isArray) || []
+}
+
+function getNutrientAmount(food, patterns, fallbackKeys = []) {
+  const nutrients = [
+    ...(Array.isArray(food?.foodNutrients) ? food.foodNutrients : []),
+    ...(Array.isArray(food?.nutrients) ? food.nutrients : []),
+    ...(Array.isArray(food?.data?.foodNutrients) ? food.data.foodNutrients : []),
+    ...(Array.isArray(food?.data?.nutrients) ? food.data.nutrients : []),
+  ]
+
+  for (const nutrient of nutrients) {
+    const name = String(
+      nutrient?.nutrientName || nutrient?.name || nutrient?.nutrient?.name || ''
+    ).toLowerCase()
+    if (patterns.some((pattern) => pattern.test(name))) {
+      const value = Number(nutrient?.value ?? nutrient?.amount ?? nutrient?.nutrient?.amount)
+      if (Number.isFinite(value)) return value
+    }
+  }
+
+  for (const key of fallbackKeys) {
+    const value = Number(food?.[key] ?? food?.data?.[key])
+    if (Number.isFinite(value)) return value
+  }
+
+  return 0
+}
+
+function extractFoodMacros(response) {
+  const food = response?.data?.food || response?.data || response?.food || response
+  return {
+    calories: getNutrientAmount(food, [/energy/, /calorie/], ['calories', 'caloriesKcal', 'energyKcal']),
+    protein: getNutrientAmount(food, [/^protein/, /protein/], ['protein', 'proteinG']),
+    carbohydrates: getNutrientAmount(food, [/carbohydrate/, /carbohydrates/], ['carbohydrates', 'carbs', 'carbohydratesG']),
+    fat: getNutrientAmount(food, [/total lipid/, /^fat/, /total fat/], ['fat', 'fatG', 'totalFat']),
+  }
 }
 
 function StatCard({ label, value, unit, detail, icon, color }) {
@@ -278,6 +329,11 @@ export default function Nutrition() {
 
   const [mealType, setMealType] = useState('Breakfast')
   const [mealName, setMealName] = useState('')
+  const [foodSearch, setFoodSearch] = useState('')
+  const [foodResults, setFoodResults] = useState([])
+  const [searchingFoods, setSearchingFoods] = useState(false)
+  const [selectedFoodId, setSelectedFoodId] = useState('')
+  const [loadingFoodNutrition, setLoadingFoodNutrition] = useState(false)
   const [calories, setCalories] = useState('')
   const [protein, setProtein] = useState('')
   const [carbohydrates, setCarbohydrates] = useState('')
@@ -407,6 +463,66 @@ export default function Nutrition() {
       setError(getErrorMessage(err, 'Unable to save drink. Please try again.'))
     } finally {
       setSavingWater(false)
+    }
+  }
+
+
+  async function handleFoodSearch(event) {
+    event.preventDefault()
+    const query = foodSearch.trim()
+    if (query.length < 2) {
+      setError('Enter at least 2 characters to search foods.')
+      return
+    }
+
+    setError('')
+    setMessage('')
+    setSearchingFoods(true)
+    setFoodResults([])
+
+    try {
+      const response = await searchNutritionFoods(query)
+      const results = normalizeFoodResults(response)
+      setFoodResults(results)
+      if (!results.length) setMessage('No foods found. Try another search term.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Food search is unavailable right now.'))
+    } finally {
+      setSearchingFoods(false)
+    }
+  }
+
+  async function handleSelectFood(food) {
+    const fdcId = food?.fdcId ?? food?.fdc_id ?? food?.id
+    if (!fdcId) {
+      setError('This food result has no usable food ID. Please choose another result.')
+      return
+    }
+
+    setError('')
+    setMessage('')
+    setLoadingFoodNutrition(true)
+    setSelectedFoodId(String(fdcId))
+
+    try {
+      const response = await getFoodNutrition(fdcId)
+      const macros = extractFoodMacros(response)
+      const foodName = food?.description || food?.name || food?.foodName || food?.title || 'Selected food'
+
+      setMealName(foodName)
+      setCalories(String(Number(macros.calories.toFixed(2))))
+      setProtein(String(Number(macros.protein.toFixed(2))))
+      setCarbohydrates(String(Number(macros.carbohydrates.toFixed(2))))
+      setFat(String(Number(macros.fat.toFixed(2))))
+      setServingSize('100')
+      setServingUnit('g')
+      setFoodResults([])
+      setMessage('Nutrition values loaded for 100 g. Adjust the serving size before saving.')
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not load nutrition values for this food.'))
+    } finally {
+      setLoadingFoodNutrition(false)
+      setSelectedFoodId('')
     }
   }
 
@@ -908,6 +1024,43 @@ export default function Nutrition() {
                   <div>
                     <label htmlFor="meal-name" className="mb-2 block text-sm font-medium">Food name</label>
                     <input id="meal-name" required maxLength={100} value={mealName} onChange={(event) => setMealName(event.target.value)} placeholder="e.g. Paneer and roti" className="w-full rounded-xl border border-[#E5E1EC] px-4 py-3 text-sm outline-none focus:border-[#A88BCB] focus:ring-2 focus:ring-[#E4DBF4]" />
+                  </div>
+
+                  <div className="rounded-2xl border border-[#EAE3F2] bg-[#FBF9FD] p-4">
+                    <label htmlFor="food-search" className="mb-2 block text-sm font-semibold">Find food nutrition</label>
+                    <form onSubmit={handleFoodSearch} className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        id="food-search"
+                        value={foodSearch}
+                        onChange={(event) => setFoodSearch(event.target.value)}
+                        minLength={2}
+                        maxLength={100}
+                        placeholder="Search foods, e.g. banana or rice"
+                        className="min-w-0 flex-1 rounded-xl border border-[#E5E1EC] bg-white px-4 py-3 text-sm outline-none focus:border-[#A88BCB] focus:ring-2 focus:ring-[#E4DBF4]"
+                      />
+                      <button type="submit" disabled={searchingFoods || foodSearch.trim().length < 2} className="rounded-xl bg-[#7652A6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#60428A] disabled:cursor-not-allowed disabled:opacity-60">
+                        {searchingFoods ? 'Searching...' : 'Search foods'}
+                      </button>
+                    </form>
+                    {foodResults.length > 0 && (
+                      <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
+                        {foodResults.map((food, index) => {
+                          const id = food?.fdcId ?? food?.fdc_id ?? food?.id ?? `food-${index}`
+                          const name = food?.description || food?.name || food?.foodName || food?.title || 'Food result'
+                          const detail = food?.dataType || food?.data_type || food?.brandOwner || food?.brandName || ''
+                          return (
+                            <button key={id} type="button" disabled={loadingFoodNutrition} onClick={() => handleSelectFood(food)} className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#EAE3F2] bg-white p-3 text-left transition hover:border-[#B58BDC] hover:bg-[#F8F5FC] disabled:opacity-60">
+                              <span className="min-w-0">
+                                <span className="block break-words text-sm font-semibold">{name}</span>
+                                {detail && <span className="mt-1 block text-xs text-[#7E7E82]">{detail}</span>}
+                              </span>
+                              <span className="shrink-0 text-xs font-semibold text-[#7652A6]">{loadingFoodNutrition && selectedFoodId === String(id) ? 'Loading...' : 'Use food'}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+                    <p className="mt-2 text-xs leading-5 text-[#7E7E82]">Choose a result to fill the meal form with nutrition values per 100 g when the food service provides them. Check values and serving size before saving.</p>
                   </div>
 
                   <div>
