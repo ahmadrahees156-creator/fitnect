@@ -263,7 +263,7 @@ function Dashboard() {
       </div>
 
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((item) => (
             <div key={item} className="h-36 animate-pulse rounded-3xl bg-[#F1EDF7]" />
           ))}
@@ -442,7 +442,7 @@ function Dashboard() {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="mb-10 flex items-center justify-between">
+        <div className="mb-8 flex items-center justify-between">
           <Brand />
           <button
             onClick={() => setSidebarOpen(false)}
@@ -476,7 +476,7 @@ function Dashboard() {
         <div className="mt-6 border-t border-[#EEEAF3] pt-4">
           <button
             onClick={handleLogout}
-            className="w-full rounded-xl px-4 py-3.5 text-left text-[15px] font-semibold text-[#B04444] transition hover:bg-red-50"
+            className="w-full rounded-xl px-4 py-3 text-left text-sm font-semibold text-[#B04444] transition hover:bg-red-50"
           >
             Log out
           </button>
@@ -484,7 +484,7 @@ function Dashboard() {
       </aside>
 
       <div className="min-h-screen lg:pl-72">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#EEEAF3] bg-white/90 px-4 py-4 backdrop-blur-md sm:px-8">
+        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[#EEEAF3] bg-white/90 px-4 py-3.5 backdrop-blur-md sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -519,7 +519,7 @@ function Dashboard() {
           </div>
         </header>
 
-        <main className="mx-auto max-w-7xl p-4 sm:p-8">
+        <main className="mx-auto max-w-[1440px] p-4 sm:p-6 lg:p-8">
           {renderActiveSection()}
         </main>
       </div>

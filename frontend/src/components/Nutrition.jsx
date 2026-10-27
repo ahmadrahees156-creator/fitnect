@@ -714,14 +714,14 @@ export default function Nutrition() {
   ])
 
   return (
-    <div className="min-h-screen bg-[#F8F5FC] px-4 py-6 text-[#151517] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-7">
+    <div className="min-h-screen bg-[#F8F5FC] px-4 py-5 text-[#151517] sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-[1440px] space-y-6 sm:space-y-8">
 
-        <section className="relative overflow-hidden rounded-[28px] bg-[#E4DBF4] p-6 sm:p-9 lg:p-10">
+        <section className="relative overflow-hidden rounded-[28px] bg-[#E4DBF4] p-5 sm:p-8 lg:p-10">
           <div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-[#FDC381]/50 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-20 right-1/4 h-48 w-48 rounded-full bg-white/50 blur-2xl" />
 
-          <div className="relative grid items-center gap-8 md:grid-cols-[1.3fr_0.7fr]">
+          <div className="relative grid items-center gap-6 md:gap-8 md:grid-cols-[1.3fr_0.7fr]">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/60 px-3 py-1.5 text-xs font-semibold text-[#60428A]">
                 <span className="h-2 w-2 rounded-full bg-[#8C68BC]" />
@@ -797,14 +797,14 @@ export default function Nutrition() {
           </div>
         ) : (
           <>
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <section className="grid gap-3 sm:gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard label="Calories consumed" value={totalCalories.toLocaleString()} unit="kcal" detail={`${Math.max(calorieGoal - totalCalories, 0).toLocaleString()} kcal remaining to goal`} icon="🔥" color="bg-[#FDE8D5]" />
               <StatCard label="Protein intake" value={totalProtein.toFixed(1)} unit="g" detail={`${Math.max(proteinGoal - totalProtein, 0).toFixed(1)} g remaining to goal`} icon="🥚" color="bg-[#E4DBF4]" />
               <StatCard label="Fluid intake" value={(water / 1000).toFixed(2)} unit="L" detail={`${Math.max(WATER_GOAL - water, 0).toLocaleString()} ml to demo target`} icon="💧" color="bg-[#DCEFE5]" />
               <StatCard label="Meals logged" value={nutrition.entryCount ?? entries.length} unit="meals" detail="Entries recorded today" icon="🍽️" color="bg-[#FCE4F5]" />
             </section>
 
-            <section id="hydration" className="grid items-start gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <section id="hydration" className="grid items-start gap-5 sm:gap-6 lg:grid-cols-[1.1fr_0.9fr]">
               <div className="rounded-3xl border border-[#EAE3F2] bg-white p-5 shadow-sm sm:p-7">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
@@ -1041,7 +1041,7 @@ export default function Nutrition() {
               </div>
             </section>
 
-            <section id="meal-logger" className="grid items-start gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+            <section id="meal-logger" className="grid items-start gap-5 sm:gap-6 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="rounded-3xl border border-[#EAE3F2] bg-white p-6 shadow-sm sm:p-7">
                 <p className="text-sm font-medium text-[#8B7A9D]">KEEP A RECORD</p>
                 <h2 className="mt-1 text-xl font-bold">Log your meal</h2>
