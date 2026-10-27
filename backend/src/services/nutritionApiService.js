@@ -1,4 +1,4 @@
-const BASE_URL = "https://fitnect-nutrition.onrender.com";
+const BASE_URL = (process.env.NUTRITION_SERVICE_URL || "https://fitnect-nutrition.onrender.com").replace(/\/+$/, "");
 
 async function requestNutritionApi(path, options = {}) {
   let response;
@@ -11,7 +11,7 @@ async function requestNutritionApi(path, options = {}) {
         ...(options.body ? { "Content-Type": "application/json" } : {}),
         ...options.headers
       },
-      signal: AbortSignal.timeout(20000)
+      signal: AbortSignal.timeout(35000)
     });
   } catch (error) {
     const serviceError = new Error(
@@ -72,6 +72,24 @@ async function getMealSummary(items) {
 }
 
 async function getNutritionTargets(profile) {
+  const goalMap = {
+    strength: "build strength",
+    weight_gain: "build strength",
+    weight_management: "loss weight",
+    endurance: "improve endurance",
+    general_fitness: "improve endurance"
+  };
+
+  const activityMap = {
+    sedentary: "sedentary",
+    light: "light",
+    moderate: "moderate",
+    high: "very_active"
+  };
+
+  const goal = goalMap[profile.goal] || "build strength";
+  const activity_level = activityMap[profile.activityLevel] || "moderate";
+
   return requestNutritionApi("/nutrition-targets", {
     method: "POST",
     body: JSON.stringify({
@@ -79,8 +97,8 @@ async function getNutritionTargets(profile) {
       sex: profile.sex,
       weight: profile.weightKg,
       height: profile.heightCm,
-      goal: profile.goal,
-      activity_level: profile.activityLevel
+      goal,
+      activity_level
     })
   });
 }

@@ -1,7 +1,7 @@
-
 const mongoose = require("mongoose");
 const Nutrition = require("../models/Nutrition");
 const Food = require("../models/Food");
+const nutritionApi = require("../services/nutritionApiService");
 
 const mealTypes = ["breakfast", "lunch", "dinner", "snack"];
 const servingUnits = ["g", "ml", "piece", "cup", "serving"];
@@ -129,7 +129,6 @@ exports.addNutrition = async (req, res, next) => {
   }
 };
 
-
 exports.addFoodFromCatalogue = async (req, res, next) => {
   try {
     const {
@@ -188,7 +187,28 @@ exports.addFoodFromCatalogue = async (req, res, next) => {
     }
 
     // Look up the food in our own catalogue.
-    const food = await Food.findOne({ fdcId }).lean();
+    let food = await Food.findOne({ fdcId }).lean();
+
+    if (!food) {
+      try {
+        const extNutrition = await nutritionApi.getFoodNutrition(fdcId);
+        if (Array.isArray(extNutrition) && extNutrition.length > 0) {
+          const item = extNutrition[0];
+          const gw = Number(item.gram_weight) || 100;
+          food = {
+            name: item.description,
+            nutritionPer100g: {
+              caloriesKcal: (Number(item.calories_kcal) / gw) * 100,
+              proteinG: (Number(item.protein_g) / gw) * 100,
+              carbohydratesG: (Number(item.carbs_g) / gw) * 100,
+              fatG: (Number(item.fat_g) / gw) * 100,
+            },
+          };
+        }
+      } catch (err) {
+        // Fall through to 404
+      }
+    }
 
     if (!food) {
       return res.status(404).json({
@@ -258,7 +278,6 @@ exports.addFoodFromCatalogue = async (req, res, next) => {
     next(error);
   }
 };
-
 
 exports.getTodayNutrition = async (req, res, next) => {
   try {

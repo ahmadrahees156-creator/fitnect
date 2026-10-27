@@ -1,4 +1,6 @@
 const WellnessCheckIn = require("../models/WellnessCheckIn");
+const Workout = require("../models/Workout");
+const Nutrition = require("../models/Nutrition");
 
 // GET /api/dashboard/summary
 async function getDashboardSummary(req, res, next) {
@@ -19,22 +21,47 @@ async function getDashboardSummary(req, res, next) {
             today.getTime() - 6 * 24 * 60 * 60 * 1000
         );
 
-        const [todayWellness, weeklyRecords] = await Promise.all([
-            WellnessCheckIn.findOne({
-                user: req.user.id,
-                date: today
-            }).lean(),
+        const [todayWellness, weeklyRecords, todayWorkouts, workoutsLast7Days, todayNutrition] =
+            await Promise.all([
+                WellnessCheckIn.findOne({
+                    user: req.user.id,
+                    date: today
+                }).lean(),
 
-            WellnessCheckIn.find({
-                user: req.user.id,
-                date: {
-                    $gte: weekStart,
-                    $lt: tomorrow
-                }
-            })
-                .sort({ date: 1 })
-                .lean()
-        ]);
+                WellnessCheckIn.find({
+                    user: req.user.id,
+                    date: {
+                        $gte: weekStart,
+                        $lt: tomorrow
+                    }
+                })
+                    .sort({ date: 1 })
+                    .lean(),
+
+                Workout.find({
+                    user: req.user.id,
+                    date: {
+                        $gte: today,
+                        $lt: tomorrow
+                    }
+                }).lean(),
+
+                Workout.countDocuments({
+                    user: req.user.id,
+                    date: {
+                        $gte: weekStart,
+                        $lt: tomorrow
+                    }
+                }),
+
+                Nutrition.find({
+                    user: req.user.id,
+                    date: {
+                        $gte: today,
+                        $lt: tomorrow
+                    }
+                }).lean()
+            ]);
 
         const count = weeklyRecords.length;
 
@@ -48,6 +75,16 @@ async function getDashboardSummary(req, res, next) {
 
             return Math.round((total / count) * 10) / 10;
         };
+
+        const todayNutritionTotals = todayNutrition.reduce(
+            (acc, item) => ({
+                caloriesKcal: acc.caloriesKcal + (item.calories || 0),
+                proteinG: acc.proteinG + (item.protein || 0),
+                carbohydratesG: acc.carbohydratesG + (item.carbohydrates || 0),
+                fatG: acc.fatG + (item.fat || 0)
+            }),
+            { caloriesKcal: 0, proteinG: 0, carbohydratesG: 0, fatG: 0 }
+        );
 
         return res.status(200).json({
             success: true,
@@ -65,18 +102,30 @@ async function getDashboardSummary(req, res, next) {
                 },
 
                 training: {
-                    available: false,
-                    message: "Workout tracking has not been implemented yet"
+                    available: true,
+                    workoutsToday: todayWorkouts.length,
+                    minutesToday: todayWorkouts.reduce(
+                        (sum, w) => sum + (w.durationMinutes || 0),
+                        0
+                    ),
+                    workoutsLast7Days
                 },
 
                 nutrition: {
-                    available: false,
-                    message: "Nutrition tracking has not been implemented yet"
+                    available: true,
+                    entryCountToday: todayNutrition.length,
+                    totalsToday: {
+                        caloriesKcal: Math.round(todayNutritionTotals.caloriesKcal * 100) / 100,
+                        proteinG: Math.round(todayNutritionTotals.proteinG * 100) / 100,
+                        carbohydratesG: Math.round(todayNutritionTotals.carbohydratesG * 100) / 100,
+                        fatG: Math.round(todayNutritionTotals.fatG * 100) / 100
+                    }
                 },
 
                 recovery: {
-                    available: false,
-                    message: "Recovery tracking has not been implemented yet"
+                    available: true,
+                    checkedInToday: Boolean(todayWellness),
+                    today: todayWellness || null
                 }
             }
         });
