@@ -64,7 +64,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
     });
 
     
-    final url = Uri.parse('https://your-backend-api.com/predict');
+    final url = Uri.parse('https://fitnect.onrender.com/api/injury-risk/predict');
 
     final Map<String, dynamic> body = {
       "heart_rate": double.parse(_heartRateController.text),
