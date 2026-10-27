@@ -12,7 +12,7 @@ class WellnessScreen extends StatefulWidget {
 }
 
 class _WellnessScreenState extends State<WellnessScreen> {
-  // Form controllers & state variables
+  
   String _selectedMood = 'good';
   double _energyLevel = 7.0;
   double _sleepHours = 7.5;
@@ -108,7 +108,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Header Card
+            
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -128,7 +128,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 1. Mood Section
+            
             _buildSectionCard(
               title: 'Your mood',
               subtitle: 'How has today been feeling so far?',
@@ -159,7 +159,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 2. Sleep & Recovery Section
+            
             _buildSectionCard(
               title: 'Sleep & recovery',
               subtitle: 'Rest is part of your progress.',
@@ -198,7 +198,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 3. Energy Levels & Stress Section
+            
             _buildSectionCard(
               title: 'Energy levels & stress',
               subtitle: 'Tune into the energy you have.',
@@ -241,7 +241,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 4. Muscle Soreness Section
+            
             _buildSectionCard(
               title: 'Muscle soreness',
               subtitle: 'How is your body feeling after movement?',
@@ -268,7 +268,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Notes Section
+          
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -296,7 +296,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Submit Button
+            
             ElevatedButton(
               onPressed: _isLoading ? null : _submitWellnessCheckIn,
               style: ElevatedButton.styleFrom(
