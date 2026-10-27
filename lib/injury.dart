@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class InjuryRiskScreen extends StatefulWidget {
-  final String token; // JWT Bearer token for authentication
+  final String token; 
 
   const InjuryRiskScreen({
     super.key,
@@ -17,7 +17,7 @@ class InjuryRiskScreen extends StatefulWidget {
 class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers for the 12 numeric fields required by the model
+  
   final TextEditingController _heartRateController = TextEditingController();
   final TextEditingController _stressController = TextEditingController();
   final TextEditingController _hydrationController = TextEditingController();
@@ -31,7 +31,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _bmiController = TextEditingController();
 
-  // Categorical defaults based on ML service rules
+  
   String _selectedSport = 'Other';
   String _selectedGender = 'Male';
 
@@ -157,7 +157,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
               const Text('Enter your telemetry and training metrics to evaluate your current injury risk profile.', style: TextStyle(fontSize: 13, color: Colors.black54)),
               const SizedBox(height: 20),
 
-              // Error State Banner
+              
               if (_errorMessage != null)
                 Container(
                   padding: const EdgeInsets.all(14),
@@ -176,7 +176,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
                   ),
                 ),
 
-              // Success Result State Card
+              
               if (_predictionResult != null)
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -211,7 +211,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
                   ),
                 ),
 
-              // Form Input Fields
+              
               _buildNumberField('Heart Rate (bpm)', _heartRateController),
               const SizedBox(height: 12),
               _buildNumberField('Stress Level', _stressController),
@@ -237,7 +237,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
               _buildNumberField('BMI', _bmiController),
               const SizedBox(height: 16),
 
-              // Sport Type Dropdown
+              
               const Text('Sport Type', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
               const SizedBox(height: 6),
               Container(
@@ -260,7 +260,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Gender Dropdown
+              
               const Text('Gender', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)),
               const SizedBox(height: 6),
               Container(
@@ -283,7 +283,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Submit / Analyze Button
+              
               SizedBox(
                 width: double.infinity,
                 height: 50,
