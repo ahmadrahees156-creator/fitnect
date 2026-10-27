@@ -45,7 +45,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         });
       }
     } catch (e) {
-      // Handle error quietly or show snackbar
+      debugPrint('Error fetching workouts: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -83,7 +83,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Banner Card
+            
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -115,7 +115,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Training Library Header & Filter
+            
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -141,7 +141,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Category Filter Dropdown
+            
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
@@ -164,7 +164,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Workout List or Empty State
+            
             _isLoading
                 ? const Center(child: Padding(padding: EdgeInsets.all(40.0), child: CircularProgressIndicator()))
                 : _workouts.isEmpty
