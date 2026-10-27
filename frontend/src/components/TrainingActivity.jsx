@@ -550,20 +550,31 @@ function TrainingActivity() {
                   'from-[#FDC381]/70 to-[#FFF2E2]',
                   'from-[#F8E5F3] to-[#F5EFFA]',
                 ]
+                const categoryImages = {
+                  strength: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=1000&q=85',
+                  cardio: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1000&q=85',
+                  flexibility: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1000&q=85',
+                  yoga: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1000&q=85',
+                  sports: 'https://images.unsplash.com/photo-146_many?auto=format&fit=crop&w=1000&q=85',
+                  other: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=85',
+                }
+                const fallbackImage = categoryImages[item.category] || categoryImages.other
                 return (
                   <article key={item._id ?? item.id ?? title} className="group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-[#EEE7F4] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D7C5E5] hover:shadow-[0_18px_38px_rgba(55,36,72,0.09)]">
                     <div className={`relative flex h-32 items-end overflow-hidden bg-gradient-to-br ${accents[index % accents.length]} p-4`}>
-                      {item.imageUrl ? (
-                        <img src={item.imageUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                      ) : (
-                        <>
-                          <div className="absolute -right-3 -top-8 h-32 w-32 rounded-full border border-white/70" />
-                          <div className="absolute right-7 top-3 h-20 w-20 rounded-full border border-white/70" />
-                          <span className="absolute right-5 top-4 text-5xl font-black text-[#69527D]/80 transition duration-300 group-hover:scale-110">
-                            {item.category === 'cardio' ? '↗' : item.category === 'flexibility' || item.category === 'yoga' ? '〜' : '＋'}
-                          </span>
-                        </>
-                      )}
+                      <img
+                        src={item.imageUrl || fallbackImage}
+                        alt={`${title} workout`}
+                        loading="lazy"
+                        onError={(event) => {
+                          if (event.currentTarget.src !== fallbackImage) {
+                            event.currentTarget.onerror = null
+                            event.currentTarget.src = fallbackImage
+                          }
+                        }}
+                        className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#151517]/45 via-transparent to-[#151517]/5" />
                       <div className="relative flex flex-wrap gap-2">
                         <span className="rounded-full border border-white/70 bg-white/85 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#493456]">{categoryName}</span>
                         <span className="rounded-full border border-white/70 bg-white/85 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#493456]">{difficulty}</span>
