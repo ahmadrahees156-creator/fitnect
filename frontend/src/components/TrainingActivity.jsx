@@ -89,6 +89,33 @@ const categoryFallbackImages = {
   other: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=85',
 }
 
+function normalizeExerciseName(value = '') {
+  return String(value)
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
+function findLibraryGif(workout, exerciseIndex) {
+  const directGif = getWorkoutGif(workout)
+  if (directGif) return directGif
+
+  const name = normalizeExerciseName(workout?.name || workout?.title)
+  if (!name || !Array.isArray(exerciseIndex) || !exerciseIndex.length) return ''
+
+  const exact = exerciseIndex.find((exercise) =>
+    normalizeExerciseName(exercise.name) === name
+  )
+  if (exact?.gifUrl) return exact.gifUrl
+
+  const match = exerciseIndex.find((exercise) => {
+    const candidate = normalizeExerciseName(exercise.name)
+    return candidate.length > 4 && (name.includes(candidate) || candidate.includes(name))
+  })
+  return match?.gifUrl || ''
+}
+
 function getWorkoutGif(workout) {
   return [
     workout?.gifUrl,
@@ -148,6 +175,24 @@ function TrainingActivity() {
   const [libraryDifficulty, setLibraryDifficulty] = useState('all')
   const [librarySearch, setLibrarySearch] = useState('')
   const [selectedLibraryWorkout, setSelectedLibraryWorkout] = useState(null)
+  const [exerciseGifIndex, setExerciseGifIndex] = useState([])
+
+  useEffect(() => {
+    let active = true
+    fetch('https://cdn.jsdelivr.net/gh/JahelCuadrado/ExerciseGymGifsDB@v1.1.0/api/en/exercises.json')
+      .then((response) => {
+        if (!response.ok) throw new Error('Exercise GIF catalogue unavailable')
+        return response.json()
+      })
+      .then((data) => {
+        const items = Array.isArray(data) ? data : data?.exercises
+        if (active && Array.isArray(items)) setExerciseGifIndex(items)
+      })
+      .catch(() => {
+        if (active) setExerciseGifIndex([])
+      })
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -646,7 +691,7 @@ function TrainingActivity() {
                 ]
                 const fallbackImage = categoryFallbackImages[item.category] || categoryFallbackImages.other
                 const workoutImage = getWorkoutImage(item)
-                const workoutGif = getWorkoutGif(item)
+                const workoutGif = findLibraryGif(item, exerciseGifIndex)
                 return (
                   <article key={item._id ?? item.id ?? title} className="group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-[#EEE7F4] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D7C5E5] hover:shadow-[0_18px_38px_rgba(55,36,72,0.09)]">
                     <div className={`relative flex h-32 items-end overflow-hidden bg-gradient-to-br ${accents[index % accents.length]} p-4`}>
@@ -736,7 +781,7 @@ function TrainingActivity() {
               </div>
             </div>
             <div className="space-y-6 p-5 sm:p-7">
-              {getWorkoutGif(selectedLibraryWorkout) ? (
+              {findLibraryGif(selectedLibraryWorkout, exerciseGifIndex) ? (
                 <section className="overflow-hidden rounded-2xl border border-[#EEE7F4] bg-white">
                   <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] px-4 py-3">
                     <h3 className="text-sm font-bold text-[#302442]">Animated exercise demo</h3>
@@ -744,7 +789,7 @@ function TrainingActivity() {
                   </div>
                   <div className="flex justify-center bg-[#F8F5FC] p-3 sm:p-5">
                     <img
-                      src={getWorkoutGif(selectedLibraryWorkout)}
+                      src={findLibraryGif(selectedLibraryWorkout, exerciseGifIndex)}
                       alt={`${formatLibraryText(selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout')} animated exercise demonstration`}
                       loading="lazy"
                       className="max-h-[360px] w-full max-w-sm rounded-xl object-contain"
@@ -757,7 +802,16 @@ function TrainingActivity() {
                     <h3 className="text-sm font-bold text-[#302442]">Exercise demonstration</h3>
                     <span className="rounded-full bg-[#FDC381]/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#76502A]">Image preview</span>
                   </div>
-                  <img src={getWorkoutImage(selectedLibraryWorkout)} alt={`${formatLibraryText(selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout')} preview`} loading="lazy" className="h-48 w-full object-cover sm:h-60" />
+                  <img
+                    src={getWorkoutImage({ ...selectedLibraryWorkout, imageUrl: undefined })}
+                    alt={`${formatLibraryText(selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout')} preview`}
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null
+                      event.currentTarget.src = categoryFallbackImages[selectedLibraryWorkout.category] || categoryFallbackImages.other
+                    }}
+                    className="h-48 w-full object-cover sm:h-60"
+                  />
                   <p className="px-4 py-3 text-xs leading-5 text-[#77717F]">An animated GIF will appear here when this exercise has a GIF URL in the workout library data.</p>
                 </section>
               )}
