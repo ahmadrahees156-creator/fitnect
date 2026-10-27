@@ -5,6 +5,7 @@ import { getCurrentUser } from '../services/authService'
 import { getDashboardSummary } from '../services/dashboardService'
 import { getTodayWellness } from '../services/wellnessService'
 import { getActivityHistory } from '../services/activityHistoryService'
+import { getInsights } from '../services/insightsService'
 
 import Brand from '../components/Brand'
 import TrainingActivity from '../components/TrainingActivity'
@@ -63,6 +64,8 @@ function Dashboard() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState('')
   const [historyError, setHistoryError] = useState('')
+  const [insights, setInsights] = useState([])
+  const [insightsError, setInsightsError] = useState('')
 
   const refreshActivityHistory = useCallback(async () => {
     try {
@@ -84,11 +87,12 @@ function Dashboard() {
     setError('')
 
     try {
-      const [summaryResult, userResult, wellnessResult] =
+      const [summaryResult, userResult, wellnessResult, insightsResult] =
         await Promise.allSettled([
           getDashboardSummary(),
           getCurrentUser(),
           getTodayWellness(),
+          getInsights(),
         ])
 
       if (summaryResult.status === 'fulfilled') {
@@ -108,6 +112,16 @@ function Dashboard() {
         )
       } else {
         console.error('User fetch failed:', userResult.reason)
+      }
+
+      if (insightsResult.status === 'fulfilled') {
+        const result = insightsResult.value
+        const items = result?.insights ?? result?.data?.insights ?? []
+        setInsights(Array.isArray(items) ? items : [])
+        setInsightsError('')
+      } else {
+        console.error('Insights fetch failed:', insightsResult.reason)
+        setInsightsError('Personal insights are temporarily unavailable.')
       }
 
       if (wellnessResult.status === 'fulfilled') {
@@ -336,6 +350,33 @@ function Dashboard() {
         >
           {hasCheckedIn ? 'Edit today’s check-in' : 'Complete check-in'}
         </button>
+      </section>
+
+      <section className="rounded-3xl border border-[#EEEAF3] bg-white p-6 sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-[#8B7A9D]">Based on your check-in</p>
+            <h2 className="mt-2 text-2xl font-bold text-[#151517]">Personal insights</h2>
+            <p className="mt-1 text-sm text-[#7E7E82]">Rule-based suggestions from your latest wellness record.</p>
+          </div>
+          <button onClick={() => refreshDashboard()} className="rounded-full border border-[#E5E1EB] px-4 py-2 text-sm font-semibold hover:bg-[#F8F5FC]">Refresh insights</button>
+        </div>
+        {insightsError ? (
+          <p className="mt-5 rounded-xl bg-[#FFF5F5] p-4 text-sm text-[#9B4545]">{insightsError}</p>
+        ) : insights.length ? (
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            {insights.map((item, index) => (
+              <article key={item._id ?? item.type ?? item.title ?? index} className="rounded-2xl bg-[#F8F5FC] p-5">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#8B7A9D]">{item.type || 'wellness'}</p>
+                <h3 className="mt-2 font-bold text-[#302442]">{item.title || 'Wellness insight'}</h3>
+                <p className="mt-2 text-sm leading-6 text-[#68676D]">{item.message || item.description || 'Keep recording your wellness to build a clearer picture.'}</p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-5 rounded-2xl bg-[#F8F5FC] p-5 text-sm text-[#68676D]">No insights are available yet. Complete a wellness check-in to get suggestions.</p>
+        )}
+        <p className="mt-4 text-xs leading-5 text-[#7E7E82]">These are basic wellness suggestions, not medical advice or an injury diagnosis.</p>
       </section>
 
       <ActivityChart history={activityHistory} error={historyError} onRetry={refreshActivityHistory} />
