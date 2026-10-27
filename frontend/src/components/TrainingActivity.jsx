@@ -89,6 +89,19 @@ const categoryFallbackImages = {
   other: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=85',
 }
 
+function getWorkoutGif(workout) {
+  return [
+    workout?.gifUrl,
+    workout?.gifURL,
+    workout?.gif,
+    workout?.demoGifUrl,
+    workout?.animationUrl,
+    workout?.media?.gif,
+    workout?.media?.gifUrl,
+    workout?.demonstration?.gifUrl,
+  ].find((url) => typeof url === 'string' && /^https?:\/\//i.test(url)) || ''
+}
+
 function getWorkoutImage(workout) {
   if (workout.imageUrl) return workout.imageUrl
 
@@ -633,15 +646,19 @@ function TrainingActivity() {
                 ]
                 const fallbackImage = categoryFallbackImages[item.category] || categoryFallbackImages.other
                 const workoutImage = getWorkoutImage(item)
+                const workoutGif = getWorkoutGif(item)
                 return (
                   <article key={item._id ?? item.id ?? title} className="group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-[#EEE7F4] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D7C5E5] hover:shadow-[0_18px_38px_rgba(55,36,72,0.09)]">
                     <div className={`relative flex h-32 items-end overflow-hidden bg-gradient-to-br ${accents[index % accents.length]} p-4`}>
                       <img
-                        src={workoutImage}
-                        alt={`${title} workout`}
+                        src={workoutGif || workoutImage}
+                        alt={`${title} workout demonstration`}
                         loading="lazy"
                         onError={(event) => {
-                          if (event.currentTarget.src !== fallbackImage) {
+                          if (workoutGif && event.currentTarget.src === workoutGif) {
+                            event.currentTarget.onerror = null
+                            event.currentTarget.src = workoutImage
+                          } else if (event.currentTarget.src !== fallbackImage) {
                             event.currentTarget.onerror = null
                             event.currentTarget.src = fallbackImage
                           }
@@ -719,6 +736,31 @@ function TrainingActivity() {
               </div>
             </div>
             <div className="space-y-6 p-5 sm:p-7">
+              {getWorkoutGif(selectedLibraryWorkout) ? (
+                <section className="overflow-hidden rounded-2xl border border-[#EEE7F4] bg-white">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] px-4 py-3">
+                    <h3 className="text-sm font-bold text-[#302442]">Animated exercise demo</h3>
+                    <span className="rounded-full bg-[#CAECD6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#315B3D]">GIF</span>
+                  </div>
+                  <div className="flex justify-center bg-[#F8F5FC] p-3 sm:p-5">
+                    <img
+                      src={getWorkoutGif(selectedLibraryWorkout)}
+                      alt={`${formatLibraryText(selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout')} animated exercise demonstration`}
+                      loading="lazy"
+                      className="max-h-[360px] w-full max-w-sm rounded-xl object-contain"
+                    />
+                  </div>
+                </section>
+              ) : (
+                <section className="overflow-hidden rounded-2xl border border-[#EEE7F4] bg-white">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] px-4 py-3">
+                    <h3 className="text-sm font-bold text-[#302442]">Exercise demonstration</h3>
+                    <span className="rounded-full bg-[#FDC381]/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#76502A]">Image preview</span>
+                  </div>
+                  <img src={getWorkoutImage(selectedLibraryWorkout)} alt={`${formatLibraryText(selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout')} preview`} loading="lazy" className="h-48 w-full object-cover sm:h-60" />
+                  <p className="px-4 py-3 text-xs leading-5 text-[#77717F]">An animated GIF will appear here when this exercise has a GIF URL in the workout library data.</p>
+                </section>
+              )}
               {selectedLibraryWorkout.description && (
                 <section>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-[#806991]">About this workout</h3>
