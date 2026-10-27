@@ -5,12 +5,29 @@ import 'profile.dart';
 class DashboardScreen extends StatelessWidget {
   final String userName;
   final String userEmail;
+  final String token;
+  final int age;
+  final double height;
+  final double weight;
+  final double bmi;
 
   const DashboardScreen({
     super.key,
-    this.userName = 'Athlete', 
+    this.userName = 'Athlete',
     this.userEmail = '',
+    this.token = '',
+    this.age = 0,
+    this.height = 0.0,
+    this.weight = 0.0,
+    this.bmi = 0.0,
   });
+
+  String _getBmiCategory(double value) {
+    if (value < 18.5) return 'Underweight';
+    if (value < 25.0) return 'Normal weight';
+    if (value < 30.0) return 'Overweight';
+    return 'Obese';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +63,7 @@ class DashboardScreen extends StatelessWidget {
                     builder: (context) => ProfileScreen(
                       userName: userName,
                       userEmail: userEmail,
+                    
                     ),
                   ),
                 );
@@ -64,11 +82,12 @@ class DashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      drawer: SidebarDrawer(userName: userName, userEmail: userEmail),
+      drawer: SidebarDrawer(userName: userName, userEmail: userEmail, token: token,),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
+            // Wellness Check-in Welcome Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -93,7 +112,40 @@ class DashboardScreen extends StatelessWidget {
                     'Track your wellness, understand your recovery, and build healthier training habits one day at a time.',
                     style: TextStyle(color: Colors.black54, fontSize: 13, height: 1.4),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
+
+                  // BMI Display Metric Card
+                  if (bmi > 0)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('BODY MASS INDEX (BMI)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black54, letterSpacing: 1)),
+                              const SizedBox(height: 4),
+                              Text(bmi.toStringAsFixed(1), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF8E24AA))),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFCC80),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(_getBmiCategory(bmi), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+
                   ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
@@ -109,9 +161,9 @@ class DashboardScreen extends StatelessWidget {
                   Center(
                     child: Image.asset(
                       'assets/logo.png',
-                      height: 180,
+                      height: 160,
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.directions_run, size: 100, color: Color(0xFF8E24AA)),
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.directions_run, size: 90, color: Color(0xFF8E24AA)),
                     ),
                   ),
                 ],

@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'profile.dart';
 import 'signin_screen.dart';
+import 'injury.dart';
+import 'recovery.dart';
 
 class SidebarDrawer extends StatelessWidget {
   final String userName;
   final String userEmail;
+  final String token;
 
   const SidebarDrawer({
     super.key,
     required this.userName,
     required this.userEmail,
+    required this.token,
   });
 
   @override
@@ -54,9 +58,26 @@ class SidebarDrawer extends StatelessWidget {
                   _buildDrawerItem(context, 'Wellness Check-in', false, () => Navigator.pop(context)),
                   _buildDrawerItem(context, 'Training & Activity', false, () => Navigator.pop(context)),
                   _buildDrawerItem(context, 'Footsteps', false, () => Navigator.pop(context)),
-                  _buildDrawerItem(context, 'Injury Risk', false, () => Navigator.pop(context)),
-                  _buildDrawerItem(context, 'Recovery', false, () => Navigator.pop(context)),
-                  _buildDrawerItem(context, 'Nutrition', false, () => Navigator.pop(context)),
+                  
+                  
+                  _buildDrawerItem(context, 'Injury Risk', false, () {
+                     Navigator.pop(context);
+                     Navigator.push(
+                     context,
+                     MaterialPageRoute(
+                     builder: (context) => InjuryRiskScreen(token: token), 
+                     ),
+                     );
+                   }),
+                  _buildDrawerItem(context, 'Recovery', false, () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                     context,
+                     MaterialPageRoute(
+                      builder: (context) => const RecoveryScreen(),
+                     ),
+                   );
+                   }),
                   _buildDrawerItem(context, 'Profile', false, () {
                     Navigator.pop(context);
                     Navigator.push(

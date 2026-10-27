@@ -1,8 +1,10 @@
-import 'package:fitnect/dashboard.dart';
+// import 'package:fitnect/dashboard.dart';
+import 'package:fitnect/details.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+
 
 class OtpVerificationScreen extends StatefulWidget {
   final String email;
@@ -84,13 +86,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       setState(() => _isVerifying = false);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        final String? token = data['token']; 
-        debugPrint('Authentication Token: $token');
+         final data = jsonDecode(response.body);
+          final String token = data['token'] ?? ''; 
+          final String email = widget.email;
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            MaterialPageRoute(builder: (context) =>  UserDetailsScreen(
+              initialName: '',
+              userEmail: email,
+              token: token,
+            ),
+            ),
           );
         }
       } else {

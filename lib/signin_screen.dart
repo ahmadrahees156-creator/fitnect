@@ -1,4 +1,5 @@
-import 'package:fitnect/dashboard.dart';
+//import 'package:fitnect/dashboard.dart';
+import 'package:fitnect/details.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -42,12 +43,19 @@ class _SignInScreenState extends State<SignInScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final String? token = data['token']; 
-        debugPrint('Login Token: $token');
+        final String token = data['token'] ?? '';
+        final String email = _emailController.text.trim();
+        debugPrint('Login Token: $token');  
+      
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            MaterialPageRoute(builder: (context) =>  UserDetailsScreen(
+              initialName: ' ',
+              userEmail: email,
+              token: token,
+            ),
+            ),
           );
         }
       } else {
