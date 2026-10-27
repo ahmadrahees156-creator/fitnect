@@ -50,6 +50,10 @@ function TrainingActivity() {
   const [libraryWorkouts, setLibraryWorkouts] = useState([])
   const [libraryLoading, setLibraryLoading] = useState(true)
   const [libraryError, setLibraryError] = useState('')
+  const [libraryCategory, setLibraryCategory] = useState('all')
+  const [libraryDifficulty, setLibraryDifficulty] = useState('all')
+  const [librarySearch, setLibrarySearch] = useState('')
+  const [selectedLibraryWorkout, setSelectedLibraryWorkout] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -57,18 +61,54 @@ function TrainingActivity() {
       setLibraryLoading(true)
       setLibraryError('')
       try {
-        const response = await getWorkoutLibrary({ page: 1, limit: 12 })
-        const items = response?.workouts ?? response?.data?.workouts ?? []
+        const response = await getWorkoutLibrary({
+          page: 1,
+          limit: 50,
+          category: libraryCategory,
+          difficulty: libraryDifficulty,
+        })
+        const items = response?.workouts ?? response?.data?.workouts ?? response?.data ?? []
         if (active) setLibraryWorkouts(Array.isArray(items) ? items : [])
       } catch (err) {
-        if (active) setLibraryError('Workout library could not be loaded. Please try again.')
+        if (active) setLibraryError(
+          err.response?.data?.message || 'Workout library could not be loaded. Please try again.'
+        )
       } finally {
         if (active) setLibraryLoading(false)
       }
     }
     loadLibrary()
     return () => { active = false }
-  }, [])
+  }, [libraryCategory, libraryDifficulty])
+
+  const filteredLibraryWorkouts = useMemo(() => {
+    const query = librarySearch.trim().toLowerCase()
+    if (!query) return libraryWorkouts
+    return libraryWorkouts.filter((item) =>
+      [item.name, item.title, item.description, item.category, ...(item.targetMuscles || [])]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(query)
+    )
+  }, [libraryWorkouts, librarySearch])
+
+  function formatLibraryText(value) {
+    if (typeof value !== 'string') return ''
+    return value
+      .replace(/\\r\\n/g, '\\n')
+      .replace(/[ \\t]+/g, ' ')
+      .replace(/\\n{3,}/g, '\\n\\n')
+      .trim()
+  }
+
+  function formatLibraryLabel(value = 'General') {
+    return String(value)
+      .replace(/[-_]+/g, ' ')
+      .replace(/\\s+/g, ' ')
+      .trim()
+      .replace(/\\b\\w/g, (letter) => letter.toUpperCase()) || 'General'
+  }
 
   useEffect(() => {
     let active = true
@@ -396,36 +436,250 @@ function TrainingActivity() {
         )}
       </section>
 
-      <section className="mb-8 rounded-3xl border border-[#ECE6F2] bg-white p-5 sm:p-7">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[2px] text-[#A08BAF]">Explore</p>
-            <h2 className="mt-2 text-2xl font-bold text-[#302442]">Workout library</h2>
-            <p className="mt-1 text-sm text-[#92879F]">Browse curated workout options from FitNect.</p>
+      <section className="mb-8 overflow-hidden rounded-[28px] border border-[#EEE7F4] bg-white shadow-[0_18px_55px_rgba(54,35,73,0.05)]">
+        <div className="relative overflow-hidden bg-[#F1EAF8] px-5 py-6 sm:px-7 sm:py-8">
+          <div className="pointer-events-none absolute -right-8 -top-12 h-44 w-44 rounded-full bg-[#F373D4]/15 blur-3xl" />
+          <div className="pointer-events-none absolute bottom-[-65px] right-1/4 h-40 w-40 rounded-full bg-[#CAECD6]/70 blur-2xl" />
+          <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="max-w-xl">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#8A719D]">Discover movement</p>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#151517] sm:text-3xl">Workout library</h2>
+              <p className="mt-2 text-sm leading-6 text-[#68676D]">
+                Explore guided sessions, find the right intensity, and choose a workout that fits your day.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 self-start rounded-2xl border border-white/80 bg-white/75 px-4 py-3 sm:self-auto">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#CAECD6] text-[#28543B]">
+                <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+                  <path d="M6 9v6M3.5 10.5v3M18 9v6M20.5 10.5v3M6 12h12M8 7v10M16 7v10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </span>
+              <div>
+                <p className="text-xl font-bold leading-none text-[#151517]">{filteredLibraryWorkouts.length}</p>
+                <p className="mt-1 text-xs text-[#77717F]">Workouts to explore</p>
+              </div>
+            </div>
           </div>
-          <button type="button" onClick={() => setLibraryLoading(true) || getWorkoutLibrary({ page: 1, limit: 12 }).then((response) => { const items = response?.workouts ?? response?.data?.workouts ?? []; setLibraryWorkouts(Array.isArray(items) ? items : []); setLibraryError('') }).catch(() => setLibraryError('Workout library could not be loaded. Please try again.')).finally(() => setLibraryLoading(false))} className="rounded-full border border-[#E8DDF0] px-4 py-2 text-sm font-semibold text-[#735A86] hover:bg-[#F3EDF9]">Refresh library</button>
         </div>
-        {libraryError && <p role="alert" className="mt-4 rounded-xl bg-[#FFF7F7] p-4 text-sm text-[#9B4545]">{libraryError}</p>}
-        {libraryLoading ? (
-          <p className="mt-5 text-sm text-[#92879F]">Loading workout library...</p>
-        ) : libraryWorkouts.length ? (
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {libraryWorkouts.map((item) => (
-              <article key={item._id ?? item.id ?? item.name} className="rounded-2xl border border-[#ECE6F2] bg-[#FCFAFE] p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="font-bold text-[#493456]">{item.name || item.title || 'Workout'}</h3>
-                  <span className="shrink-0 rounded-full bg-[#E4DBF4] px-2.5 py-1 text-[10px] font-bold uppercase text-[#735A86]">{item.difficulty || 'All levels'}</span>
-                </div>
-                <p className="mt-2 text-xs font-semibold capitalize text-[#92879F]">{item.category || 'General'}{item.durationMinutes ? ` · ${item.durationMinutes} min` : ''}</p>
-                {item.description && <p className="mt-3 text-sm leading-5 text-[#68676D]">{item.description}</p>}
-                {Array.isArray(item.exercises) && item.exercises.length > 0 && <p className="mt-3 text-xs text-[#92879F]">{item.exercises.length} exercises</p>}
-              </article>
-            ))}
+
+        <div className="p-5 sm:p-7">
+          <div className="grid gap-3 md:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.8fr)_minmax(150px,0.8fr)]">
+            <label className="relative block">
+              <span className="sr-only">Search workouts</span>
+              <svg viewBox="0 0 24 24" fill="none" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#92879F]" aria-hidden="true">
+                <circle cx="10.8" cy="10.8" r="6.3" stroke="currentColor" strokeWidth="1.7" />
+                <path d="m15.5 15.5 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+              <input
+                type="search"
+                value={librarySearch}
+                onChange={(event) => setLibrarySearch(event.target.value)}
+                placeholder="Search workouts or muscles..."
+                className="w-full rounded-2xl border border-[#EAE3F0] bg-[#FCFAFE] py-3 pl-11 pr-4 text-sm text-[#302442] outline-none transition placeholder:text-[#A49AAE] focus:border-[#B99AD0] focus:ring-4 focus:ring-[#E4DBF4]/60"
+              />
+            </label>
+            <label className="block">
+              <span className="sr-only">Filter by category</span>
+              <select value={libraryCategory} onChange={(event) => setLibraryCategory(event.target.value)} className="w-full rounded-2xl border border-[#EAE3F0] bg-[#FCFAFE] px-4 py-3 text-sm text-[#5D496F] outline-none focus:border-[#B99AD0]">
+                <option value="all">All categories</option>
+                <option value="strength">Strength</option>
+                <option value="cardio">Cardio</option>
+                <option value="flexibility">Flexibility</option>
+                <option value="yoga">Yoga</option>
+                <option value="sports">Sports</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="sr-only">Filter by difficulty</span>
+              <select value={libraryDifficulty} onChange={(event) => setLibraryDifficulty(event.target.value)} className="w-full rounded-2xl border border-[#EAE3F0] bg-[#FCFAFE] px-4 py-3 text-sm text-[#5D496F] outline-none focus:border-[#B99AD0]">
+                <option value="all">All difficulty levels</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </label>
           </div>
-        ) : (
-          <p className="mt-5 rounded-2xl bg-[#F8F5FC] p-5 text-sm text-[#92879F]">The library is empty right now. Add active workouts to the backend library to display them here.</p>
-        )}
+
+          {libraryError && (
+            <div role="alert" className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#F0D5D5] bg-[#FFF8F8] p-4 text-sm text-[#9B4545]">
+              <p>{libraryError}</p>
+              <button type="button" onClick={() => {
+                setLibraryCategory((current) => current)
+                setLibraryDifficulty((current) => current)
+                setLibraryLoading(true)
+                getWorkoutLibrary({ page: 1, limit: 50, category: libraryCategory, difficulty: libraryDifficulty })
+                  .then((response) => {
+                    const items = response?.workouts ?? response?.data?.workouts ?? response?.data ?? []
+                    setLibraryWorkouts(Array.isArray(items) ? items : [])
+                    setLibraryError('')
+                  })
+                  .catch((err) => setLibraryError(err.response?.data?.message || 'Workout library could not be loaded. Please try again.'))
+                  .finally(() => setLibraryLoading(false))
+              }} className="font-semibold underline underline-offset-4">Try again</button>
+            </div>
+          )}
+
+          {libraryLoading ? (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="animate-pulse overflow-hidden rounded-3xl border border-[#EEE7F4]">
+                  <div className="h-28 bg-[#F1EAF8]" />
+                  <div className="space-y-3 p-5">
+                    <div className="h-3 w-1/3 rounded-full bg-[#EEE7F4]" />
+                    <div className="h-5 w-2/3 rounded-full bg-[#EEE7F4]" />
+                    <div className="h-3 rounded-full bg-[#F5F1F8]" />
+                    <div className="h-3 w-4/5 rounded-full bg-[#F5F1F8]" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredLibraryWorkouts.length ? (
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {filteredLibraryWorkouts.map((item, index) => {
+                const title = formatLibraryText(item.name || item.title || 'Workout')
+                const description = formatLibraryText(item.description)
+                const muscles = Array.isArray(item.targetMuscles) ? item.targetMuscles.filter(Boolean) : []
+                const equipment = Array.isArray(item.equipment) ? item.equipment.filter(Boolean) : []
+                const categoryName = formatLibraryLabel(item.category)
+                const difficulty = formatLibraryLabel(item.difficulty || 'beginner')
+                const duration = Number(item.durationMinutes) || 0
+                const accents = [
+                  'from-[#E4DBF4] to-[#F8E8F7]',
+                  'from-[#CAECD6] to-[#F1F8F2]',
+                  'from-[#FDC381]/70 to-[#FFF2E2]',
+                  'from-[#F8E5F3] to-[#F5EFFA]',
+                ]
+                return (
+                  <article key={item._id ?? item.id ?? title} className="group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-[#EEE7F4] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D7C5E5] hover:shadow-[0_18px_38px_rgba(55,36,72,0.09)]">
+                    <div className={`relative flex h-32 items-end overflow-hidden bg-gradient-to-br ${accents[index % accents.length]} p-4`}>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                      ) : (
+                        <>
+                          <div className="absolute -right-3 -top-8 h-32 w-32 rounded-full border border-white/70" />
+                          <div className="absolute right-7 top-3 h-20 w-20 rounded-full border border-white/70" />
+                          <span className="absolute right-5 top-4 text-5xl font-black text-[#69527D]/80 transition duration-300 group-hover:scale-110">
+                            {item.category === 'cardio' ? '↗' : item.category === 'flexibility' || item.category === 'yoga' ? '〜' : '＋'}
+                          </span>
+                        </>
+                      )}
+                      <div className="relative flex flex-wrap gap-2">
+                        <span className="rounded-full border border-white/70 bg-white/85 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#493456]">{categoryName}</span>
+                        <span className="rounded-full border border-white/70 bg-white/85 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#493456]">{difficulty}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-1 flex-col p-5">
+                      <h3 className="text-lg font-bold leading-snug text-[#302442]">{title}</h3>
+                      <p className="mt-2 line-clamp-3 min-h-[4.5rem] whitespace-pre-line text-sm leading-6 text-[#77717F]">
+                        {description || 'A guided movement session to support your training routine.'}
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#F8F5FC] px-3 py-2 text-xs font-semibold text-[#655472]">
+                          <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true"><circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.6"/><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                          {duration ? `${duration} min` : 'Flexible duration'}
+                        </span>
+                        {muscles.length > 0 && (
+                          <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#F8F5FC] px-3 py-2 text-xs font-semibold text-[#655472]">
+                            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true"><path d="M7 8v8M4 10v4M17 8v8M20 10v4M7 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+                            {muscles.length} target {muscles.length === 1 ? 'area' : 'areas'}
+                          </span>
+                        )}
+                      </div>
+                      {muscles.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-1.5">
+                          {muscles.slice(0, 3).map((muscle) => (
+                            <span key={muscle} className="rounded-full bg-[#F0F8F2] px-2.5 py-1 text-[11px] font-medium capitalize text-[#41664E]">{formatLibraryLabel(muscle)}</span>
+                          ))}
+                          {muscles.length > 3 && <span className="rounded-full bg-[#F8F5FC] px-2.5 py-1 text-[11px] text-[#77717F]">+{muscles.length - 3} more</span>}
+                        </div>
+                      )}
+                      <button type="button" onClick={() => setSelectedLibraryWorkout(item)} className="mt-5 flex w-full items-center justify-between rounded-xl bg-[#151517] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#34343A] focus:outline-none focus:ring-4 focus:ring-[#E4DBF4]">
+                        <span>View workout details</span><span aria-hidden="true">↗</span>
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-3xl border border-dashed border-[#DCCFE7] bg-[#FCFAFE] px-5 py-12 text-center">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E4DBF4] text-[#69527D]">
+                <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true"><path d="M6 9v6M3.5 10.5v3M18 9v6M20.5 10.5v3M6 12h12M8 7v10M16 7v10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+              </span>
+              <h3 className="mt-4 font-bold text-[#302442]">No matching workouts</h3>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#77717F]">
+                Try another search or clear the filters to explore the full library.
+              </p>
+              <button type="button" onClick={() => { setLibrarySearch(''); setLibraryCategory('all'); setLibraryDifficulty('all') }} className="mt-4 rounded-full border border-[#E4DBF4] px-4 py-2 text-sm font-semibold text-[#735A86] transition hover:bg-[#F8F5FC]">
+                Clear filters
+              </button>
+            </div>
+          )}
+        </div>
       </section>
+
+      {selectedLibraryWorkout && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[#21172D]/50 p-0 backdrop-blur-sm sm:items-center sm:p-5" onClick={(event) => { if (event.target === event.currentTarget) setSelectedLibraryWorkout(null) }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="library-workout-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] bg-[#FCFAFE] shadow-2xl sm:rounded-[28px]">
+            <div className="relative overflow-hidden bg-[#E4DBF4] px-5 py-6 sm:px-7">
+              <div className="pointer-events-none absolute -right-6 -top-10 h-36 w-36 rounded-full bg-[#F373D4]/20 blur-2xl" />
+              <div className="relative flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#806991]">Workout guide</p>
+                  <h2 id="library-workout-title" className="mt-2 text-2xl font-bold text-[#151517] sm:text-3xl">{formatLibraryText(selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout')}</h2>
+                  <p className="mt-2 text-sm text-[#68676D]">{formatLibraryLabel(selectedLibraryWorkout.category)} · {formatLibraryLabel(selectedLibraryWorkout.difficulty || 'beginner')} · {Number(selectedLibraryWorkout.durationMinutes) || 15} min</p>
+                </div>
+                <button type="button" aria-label="Close workout details" onClick={() => setSelectedLibraryWorkout(null)} className="shrink-0 rounded-xl border border-white/70 bg-white/80 px-3 py-2 text-[#493456] transition hover:bg-white">✕</button>
+              </div>
+            </div>
+            <div className="space-y-6 p-5 sm:p-7">
+              {selectedLibraryWorkout.description && (
+                <section>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[#806991]">About this workout</h3>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-7 text-[#68676D]">{formatLibraryText(selectedLibraryWorkout.description)}</p>
+                </section>
+              )}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <section className="rounded-2xl bg-white p-4">
+                  <h3 className="text-sm font-bold text-[#302442]">Target muscles</h3>
+                  {Array.isArray(selectedLibraryWorkout.targetMuscles) && selectedLibraryWorkout.targetMuscles.length ? (
+                    <div className="mt-3 flex flex-wrap gap-2">{selectedLibraryWorkout.targetMuscles.map((muscle) => <span key={muscle} className="rounded-full bg-[#CAECD6] px-3 py-1.5 text-xs font-semibold capitalize text-[#315B3D]">{formatLibraryLabel(muscle)}</span>)}</div>
+                  ) : <p className="mt-2 text-sm text-[#92879F]">Not specified</p>}
+                </section>
+                <section className="rounded-2xl bg-white p-4">
+                  <h3 className="text-sm font-bold text-[#302442]">Equipment</h3>
+                  {Array.isArray(selectedLibraryWorkout.equipment) && selectedLibraryWorkout.equipment.length ? (
+                    <div className="mt-3 flex flex-wrap gap-2">{selectedLibraryWorkout.equipment.map((gear) => <span key={gear} className="rounded-full bg-[#FDC381]/40 px-3 py-1.5 text-xs font-semibold capitalize text-[#76502A]">{formatLibraryLabel(gear)}</span>)}</div>
+                  ) : <p className="mt-2 text-sm text-[#92879F]">No equipment details provided</p>}
+                </section>
+              </div>
+              <section>
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[#806991]">How to do it</h3>
+                  <span className="rounded-full bg-[#F0EAF7] px-3 py-1 text-xs font-semibold text-[#735A86]">{Array.isArray(selectedLibraryWorkout.instructions) ? selectedLibraryWorkout.instructions.length : 0} steps</span>
+                </div>
+                {Array.isArray(selectedLibraryWorkout.instructions) && selectedLibraryWorkout.instructions.length ? (
+                  <ol className="mt-4 space-y-3">
+                    {selectedLibraryWorkout.instructions.map((instruction, index) => (
+                      <li key={index} className="flex gap-3 rounded-2xl border border-[#EEE7F4] bg-white p-4">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#E4DBF4] text-xs font-bold text-[#493456]">{String(index + 1).padStart(2, '0')}</span>
+                        <p className="pt-1 text-sm leading-6 text-[#68676D]">{formatLibraryText(instruction)}</p>
+                      </li>
+                    ))}
+                  </ol>
+                ) : <p className="mt-3 rounded-2xl bg-white p-4 text-sm leading-6 text-[#92879F]">Step-by-step instructions have not been added for this workout yet.</p>}
+              </section>
+              {selectedLibraryWorkout.videoUrl && (
+                <a href={selectedLibraryWorkout.videoUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-[#151517] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#34343A]">
+                  Watch exercise video <span aria-hidden="true">↗</span>
+                </a>
+              )}
+              <button type="button" onClick={() => setSelectedLibraryWorkout(null)} className="w-full rounded-xl border border-[#E5DCEB] bg-white px-4 py-3 text-sm font-semibold text-[#493456] transition hover:bg-[#F8F5FC]">Close details</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {showAddForm && (
         <div
