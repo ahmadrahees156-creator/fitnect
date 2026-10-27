@@ -333,6 +333,7 @@ export default function Nutrition() {
   const [foodResults, setFoodResults] = useState([])
   const [searchingFoods, setSearchingFoods] = useState(false)
   const [selectedFoodId, setSelectedFoodId] = useState('')
+  const [foodNutritionPer100g, setFoodNutritionPer100g] = useState(null)
   const [loadingFoodNutrition, setLoadingFoodNutrition] = useState(false)
   const [calories, setCalories] = useState('')
   const [protein, setProtein] = useState('')
@@ -510,6 +511,7 @@ export default function Nutrition() {
       const foodName = food?.description || food?.name || food?.foodName || food?.title || 'Selected food'
 
       setMealName(foodName)
+      setFoodNutritionPer100g(macros)
       setCalories(String(Number(macros.calories.toFixed(2))))
       setProtein(String(Number(macros.protein.toFixed(2))))
       setCarbohydrates(String(Number(macros.carbohydrates.toFixed(2))))
@@ -559,16 +561,20 @@ export default function Nutrition() {
     setSavingMeal(true)
 
     try {
+      const portionMultiplier = foodNutritionPer100g && servingUnit === 'g'
+        ? Number(servingSize) / 100
+        : 1
+
       await addNutritionEntry({
         date: getToday(),
         foodName: mealName.trim(),
         mealType: mealType.toLowerCase(),
         servingSize: Number(servingSize),
         servingUnit,
-        calories: Number(calories),
-        protein: Number(protein),
-        carbohydrates: Number(carbohydrates),
-        fat: Number(fat),
+        calories: Number(calories) * portionMultiplier,
+        protein: Number(protein) * portionMultiplier,
+        carbohydrates: Number(carbohydrates) * portionMultiplier,
+        fat: Number(fat) * portionMultiplier,
         notes: notes.trim(),
       })
 
@@ -1018,12 +1024,12 @@ export default function Nutrition() {
               <div className="rounded-3xl border border-[#EAE3F2] bg-white p-6 shadow-sm sm:p-7">
                 <p className="text-sm font-medium text-[#8B7A9D]">KEEP A RECORD</p>
                 <h2 className="mt-1 text-xl font-bold">Log your meal</h2>
-                <p className="mt-2 text-sm text-[#7E7E82]">Save meal details to your FitNect account.</p>
+                <p className="mt-2 text-sm text-[#7E7E82]">Search a food to fill its nutrition values, or enter them manually.</p>
 
                 <form onSubmit={addMeal} className="mt-6 space-y-4">
                   <div>
                     <label htmlFor="meal-name" className="mb-2 block text-sm font-medium">Food name</label>
-                    <input id="meal-name" required maxLength={100} value={mealName} onChange={(event) => setMealName(event.target.value)} placeholder="e.g. Paneer and roti" className="w-full rounded-xl border border-[#E5E1EC] px-4 py-3 text-sm outline-none focus:border-[#A88BCB] focus:ring-2 focus:ring-[#E4DBF4]" />
+                    <input id="meal-name" required maxLength={100} value={mealName} onChange={(event) => { setMealName(event.target.value); setFoodNutritionPer100g(null) }} placeholder="e.g. Paneer and roti" className="w-full rounded-xl border border-[#E5E1EC] px-4 py-3 text-sm outline-none focus:border-[#A88BCB] focus:ring-2 focus:ring-[#E4DBF4]" />
                   </div>
 
                   <div className="rounded-2xl border border-[#EAE3F2] bg-[#FBF9FD] p-4">
@@ -1085,14 +1091,14 @@ export default function Nutrition() {
 
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      ['meal-calories', 'Calories (kcal)', calories, setCalories, 10000],
-                      ['meal-protein', 'Protein (g)', protein, setProtein, 2000],
-                      ['meal-carbs', 'Carbohydrates (g)', carbohydrates, setCarbohydrates, 2000],
-                      ['meal-fat', 'Fat (g)', fat, setFat, 2000],
+                      [ 'meal-calories', foodNutritionPer100g ? 'Calories (per 100 g)' : 'Calories (kcal)', calories, setCalories, 10000],
+                      ['meal-protein', foodNutritionPer100g ? 'Protein (per 100 g)' : 'Protein (g)', protein, setProtein, 2000],
+                      ['meal-carbs', foodNutritionPer100g ? 'Carbs (per 100 g)' : 'Carbohydrates (g)', carbohydrates, setCarbohydrates, 2000],
+                      ['meal-fat', foodNutritionPer100g ? 'Fat (per 100 g)' : 'Fat (g)', fat, setFat, 2000],
                     ].map(([id, label, value, setter, max]) => (
                       <div key={id}>
                         <label htmlFor={id} className="mb-2 block text-sm font-medium">{label}</label>
-                        <input id={id} type="number" min="0" max={max} step="any" required value={value} onChange={(event) => setter(event.target.value)} placeholder="0" className="w-full rounded-xl border border-[#E5E1EC] px-4 py-3 text-sm outline-none focus:border-[#A88BCB] focus:ring-2 focus:ring-[#E4DBF4]" />
+                        <input id={id} type="number" min="0" max={max} step="any" required value={value} onChange={(event) => { setter(event.target.value); setFoodNutritionPer100g(null) }} placeholder="0" className="w-full rounded-xl border border-[#E5E1EC] px-4 py-3 text-sm outline-none focus:border-[#A88BCB] focus:ring-2 focus:ring-[#E4DBF4]" />
                       </div>
                     ))}
                   </div>
