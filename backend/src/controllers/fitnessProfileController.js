@@ -31,6 +31,7 @@ exports.getMyFitnessProfile = async (req, res, next) => {
       profile: {
         age: profile.age,
         sex: profile.sex,
+        gender: profile.gender || profile.sex || "prefer_not_to_say",
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         bmi: profile.bmi,
@@ -54,6 +55,7 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
     const {
       age,
       sex,
+      gender,
       heightCm,
       weightKg,
       goal,
@@ -63,10 +65,13 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
       dietaryPreference
     } = req.body;
 
-    // Include sex as a required field for onboarding targets
+    // Accept either field name while clients migrate between sex and gender.
+    const profileSex = sex || ((gender === "female" || gender === "male") ? gender : undefined);
+    const profileGender = gender || ((sex === "female" || sex === "male") ? sex : "prefer_not_to_say");
+
     const requiredFields = {
       age,
-      sex,
+      sex: profileSex,
       heightCm,
       weightKg,
       goal,
@@ -91,7 +96,7 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
     }
 
     // Validate sex values
-    if (sex !== "female" && sex !== "male") {
+    if (profileSex !== "female" && profileSex !== "male") {
       return res.status(400).json({
         success: false,
         message: "Sex must be either 'female' or 'male'."
@@ -147,7 +152,8 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
       heightCm: numericHeight,
       weightKg: numericWeight,
       bmi,
-      sex,
+      sex: profileSex,
+      gender: profileGender,
       goal,
       activityLevel,
       experienceLevel,
