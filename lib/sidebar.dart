@@ -4,6 +4,7 @@ import 'signin_screen.dart';
 import 'injury.dart';
 import 'recovery.dart';
 import 'nutrition.dart';
+import 'wellness.dart';
 
 class SidebarDrawer extends StatelessWidget {
   final String userName;
@@ -56,7 +57,15 @@ class SidebarDrawer extends StatelessWidget {
                     child: Text('WORKSPACE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black45, letterSpacing: 1.2)),
                   ),
                   _buildDrawerItem(context, 'Overview', true, () => Navigator.pop(context)),
-                  _buildDrawerItem(context, 'Wellness Check-in', false, () => Navigator.pop(context)),
+                  _buildDrawerItem(context, 'Wellness Check-in', false, () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                  builder: (context) => WellnessScreen(token: token),
+                   ),
+                   );
+                  }),
                   _buildDrawerItem(context, 'Training & Activity', false, () => Navigator.pop(context)),
                  // _buildDrawerItem(context, 'Footsteps', false, () => Navigator.pop(context)),
                   
