@@ -61,9 +61,9 @@ const numericFields = [
   {
     name: 'training_load',
     label: 'Training load',
-    unit: 'model value',
-    min: 0,
-    max: 100000,
+    unit: 'model value (150–2500)',
+    min: 150,
+    max: 2500,
   },
   {
     name: 'training_intensity',
@@ -82,9 +82,9 @@ const numericFields = [
   {
     name: 'fatigue_index',
     label: 'Fatigue index',
-    unit: 'model value',
-    min: 0,
-    max: 100000,
+    unit: 'model value (150–270)',
+    min: 150,
+    max: 270,
   },
   { name: 'age', label: 'Age', unit: 'years', min: 1, max: 120 },
   {
