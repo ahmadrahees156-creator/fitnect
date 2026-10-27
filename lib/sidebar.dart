@@ -3,6 +3,7 @@ import 'profile.dart';
 import 'signin_screen.dart';
 import 'injury.dart';
 import 'recovery.dart';
+import 'nutrition.dart';
 
 class SidebarDrawer extends StatelessWidget {
   final String userName;
@@ -57,7 +58,7 @@ class SidebarDrawer extends StatelessWidget {
                   _buildDrawerItem(context, 'Overview', true, () => Navigator.pop(context)),
                   _buildDrawerItem(context, 'Wellness Check-in', false, () => Navigator.pop(context)),
                   _buildDrawerItem(context, 'Training & Activity', false, () => Navigator.pop(context)),
-                  _buildDrawerItem(context, 'Footsteps', false, () => Navigator.pop(context)),
+                 // _buildDrawerItem(context, 'Footsteps', false, () => Navigator.pop(context)),
                   
                   
                   _buildDrawerItem(context, 'Injury Risk', false, () {
@@ -69,6 +70,15 @@ class SidebarDrawer extends StatelessWidget {
                      ),
                      );
                    }),
+                   _buildDrawerItem(context, 'Nutrition', false, () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                     builder: (context) => NutritionScreen(token: token),
+                     ),
+                    );
+                    }),
                   _buildDrawerItem(context, 'Recovery', false, () {
                       Navigator.pop(context);
                       Navigator.push(
