@@ -29,6 +29,100 @@ function formatCategory(category = 'other') {
   return category.charAt(0).toUpperCase() + category.slice(1)
 }
 
+const workoutImageRules = [
+  {
+    keywords: ['yoga', 'sun salutation', 'surya namaskar', 'downward dog', 'child pose'],
+    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['run', 'running', 'jog', 'treadmill', 'sprint'],
+    image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['cycle', 'cycling', 'bike', 'spin class'],
+    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['push up', 'push-up', 'bench press', 'chest press', 'chest workout'],
+    image: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['squat', 'lunge', 'leg press', 'lower body', 'glute', 'hamstring'],
+    image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['deadlift', 'barbell', 'weightlifting', 'weight lifting', 'strength', 'dumbbell', 'bicep', 'curl', 'tricep'],
+    image: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['stretch', 'mobility', 'flexibility', 'warm up', 'warm-up', 'cool down', 'cool-down'],
+    image: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['swim', 'swimming'],
+    image: 'https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['basketball'],
+    image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['football', 'soccer'],
+    image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['plank', 'core', 'abs', 'abdominal', 'crunch', 'sit-up', 'sit up'],
+    image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?auto=format&fit=crop&w=1000&q=85',
+  },
+  {
+    keywords: ['cardio', 'hiit', 'jump rope', 'burpee', 'aerobic'],
+    image: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1000&q=85',
+  },
+]
+
+const categoryFallbackImages = {
+  strength: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=1000&q=85',
+  cardio: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1000&q=85',
+  flexibility: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1000&q=85',
+  yoga: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1000&q=85',
+  sports: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1000&q=85',
+  other: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=85',
+}
+
+function getWorkoutGif(workout) {
+  return [
+    workout?.gifUrl,
+    workout?.gifURL,
+    workout?.gif,
+    workout?.demoGifUrl,
+    workout?.animationUrl,
+    workout?.media?.gif,
+    workout?.media?.gifUrl,
+    workout?.demonstration?.gifUrl,
+  ].find((url) => typeof url === 'string' && /^https?:\/\//i.test(url)) || ''
+}
+
+function getWorkoutImage(workout) {
+  if (workout.imageUrl) return workout.imageUrl
+
+  const workoutText = [
+    workout.name,
+    workout.title,
+    workout.description,
+    workout.category,
+    ...(Array.isArray(workout.targetMuscles) ? workout.targetMuscles : []),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  const matchingRule = workoutImageRules.find((rule) =>
+    rule.keywords.some((keyword) => workoutText.includes(keyword))
+  )
+
+  return matchingRule?.image || categoryFallbackImages[workout.category] || categoryFallbackImages.other
+}
+
 function TrainingActivity() {
   const [workouts, setWorkouts] = useState([])
   const [category, setCategory] = useState('All')
@@ -550,24 +644,21 @@ function TrainingActivity() {
                   'from-[#FDC381]/70 to-[#FFF2E2]',
                   'from-[#F8E5F3] to-[#F5EFFA]',
                 ]
-                const categoryImages = {
-                  strength: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=1000&q=85',
-                  cardio: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?auto=format&fit=crop&w=1000&q=85',
-                  flexibility: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1000&q=85',
-                  yoga: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1000&q=85',
-                  sports: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=1000&q=85',
-                  other: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1000&q=85',
-                }
-                const fallbackImage = categoryImages[item.category] || categoryImages.other
+                const fallbackImage = categoryFallbackImages[item.category] || categoryFallbackImages.other
+                const workoutImage = getWorkoutImage(item)
+                const workoutGif = getWorkoutGif(item)
                 return (
                   <article key={item._id ?? item.id ?? title} className="group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-[#EEE7F4] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D7C5E5] hover:shadow-[0_18px_38px_rgba(55,36,72,0.09)]">
                     <div className={`relative flex h-32 items-end overflow-hidden bg-gradient-to-br ${accents[index % accents.length]} p-4`}>
                       <img
-                        src={item.imageUrl || fallbackImage}
-                        alt={`${title} workout`}
+                        src={workoutGif || workoutImage}
+                        alt={`${title} workout demonstration`}
                         loading="lazy"
                         onError={(event) => {
-                          if (event.currentTarget.src !== fallbackImage) {
+                          if (workoutGif && event.currentTarget.src === workoutGif) {
+                            event.currentTarget.onerror = null
+                            event.currentTarget.src = workoutImage
+                          } else if (event.currentTarget.src !== fallbackImage) {
                             event.currentTarget.onerror = null
                             event.currentTarget.src = fallbackImage
                           }
@@ -645,6 +736,31 @@ function TrainingActivity() {
               </div>
             </div>
             <div className="space-y-6 p-5 sm:p-7">
+              {getWorkoutGif(selectedLibraryWorkout) ? (
+                <section className="overflow-hidden rounded-2xl border border-[#EEE7F4] bg-white">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] px-4 py-3">
+                    <h3 className="text-sm font-bold text-[#302442]">Animated exercise demo</h3>
+                    <span className="rounded-full bg-[#CAECD6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#315B3D]">GIF</span>
+                  </div>
+                  <div className="flex justify-center bg-[#F8F5FC] p-3 sm:p-5">
+                    <img
+                      src={getWorkoutGif(selectedLibraryWorkout)}
+                      alt={`${formatLibraryText(selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout')} animated exercise demonstration`}
+                      loading="lazy"
+                      className="max-h-[360px] w-full max-w-sm rounded-xl object-contain"
+                    />
+                  </div>
+                </section>
+              ) : (
+                <section className="overflow-hidden rounded-2xl border border-[#EEE7F4] bg-white">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] px-4 py-3">
+                    <h3 className="text-sm font-bold text-[#302442]">Exercise demonstration</h3>
+                    <span className="rounded-full bg-[#FDC381]/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#76502A]">Image preview</span>
+                  </div>
+                  <img src={getWorkoutImage(selectedLibraryWorkout)} alt={`${formatLibraryText(selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout')} preview`} loading="lazy" className="h-48 w-full object-cover sm:h-60" />
+                  <p className="px-4 py-3 text-xs leading-5 text-[#77717F]">An animated GIF will appear here when this exercise has a GIF URL in the workout library data.</p>
+                </section>
+              )}
               {selectedLibraryWorkout.description && (
                 <section>
                   <h3 className="text-sm font-bold uppercase tracking-wider text-[#806991]">About this workout</h3>
