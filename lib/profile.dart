@@ -14,12 +14,12 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers for text fields
+  
   final _ageController = TextEditingController();
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
 
-  // Dropdown selections
+  
   String _selectedGoal = 'Strength';
   String _selectedActivity = 'Light';
   String _selectedExperience = 'Beginner';

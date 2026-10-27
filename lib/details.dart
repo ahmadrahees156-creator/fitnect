@@ -122,7 +122,15 @@ class _DetailsScreenState extends State<DetailsScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => DashboardScreen(token: widget.token),
+              builder: (context) => DashboardScreen(
+                token: widget.token,
+                userName: widget.userName,
+                userEmail: widget.userEmail,
+                age: int.parse(_ageController.text),
+                height: double.parse(_heightController.text),
+                weight: double.parse(_weightController.text),
+                bmi: _calculateBmi(),
+              ),
             ),
           );
         }
@@ -402,7 +410,15 @@ class _DetailsScreenState extends State<DetailsScreen> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => DashboardScreen(token: widget.token),
+                              builder: (context) => DashboardScreen(
+                                token: widget.token,
+                                userName: widget.userName,
+                               userEmail: widget.userEmail,
+                                age: int.tryParse(_ageController.text) ?? 20,
+                                height: double.tryParse(_heightController.text) ?? 165.0,
+                                weight: double.tryParse(_weightController.text) ?? 60.0,
+                                bmi: _calculateBmi(),
+                              ),
                             ),
                           );
                         },

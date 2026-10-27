@@ -13,13 +13,13 @@ class DashboardScreen extends StatelessWidget {
 
   const DashboardScreen({
     super.key,
-    this.userName = 'Athlete',
-    this.userEmail = '',
-    this.token = '',
-    this.age = 0,
-    this.height = 0.0,
-    this.weight = 0.0,
-    this.bmi = 0.0,
+  required this.userName,
+  required this.userEmail,
+  required this.token,
+  required this.age,
+  required this.height,
+  required this.weight,
+  required this.bmi,
   });
 
   String _getBmiCategory(double value) {
@@ -61,8 +61,7 @@ class DashboardScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => ProfileScreen(
-                      userName: userName,
-                      userEmail: userEmail,
+                      token: token,
                     
                     ),
                   ),

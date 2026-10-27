@@ -14,9 +14,9 @@ class SidebarDrawer extends StatelessWidget {
 
   const SidebarDrawer({
     super.key,
-    required this.userName,
-    required this.userEmail,
-    required this.token,
+  required this.userName,
+  required this.userEmail,
+  required this.token,
   });
 
   @override
@@ -112,8 +112,7 @@ class SidebarDrawer extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => ProfileScreen(
-                          userName: userName,
-                          userEmail: userEmail,
+                          token: token,
                         ),
                       ),
                     );
