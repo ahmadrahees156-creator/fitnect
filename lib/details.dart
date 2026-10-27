@@ -23,9 +23,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
   final _formKey = GlobalKey<FormState>();
 
   
-  final _ageController = TextEditingController(text: '22');
-  final _heightController = TextEditingController(text: '170');
-  final _weightController = TextEditingController(text: '65');
+  final _ageController = TextEditingController(text: '');
+  final _heightController = TextEditingController(text: '');
+  final _weightController = TextEditingController(text: '');
 
   
   String _selectedGoal = 'strength';
@@ -97,9 +97,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
     final url = Uri.parse('https://fitnect.onrender.com/api/fitness-profile/me');
 
     final Map<String, dynamic> body = {
-      "age": int.tryParse(_ageController.text) ?? 22,
-      "heightCm": double.tryParse(_heightController.text) ?? 170,
-      "weightKg": double.tryParse(_weightController.text) ?? 65,
+      "age": int.tryParse(_ageController.text) ?? '',
+      "heightCm": double.tryParse(_heightController.text) ?? '',
+      "weightKg": double.tryParse(_weightController.text) ?? '',
       "goal": _selectedGoal,
       "activityLevel": _selectedActivityLevel,
       "experienceLevel": _selectedExperienceLevel,
@@ -261,31 +261,49 @@ class _DetailsScreenState extends State<DetailsScreen> {
                   const SizedBox(height: 16),
 
                   
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF4FBF5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFC8E6C9)),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('YOUR ESTIMATED BMI', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32))),
-                            SizedBox(height: 2),
-                            Text('Calculated automatically from your height and weight.', style: TextStyle(fontSize: 11, color: Colors.black54)),
-                          ],
-                        ),
-                        Text(
-                          '${bmiValue.toStringAsFixed(1)} kg/m²',
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF2E7D32)),
-                        ),
-                      ],
-                    ),
-                  ),
+                 Container(
+                 padding: const EdgeInsets.all(16),
+                 decoration: BoxDecoration(
+                 color: const Color(0xFFE8F5E9), 
+                 borderRadius: BorderRadius.circular(12),
+                 border: Border.all(color: Colors.green.shade200),
+                 ),
+                 child: Row(
+                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                 child: Column(
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: const [
+            Text(
+              'YOUR ESTIMATED BMI',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
+            SizedBox(height: 2),
+            Text(
+              'Calculated automatically from your height and weight.',
+              style: TextStyle(fontSize: 11, color: Colors.black54),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 8),
+      
+      Text(
+        '${bmiValue.toStringAsFixed(1)} kg/m²',
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.green,
+        ),
+      ),
+    ],
+  ),
+),
                   const SizedBox(height: 16),
 
                   

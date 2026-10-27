@@ -87,7 +87,7 @@ class DashboardScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Wellness Check-in Welcome Card
+            
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -114,7 +114,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // BMI Display Metric Card
+                  
                   if (bmi > 0)
                     Container(
                       padding: const EdgeInsets.all(16),

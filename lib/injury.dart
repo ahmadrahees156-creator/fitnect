@@ -168,7 +168,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
                 },
               ),
 
-              // Gender Dropdown
+              
               const SizedBox(height: 12),
               const Text('Gender', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
               const SizedBox(height: 6),
@@ -196,12 +196,12 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: _isLoading
-                    .toString() == 'true' // safe boolean check
+                    .toString() == 'true' 
                     ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : const Text('Analyze Injury Risk', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
               ),
 
-              // Results Display Container
+              
               if (_apiResult != null) ...[
                 const SizedBox(height: 24),
                 Container(

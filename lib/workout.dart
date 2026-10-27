@@ -227,7 +227,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   }
 }
 
-// Modal Form for Adding a Workout
+
 class AddWorkoutModal extends StatefulWidget {
   final String token;
   final VoidCallback onWorkoutAdded;

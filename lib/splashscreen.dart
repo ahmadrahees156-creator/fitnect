@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
-// Temporary placeholder home screen for testing
+
 class PlaceholderHomeScreen extends StatelessWidget {
   const PlaceholderHomeScreen({super.key});
 

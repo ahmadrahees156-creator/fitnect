@@ -14,7 +14,7 @@ class NutritionScreen extends StatefulWidget {
 class _NutritionScreenState extends State<NutritionScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Form controllers
+  
   final _foodNameController = TextEditingController();
   final _servingSizeController = TextEditingController(text: '1');
   final _caloriesController = TextEditingController();
@@ -27,7 +27,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
   String _selectedServingUnit = 'serving';
   bool _isLoading = false;
 
-  // Today's summary totals (Mock or fetched from API)
+  
   double _totalCalories = 0.0;
   double _totalProtein = 0.0;
   double _totalCarbs = 0.0;
@@ -123,7 +123,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
     }
   }
 
-  // Quick-add template filler
+  
   void _quickAddMeal(String name, String mealType, double cal, double prot, double carb, double fat) {
     setState(() {
       _foodNameController.text = name;
@@ -152,7 +152,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Banner Card
+            
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -194,7 +194,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 4 Summary Metric Cards Grid
+            
             Row(
               children: [
                 Expanded(child: _buildMetricCard('Calories consumed', '${_totalCalories.toStringAsFixed(0)} kcal', Icons.local_fire_department, Colors.orange)),
@@ -212,7 +212,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Daily Targets Progress Overview
+            
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -236,7 +236,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Log Your Meal Form Card
+            
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -351,7 +351,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Simple Meal Ideas (Quick Add)
+            
             const Text('Simple meal ideas (Quick add)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             const Text('Tap any template to load it into your log form.', style: TextStyle(fontSize: 12, color: Colors.grey)),
