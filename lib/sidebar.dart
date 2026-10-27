@@ -5,6 +5,7 @@ import 'injury.dart';
 import 'recovery.dart';
 import 'nutrition.dart';
 import 'wellness.dart';
+import 'workout.dart';
 
 class SidebarDrawer extends StatelessWidget {
   final String userName;
@@ -66,7 +67,15 @@ class SidebarDrawer extends StatelessWidget {
                    ),
                    );
                   }),
-                  _buildDrawerItem(context, 'Training & Activity', false, () => Navigator.pop(context)),
+                  _buildDrawerItem(context, 'Training & Activity', false, () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                  builder: (context) => WorkoutScreen(token: token),
+                  ),
+                  );
+                  }),
                  // _buildDrawerItem(context, 'Footsteps', false, () => Navigator.pop(context)),
                   
                   
