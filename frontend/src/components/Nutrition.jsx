@@ -468,8 +468,7 @@ export default function Nutrition() {
   }
 
 
-  async function handleFoodSearch(event) {
-    event.preventDefault()
+  async function handleFoodSearch() {
     const query = foodSearch.trim()
     if (query.length < 2) {
       setError('Enter at least 2 characters to search foods.')
@@ -1034,7 +1033,7 @@ export default function Nutrition() {
 
                   <div className="rounded-2xl border border-[#EAE3F2] bg-[#FBF9FD] p-4">
                     <label htmlFor="food-search" className="mb-2 block text-sm font-semibold">Find food nutrition</label>
-                    <form onSubmit={handleFoodSearch} className="flex flex-col gap-2 sm:flex-row">
+                    <div className="flex flex-col gap-2 sm:flex-row">
                       <input
                         id="food-search"
                         value={foodSearch}
@@ -1044,10 +1043,10 @@ export default function Nutrition() {
                         placeholder="Search foods, e.g. banana or rice"
                         className="min-w-0 flex-1 rounded-xl border border-[#E5E1EC] bg-white px-4 py-3 text-sm outline-none focus:border-[#A88BCB] focus:ring-2 focus:ring-[#E4DBF4]"
                       />
-                      <button type="submit" disabled={searchingFoods || foodSearch.trim().length < 2} className="rounded-xl bg-[#7652A6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#60428A] disabled:cursor-not-allowed disabled:opacity-60">
+                      <button type="button" onClick={handleFoodSearch} disabled={searchingFoods || foodSearch.trim().length < 2} className="rounded-xl bg-[#7652A6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#60428A] disabled:cursor-not-allowed disabled:opacity-60">
                         {searchingFoods ? 'Searching...' : 'Search foods'}
                       </button>
-                    </form>
+                    </div>
                     {foodResults.length > 0 && (
                       <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
                         {foodResults.map((food, index) => {
