@@ -31,3 +31,27 @@ export async function getNutritionGoalsProgress() {
   const response = await api.get('/nutrition-goals/progress/today')
   return response.data
 }
+
+export async function searchNutritionFoods(search) {
+  const response = await api.get('/nutrition-api/foods', {
+    params: { search },
+  })
+  return response.data
+}
+
+export async function getFoodNutrition(fdcId) {
+  const response = await api.get('/nutrition-api/nutrition', {
+    params: { fdc_id: fdcId },
+  })
+  return response.data
+}
+
+export async function getMealSummary(items) {
+  const response = await api.post('/nutrition-api/meal-summary', { items })
+  return response.data
+}
+
+export async function getPersonalNutritionTargets() {
+  const response = await api.post('/nutrition-api/nutrition-targets')
+  return response.data
+}
