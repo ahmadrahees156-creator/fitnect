@@ -1190,7 +1190,7 @@ export default function Nutrition() {
               </div>
             </section>
 
-            <NutritionHistory refreshTrigger={nutrition.entryCount ?? entries.length} />
+            <NutritionHistory refreshTrigger={nutrition?.entryCount ?? 0} />
 
             <section>
               <div>
