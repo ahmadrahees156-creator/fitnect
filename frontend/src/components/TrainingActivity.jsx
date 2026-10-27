@@ -734,8 +734,8 @@ function TrainingActivity() {
                 const workoutImage = getWorkoutImage(item)
                 const workoutGif = findLibraryGif(item, exerciseGifIndex)
                 return (
-                  <article key={item._id ?? item.id ?? title} className="group flex min-w-0 flex-col overflow-hidden rounded-[24px] border border-[#EEE7F4] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D7C5E5] hover:shadow-[0_18px_38px_rgba(55,36,72,0.09)]">
-                    <div className={`relative flex h-32 items-end overflow-hidden bg-gradient-to-br ${accents[index % accents.length]} p-4`}>
+                  <article key={item._id ?? item.id ?? title} className="group flex min-w-0 flex-col overflow-hidden rounded-[26px] border border-[#EEE7F4] bg-white shadow-[0_5px_20px_rgba(55,36,72,0.035)] transition duration-300 hover:-translate-y-1.5 hover:border-[#D7C5E5] hover:shadow-[0_22px_44px_rgba(55,36,72,0.12)]">
+                    <div className={`relative flex h-44 items-end overflow-hidden bg-gradient-to-br ${accents[index % accents.length]} p-4 sm:h-48`}>
                       <img
                         src={workoutGif || workoutImage}
                         alt={`${title} workout demonstration`}
@@ -749,7 +749,7 @@ function TrainingActivity() {
                             event.currentTarget.src = fallbackImage
                           }
                         }}
-                        className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        className={`absolute inset-0 h-full w-full transition duration-500 ${workoutGif ? "bg-[#F8F5FC] object-contain p-2" : "object-cover group-hover:scale-105"}`}
                       />
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#151517]/45 via-transparent to-[#151517]/5" />
                       <div className="relative flex flex-wrap gap-2">
@@ -757,8 +757,8 @@ function TrainingActivity() {
                         <span className="rounded-full border border-white/70 bg-white/85 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#493456]">{difficulty}</span>
                       </div>
                     </div>
-                    <div className="flex flex-1 flex-col p-5">
-                      <h3 className="text-lg font-bold leading-snug text-[#302442]">{title}</h3>
+                    <div className="flex flex-1 flex-col p-5 sm:p-5">
+                      <h3 className="line-clamp-2 min-h-[3.25rem] text-[17px] font-bold leading-6 text-[#302442] transition-colors group-hover:text-[#7855A6]">{title}</h3>
                       <p className="mt-2 line-clamp-3 min-h-[4.5rem] whitespace-pre-line text-sm leading-6 text-[#77717F]">
                         {description || 'A guided movement session to support your training routine.'}
                       </p>
@@ -782,7 +782,7 @@ function TrainingActivity() {
                           {muscles.length > 3 && <span className="rounded-full bg-[#F8F5FC] px-2.5 py-1 text-[11px] text-[#77717F]">+{muscles.length - 3} more</span>}
                         </div>
                       )}
-                      <button type="button" onClick={() => setSelectedLibraryWorkout(item)} className="mt-5 flex w-full items-center justify-between rounded-xl bg-[#151517] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#34343A] focus:outline-none focus:ring-4 focus:ring-[#E4DBF4]">
+                      <button type="button" onClick={() => setSelectedLibraryWorkout(item)} className="mt-5 flex w-full items-center justify-between rounded-xl bg-[#151517] px-4 py-3.5 text-sm font-semibold text-white transition duration-200 hover:bg-[#7855A6] focus:outline-none focus:ring-4 focus:ring-[#E4DBF4]">
                         <span>View workout details</span><span aria-hidden="true">↗</span>
                       </button>
                     </div>
@@ -833,6 +833,10 @@ function TrainingActivity() {
                       src={findLibraryGif(selectedLibraryWorkout, exerciseGifIndex)}
                       alt={`${formatLibraryText(selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout')} animated exercise demonstration`}
                       loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null
+                        event.currentTarget.src = getWorkoutImage({ ...selectedLibraryWorkout, imageUrl: undefined })
+                      }}
                       className="max-h-[360px] w-full max-w-sm rounded-xl object-contain"
                     />
                   </div>
