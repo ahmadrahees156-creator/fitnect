@@ -417,7 +417,25 @@ export default function Nutrition() {
       errors.push(getErrorMessage(savedGoalsResult.reason, 'Could not load nutrition goals.'))
     }
 
-    if (goalsResult.status === 'rejected') {
+    if (goalsResult.status === 'fulfilled') {
+      const progressData = goalsResult.value
+
+      // Keep the page useful if the daily nutrition endpoint is temporarily unavailable.
+      if (todayResult.status === 'rejected' && progressData?.consumed) {
+        const consumed = progressData.consumed
+        setNutrition({
+          date: progressData.date || getToday(),
+          entryCount: 0,
+          totals: {
+            calories: Number(consumed.caloriesKcal) || 0,
+            protein: Number(consumed.proteinG) || 0,
+            carbohydrates: Number(consumed.carbohydratesG) || 0,
+            fat: Number(consumed.fatG) || 0,
+          },
+          entries: [],
+        })
+      }
+    } else {
       errors.push(getErrorMessage(goalsResult.reason, 'Could not load nutrition goal progress.'))
     }
 
