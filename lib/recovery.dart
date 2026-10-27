@@ -31,7 +31,7 @@ class RecoveryScreen extends StatelessWidget {
             const Text('Track your physical adaptation, sleep architecture, and daily energy reserves.', style: TextStyle(fontSize: 13, color: Colors.black54)),
             const SizedBox(height: 24),
 
-            // Recovery Score Banner Card
+            
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -61,7 +61,7 @@ class RecoveryScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Metrics Breakdown Section
+            
             const Text('Recovery Breakdown', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
             const SizedBox(height: 16),
 
