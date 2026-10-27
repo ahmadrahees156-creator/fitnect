@@ -94,26 +94,67 @@ function normalizeExerciseName(value = '') {
     .toLowerCase()
     .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\\b(machine|exercise|workout|with|the)\\b/g, ' ')
+    .replace(/\\s+/g, ' ')
     .trim()
 }
+
+const exerciseGifAliases = [
+  { terms: ['sit up', 'situp', 'crunch', 'abdominal crunch'], matches: ['sit up', 'sit-up', 'crunch'] },
+  { terms: ['hamstring', '90 90'], matches: ['hamstring', '90/90'] },
+  { terms: ['adductor', 'groin', 'hip adduction'], matches: ['adductor', 'hip adduction'] },
+  { terms: ['push up', 'pushup'], matches: ['push up', 'push-up'] },
+  { terms: ['squat'], matches: ['squat'] },
+  { terms: ['bicep curl', 'barbell curl', 'dumbbell curl'], matches: ['curl'] },
+  { terms: ['plank'], matches: ['plank'] },
+  { terms: ['deadlift'], matches: ['deadlift'] },
+  { terms: ['bench press'], matches: ['bench press'] },
+  { terms: ['leg press'], matches: ['leg press'] },
+  { terms: ['lat pulldown', 'lat pull down'], matches: ['lat pulldown', 'lat pull down'] },
+  { terms: ['shoulder press', 'overhead press'], matches: ['shoulder press', 'overhead press'] },
+  { terms: ['lunge'], matches: ['lunge'] },
+  { terms: ['jumping jack'], matches: ['jumping jack'] },
+  { terms: ['burpee'], matches: ['burpee'] },
+]
 
 function findLibraryGif(workout, exerciseIndex) {
   const directGif = getWorkoutGif(workout)
   if (directGif) return directGif
+  if (!Array.isArray(exerciseIndex) || !exerciseIndex.length) return ''
 
   const name = normalizeExerciseName(workout?.name || workout?.title)
-  if (!name || !Array.isArray(exerciseIndex) || !exerciseIndex.length) return ''
+  const description = normalizeExerciseName(workout?.description)
+  const searchText = `${name} ${description}`
+  if (!name) return ''
 
   const exact = exerciseIndex.find((exercise) =>
     normalizeExerciseName(exercise.name) === name
   )
   if (exact?.gifUrl) return exact.gifUrl
 
-  const match = exerciseIndex.find((exercise) => {
-    const candidate = normalizeExerciseName(exercise.name)
-    return candidate.length > 4 && (name.includes(candidate) || candidate.includes(name))
-  })
-  return match?.gifUrl || ''
+  const alias = exerciseGifAliases.find((rule) =>
+    rule.terms.some((term) => name.includes(normalizeExerciseName(term)))
+  )
+  if (alias) {
+    const match = exerciseIndex.find((exercise) =>
+      alias.matches.some((term) =>
+        normalizeExerciseName(exercise.name).includes(normalizeExerciseName(term))
+      )
+    )
+    if (match?.gifUrl) return match.gifUrl
+  }
+
+  const words = name.split(' ').filter((word) => word.length > 3)
+  const ranked = exerciseIndex
+    .map((exercise) => {
+      const candidate = normalizeExerciseName(exercise.name)
+      const score = words.reduce((total, word) => total + (candidate.includes(word) ? 2 : 0), 0)
+        + (searchText.includes(candidate) && candidate.length > 4 ? 1 : 0)
+      return { exercise, score }
+    })
+    .sort((a, b) => b.score - a.score)
+
+  return ranked[0]?.score >= 2 ? ranked[0].exercise.gifUrl || '' : ''
 }
 
 function getWorkoutGif(workout) {
