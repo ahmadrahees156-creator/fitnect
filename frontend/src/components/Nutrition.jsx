@@ -5,9 +5,11 @@ import {
   searchNutritionFoods,
   getFoodNutrition,
   getTodayNutrition,
+  getNutritionGoals,
   getNutritionGoalsProgress,
   saveNutritionGoals,
 } from '../services/nutritionService'
+import NutritionHistory from './NutritionHistory'
 import {
   addHydrationEntry,
   getTodayHydration,
@@ -374,6 +376,7 @@ export default function Nutrition() {
 
     const results = await Promise.allSettled([
       getTodayNutrition(),
+      getNutritionGoals(),
       getNutritionGoalsProgress(),
       getTodayHydration(),
       getHydrationHistory(7),
@@ -381,6 +384,7 @@ export default function Nutrition() {
 
     const [
       todayResult,
+      savedGoalsResult,
       goalsResult,
       hydrationResult,
       historyResult,
@@ -394,9 +398,8 @@ export default function Nutrition() {
       errors.push(getErrorMessage(todayResult.reason, 'Could not load nutrition data.'))
     }
 
-    if (goalsResult.status === 'fulfilled') {
-      const progressData = goalsResult.value
-      const savedGoals = progressData?.goals
+    if (savedGoalsResult.status === 'fulfilled') {
+      const savedGoals = savedGoalsResult.value?.goals ?? null
 
       if (savedGoals) {
         setGoals(savedGoals)
@@ -411,7 +414,26 @@ export default function Nutrition() {
         setGoalForm(defaultGoals)
       }
     } else {
-      errors.push(getErrorMessage(goalsResult.reason, 'Could not load nutrition goals.'))
+      errors.push(getErrorMessage(savedGoalsResult.reason, 'Could not load nutrition goals.'))
+    }
+
+    if (goalsResult.status === 'rejected') {
+      errors.push(getErrorMessage(goalsResult.reason, 'Could not load nutrition goal progress.'))
+    }
+
+    if (todayResult.status === 'rejected' && goalsResult.status === 'fulfilled' && goalsResult.value?.consumed) {
+      const consumed = goalsResult.value.consumed
+      setNutrition({
+        date: goalsResult.value.date || getToday(),
+        entryCount: 0,
+        totals: {
+          calories: Number(consumed.caloriesKcal) || 0,
+          protein: Number(consumed.proteinG) || 0,
+          carbohydrates: Number(consumed.carbohydratesG) || 0,
+          fat: Number(consumed.fatG) || 0,
+        },
+        entries: [],
+      })
     }
 
     if (hydrationResult.status === 'fulfilled') {
@@ -1167,6 +1189,8 @@ export default function Nutrition() {
                 </div>
               </div>
             </section>
+
+            <NutritionHistory refreshTrigger={nutrition.entryCount ?? entries.length} />
 
             <section>
               <div>
