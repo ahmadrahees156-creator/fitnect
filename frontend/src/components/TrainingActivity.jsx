@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createWorkout, getWorkouts } from '../services/workoutService'
+import { getWorkoutLibrary } from '../services/workoutLibraryService'
 
 const categoryOptions = [
   { label: 'All categories', value: 'All' },
@@ -46,6 +47,28 @@ function TrainingActivity() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [libraryWorkouts, setLibraryWorkouts] = useState([])
+  const [libraryLoading, setLibraryLoading] = useState(true)
+  const [libraryError, setLibraryError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    async function loadLibrary() {
+      setLibraryLoading(true)
+      setLibraryError('')
+      try {
+        const response = await getWorkoutLibrary({ page: 1, limit: 12 })
+        const items = response?.workouts ?? response?.data?.workouts ?? []
+        if (active) setLibraryWorkouts(Array.isArray(items) ? items : [])
+      } catch (err) {
+        if (active) setLibraryError('Workout library could not be loaded. Please try again.')
+      } finally {
+        if (active) setLibraryLoading(false)
+      }
+    }
+    loadLibrary()
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -370,6 +393,37 @@ function TrainingActivity() {
               )
             })}
           </div>
+        )}
+      </section>
+
+      <section className="mb-8 rounded-3xl border border-[#ECE6F2] bg-white p-5 sm:p-7">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[2px] text-[#A08BAF]">Explore</p>
+            <h2 className="mt-2 text-2xl font-bold text-[#302442]">Workout library</h2>
+            <p className="mt-1 text-sm text-[#92879F]">Browse curated workout options from FitNect.</p>
+          </div>
+          <button type="button" onClick={() => setLibraryLoading(true) || getWorkoutLibrary({ page: 1, limit: 12 }).then((response) => { const items = response?.workouts ?? response?.data?.workouts ?? []; setLibraryWorkouts(Array.isArray(items) ? items : []); setLibraryError('') }).catch(() => setLibraryError('Workout library could not be loaded. Please try again.')).finally(() => setLibraryLoading(false))} className="rounded-full border border-[#E8DDF0] px-4 py-2 text-sm font-semibold text-[#735A86] hover:bg-[#F3EDF9]">Refresh library</button>
+        </div>
+        {libraryError && <p role="alert" className="mt-4 rounded-xl bg-[#FFF7F7] p-4 text-sm text-[#9B4545]">{libraryError}</p>}
+        {libraryLoading ? (
+          <p className="mt-5 text-sm text-[#92879F]">Loading workout library...</p>
+        ) : libraryWorkouts.length ? (
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {libraryWorkouts.map((item) => (
+              <article key={item._id ?? item.id ?? item.name} className="rounded-2xl border border-[#ECE6F2] bg-[#FCFAFE] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="font-bold text-[#493456]">{item.name || item.title || 'Workout'}</h3>
+                  <span className="shrink-0 rounded-full bg-[#E4DBF4] px-2.5 py-1 text-[10px] font-bold uppercase text-[#735A86]">{item.difficulty || 'All levels'}</span>
+                </div>
+                <p className="mt-2 text-xs font-semibold capitalize text-[#92879F]">{item.category || 'General'}{item.durationMinutes ? ` · ${item.durationMinutes} min` : ''}</p>
+                {item.description && <p className="mt-3 text-sm leading-5 text-[#68676D]">{item.description}</p>}
+                {Array.isArray(item.exercises) && item.exercises.length > 0 && <p className="mt-3 text-xs text-[#92879F]">{item.exercises.length} exercises</p>}
+              </article>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-5 rounded-2xl bg-[#F8F5FC] p-5 text-sm text-[#92879F]">The library is empty right now. Add active workouts to the backend library to display them here.</p>
         )}
       </section>
 
