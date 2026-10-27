@@ -353,30 +353,115 @@ function Dashboard() {
       </section>
 
       <section className="rounded-3xl border border-[#EEEAF3] bg-white p-6 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wider text-[#8B7A9D]">Based on your check-in</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8B7A9D]">
+              Based on your check-in
+            </p>
             <h2 className="mt-2 text-2xl font-bold text-[#151517]">Personal insights</h2>
-            <p className="mt-1 text-sm text-[#7E7E82]">Rule-based suggestions from your latest wellness record.</p>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-[#7E7E82]">
+              Practical suggestions based on your latest wellness record.
+            </p>
           </div>
-          <button onClick={() => refreshDashboard()} className="rounded-full border border-[#E5E1EB] px-4 py-2 text-sm font-semibold hover:bg-[#F8F5FC]">Refresh insights</button>
+          <button
+            onClick={() => refreshDashboard()}
+            disabled={refreshing}
+            className="rounded-full border border-[#E5E1EB] bg-white px-4 py-2.5 text-sm font-semibold text-[#302442] transition hover:bg-[#F8F5FC] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh insights'}
+          </button>
         </div>
+
         {insightsError ? (
-          <p className="mt-5 rounded-xl bg-[#FFF5F5] p-4 text-sm text-[#9B4545]">{insightsError}</p>
+          <div className="mt-6 rounded-2xl border border-[#F3CACA] bg-[#FFF3F3] p-4 text-sm leading-6 text-[#9B4545]">
+            <p className="font-semibold">Insights unavailable</p>
+            <p className="mt-1">{insightsError}</p>
+          </div>
         ) : insights.length ? (
-          <div className="mt-5 grid gap-3 md:grid-cols-2">
-            {insights.map((item, index) => (
-              <article key={item._id ?? item.type ?? item.title ?? index} className="rounded-2xl bg-[#F8F5FC] p-5">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#8B7A9D]">{item.type || 'wellness'}</p>
-                <h3 className="mt-2 font-bold text-[#302442]">{item.title || 'Wellness insight'}</h3>
-                <p className="mt-2 text-sm leading-6 text-[#68676D]">{item.message || item.description || 'Keep recording your wellness to build a clearer picture.'}</p>
-              </article>
-            ))}
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            {insights.map((item, index) => {
+              const type = String(item.type || 'wellness').toLowerCase()
+              const isCaution = ['stress', 'soreness', 'injury', 'risk'].some((term) => type.includes(term))
+              const isNeedsAttention = ['sleep', 'energy', 'hydration', 'nutrition', 'recovery'].some((term) => type.includes(term))
+              const isGeneral = ['general', 'wellness'].includes(type)
+              const tone = isCaution
+                ? {
+                    card: 'border-[#F4D1D1] bg-[#FFF3F3]',
+                    label: 'text-[#B54747]',
+                    title: 'text-[#702F35]',
+                    message: 'text-[#79585B]',
+                    status: 'Needs attention',
+                    dot: 'bg-[#D56A6A]',
+                  }
+                : isNeedsAttention
+                  ? {
+                      card: 'border-[#F4DFC0] bg-[#FFF7E9]',
+                      label: 'text-[#A76A20]',
+                      title: 'text-[#62421F]',
+                      message: 'text-[#78654D]',
+                      status: 'Review',
+                      dot: 'bg-[#D99A45]',
+                    }
+                  : isGeneral
+                    ? {
+                        card: 'border-[#D2EBDD] bg-[#F0F9F3]',
+                        label: 'text-[#397A52]',
+                        title: 'text-[#244D34]',
+                        message: 'text-[#587361]',
+                        status: 'On track',
+                        dot: 'bg-[#5AA978]',
+                      }
+                    : {
+                        card: 'border-[#E7DDF4] bg-[#F8F4FD]',
+                        label: 'text-[#80649E]',
+                        title: 'text-[#3F3052]',
+                        message: 'text-[#6D6478]',
+                        status: 'Suggestion',
+                        dot: 'bg-[#A78AC8]',
+                      }
+
+              return (
+                <article
+                  key={item._id ?? item.type ?? item.title ?? index}
+                  className={`rounded-2xl border p-5 transition-colors duration-200 sm:p-6 ${tone.card}`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className={`text-xs font-bold uppercase tracking-[0.14em] ${tone.label}`}>
+                      {type.replace(/[-_]/g, ' ')}
+                    </p>
+                    <span className={`inline-flex shrink-0 items-center gap-2 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold ${tone.label}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                      {tone.status}
+                    </span>
+                  </div>
+                  <h3 className={`mt-3 text-base font-bold leading-6 ${tone.title}`}>
+                    {item.title || 'Wellness insight'}
+                  </h3>
+                  <p className={`mt-2 text-sm leading-6 ${tone.message}`}>
+                    {item.message || item.description || 'Keep recording your wellness to build a clearer picture.'}
+                  </p>
+                </article>
+              )
+            })}
           </div>
         ) : (
-          <p className="mt-5 rounded-2xl bg-[#F8F5FC] p-5 text-sm text-[#68676D]">No insights are available yet. Complete a wellness check-in to get suggestions.</p>
+          <div className="mt-6 rounded-2xl border border-[#E7DDF4] bg-[#F8F4FD] p-5 sm:p-6">
+            <p className="font-semibold text-[#3F3052]">No insights yet</p>
+            <p className="mt-2 text-sm leading-6 text-[#6D6478]">
+              Complete a wellness check-in to get suggestions based on your latest record.
+            </p>
+            <button
+              onClick={() => goToSection('wellness')}
+              className="mt-4 rounded-full bg-[#151517] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#34343A]"
+            >
+              Complete check-in
+            </button>
+          </div>
         )}
-        <p className="mt-4 text-xs leading-5 text-[#7E7E82]">These are basic wellness suggestions, not medical advice or an injury diagnosis.</p>
+
+        <p className="mt-5 border-t border-[#EEEAF3] pt-4 text-xs leading-5 text-[#7E7E82]">
+          These are basic wellness suggestions, not medical advice or an injury diagnosis.
+        </p>
       </section>
 
       <ActivityChart history={activityHistory} error={historyError} onRetry={refreshActivityHistory} />
