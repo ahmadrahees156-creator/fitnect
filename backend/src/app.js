@@ -22,7 +22,6 @@ const injuryRiskRoutes = require("./routes/injuryRiskRoutes");
 const fitnessProfileRoutes = require("./routes/fitnessProfileRoutes");
 const foodRoutes = require("./routes/foodRoutes");
 const fitnessRecommendationRoutes = require("./routes/fitnessRecommendationRoutes");
-const nutritionApiRoutes = require("./routes/nutritionApiRoutes");
 
 const app = express();
 
