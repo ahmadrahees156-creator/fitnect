@@ -586,19 +586,28 @@ export default function Recovery() {
                   Small steps, better routines
                 </h2>
 
-                <div className="mt-5 space-y-4">
-                  {recoveryTips.map((tip) => (
-                    <div key={tip.title} className="flex gap-3">
+                <div className="mt-5 space-y-3">
+                  {recoveryTips.map((tip, index) => (
+                    <div
+                      key={tip.title}
+                      className="group flex gap-3 rounded-2xl border border-[#F0EAF4] bg-[#FDFBFE] p-3.5 transition duration-200 hover:-translate-y-0.5 hover:border-[#E3D5EE] hover:bg-white hover:shadow-[0_8px_24px_rgba(70,45,90,0.06)]"
+                    >
                       <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg transition-transform duration-200 group-hover:scale-105"
                         style={{ backgroundColor: tip.color }}
+                        aria-hidden="true"
                       >
                         {tip.icon}
                       </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-[#493956]">
-                          {tip.title}
-                        </h3>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="text-sm font-bold text-[#493956]">
+                            {tip.title}
+                          </h3>
+                          <span className="text-[10px] font-bold tracking-wide text-[#B0A0BB]">
+                            0{index + 1}
+                          </span>
+                        </div>
                         <p className="mt-1 text-xs leading-5 text-[#92849D]">
                           {tip.detail}
                         </p>
