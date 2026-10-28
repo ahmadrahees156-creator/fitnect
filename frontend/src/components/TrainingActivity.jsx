@@ -814,7 +814,7 @@ function TrainingActivity() {
               </span>
               <h3 className="mt-4 font-bold text-[#302442]">No matching workouts</h3>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#77717F]">
-                Try another search or clear the filters to explore the full library.
+                Try a different keyword, category or difficulty—or reset all filters to explore the full library.
               </p>
               <button type="button" onClick={() => { setLibrarySearch(''); setLibraryCategory('all'); setLibraryDifficulty('all') }} className="mt-4 rounded-full border border-[#E4DBF4] px-4 py-2 text-sm font-semibold text-[#735A86] transition hover:bg-[#F8F5FC]">
                 Clear filters
@@ -830,7 +830,7 @@ function TrainingActivity() {
           onClick={(event) => { if (event.target === event.currentTarget) setSelectedLibraryWorkout(null) }}
           onKeyDown={(event) => { if (event.key === 'Escape') setSelectedLibraryWorkout(null) }}
         >
-          <section role="dialog" aria-modal="true" aria-labelledby="library-workout-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] bg-[#FCFAFE] shadow-2xl sm:rounded-[28px]">
+          <section role="dialog" aria-modal="true" aria-labelledby="library-workout-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] border border-white/70 bg-[#FCFAFE] shadow-2xl sm:rounded-[28px]">
             <div className="relative overflow-hidden bg-[#E4DBF4] px-5 py-6 sm:px-7">
               <div className="pointer-events-none absolute -right-6 -top-10 h-36 w-36 rounded-full bg-[#F373D4]/20 blur-2xl" />
               <div className="relative flex items-start justify-between gap-4">
@@ -844,9 +844,12 @@ function TrainingActivity() {
             </div>
             <div className="space-y-6 p-5 sm:p-7">
               {findLibraryGif(selectedLibraryWorkout, exerciseGifIndex) ? (
-                <section className="overflow-hidden rounded-2xl border border-[#EEE7F4] bg-white">
-                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] px-4 py-3">
-                    <h3 className="text-sm font-bold text-[#302442]">Animated exercise demo</h3>
+                <section className="overflow-hidden rounded-2xl border border-[#E6D9EF] bg-white shadow-sm">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] bg-[#FCFAFE] px-4 py-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-[#302442]">Animated exercise demo</h3>
+                      <p className="mt-1 text-xs text-[#92879F]">Watch the movement before you begin</p>
+                    </div>
                     <span className="rounded-full bg-[#CAECD6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#315B3D]">GIF</span>
                   </div>
                   <div className="flex justify-center bg-[#F8F5FC] p-3 sm:p-5">
@@ -863,9 +866,12 @@ function TrainingActivity() {
                   </div>
                 </section>
               ) : (
-                <section className="overflow-hidden rounded-2xl border border-[#EEE7F4] bg-white">
-                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] px-4 py-3">
-                    <h3 className="text-sm font-bold text-[#302442]">Exercise demonstration</h3>
+                <section className="overflow-hidden rounded-2xl border border-[#E6D9EF] bg-white shadow-sm">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] bg-[#FCFAFE] px-4 py-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-[#302442]">Exercise demonstration</h3>
+                      <p className="mt-1 text-xs text-[#92879F]">Visual reference for this movement</p>
+                    </div>
                     <span className="rounded-full bg-[#FDC381]/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#76502A]">Image preview</span>
                   </div>
                   <img
@@ -888,13 +894,13 @@ function TrainingActivity() {
                 </section>
               )}
               <div className="grid gap-4 sm:grid-cols-2">
-                <section className="rounded-2xl bg-white p-4">
+                <section className="rounded-2xl border border-[#E5F0E8] bg-white p-4 sm:p-5">
                   <h3 className="text-sm font-bold text-[#302442]">Target muscles</h3>
                   {Array.isArray(selectedLibraryWorkout.targetMuscles) && selectedLibraryWorkout.targetMuscles.length ? (
                     <div className="mt-3 flex flex-wrap gap-2">{selectedLibraryWorkout.targetMuscles.map((muscle) => <span key={muscle} className="rounded-full bg-[#CAECD6] px-3 py-1.5 text-xs font-semibold capitalize text-[#315B3D]">{formatLibraryLabel(muscle)}</span>)}</div>
                   ) : <p className="mt-2 text-sm text-[#92879F]">Not specified</p>}
                 </section>
-                <section className="rounded-2xl bg-white p-4">
+                <section className="rounded-2xl border border-[#F3E4D3] bg-white p-4 sm:p-5">
                   <h3 className="text-sm font-bold text-[#302442]">Equipment</h3>
                   {Array.isArray(selectedLibraryWorkout.equipment) && selectedLibraryWorkout.equipment.length ? (
                     <div className="mt-3 flex flex-wrap gap-2">{selectedLibraryWorkout.equipment.map((gear) => <span key={gear} className="rounded-full bg-[#FDC381]/40 px-3 py-1.5 text-xs font-semibold capitalize text-[#76502A]">{formatLibraryLabel(gear)}</span>)}</div>
@@ -909,7 +915,7 @@ function TrainingActivity() {
                 {Array.isArray(selectedLibraryWorkout.instructions) && selectedLibraryWorkout.instructions.length ? (
                   <ol className="mt-4 space-y-3">
                     {selectedLibraryWorkout.instructions.map((instruction, index) => (
-                      <li key={index} className="flex gap-3 rounded-2xl border border-[#EEE7F4] bg-white p-4">
+                      <li key={index} className="flex gap-3 rounded-2xl border border-[#EEE7F4] bg-white p-4 transition-colors hover:border-[#DCCBE9] hover:bg-[#FDFBFE]">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#E4DBF4] text-xs font-bold text-[#493456]">{String(index + 1).padStart(2, '0')}</span>
                         <p className="pt-1 text-sm leading-6 text-[#68676D]">{formatLibraryText(instruction)}</p>
                       </li>
