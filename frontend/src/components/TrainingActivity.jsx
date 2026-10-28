@@ -198,6 +198,9 @@ function TrainingActivity() {
   const [libraryDifficulty, setLibraryDifficulty] = useState('all')
   const [librarySearch, setLibrarySearch] = useState('')
   const [selectedLibraryWorkout, setSelectedLibraryWorkout] = useState(null)
+  const [addingLibraryWorkout, setAddingLibraryWorkout] = useState(false)
+  const [libraryAddMessage, setLibraryAddMessage] = useState('')
+  const [libraryAddError, setLibraryAddError] = useState('')
   const [exerciseGifIndex, setExerciseGifIndex] = useState([])
 
   useEffect(() => {
@@ -435,6 +438,41 @@ function TrainingActivity() {
       )
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleAddLibraryWorkoutToDaily() {
+    if (!selectedLibraryWorkout || addingLibraryWorkout) return
+
+    const title = formatLibraryText(
+      selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout'
+    )
+    const allowedCategories = ['strength', 'cardio', 'flexibility', 'yoga', 'sports', 'other']
+    const rawCategory = String(selectedLibraryWorkout.category || 'other').toLowerCase()
+    const workoutCategory = allowedCategories.includes(rawCategory) ? rawCategory : 'other'
+
+    setAddingLibraryWorkout(true)
+    setLibraryAddError('')
+    setLibraryAddMessage('')
+
+    try {
+      await createWorkout({
+        title,
+        category: workoutCategory,
+        date: new Date().toISOString().slice(0, 10),
+        durationMinutes: Number(selectedLibraryWorkout.durationMinutes) || 15,
+        notes: formatLibraryText(selectedLibraryWorkout.description || ''),
+        exercises: [{ name: title }],
+      })
+      setLibraryAddMessage('Added to your daily workout.')
+      setCategory('All')
+      setRefreshKey((key) => key + 1)
+    } catch (err) {
+      setLibraryAddError(
+        err.response?.data?.message || 'Could not add this workout. Please try again.'
+      )
+    } finally {
+      setAddingLibraryWorkout(false)
     }
   }
 
@@ -964,6 +1002,24 @@ function TrainingActivity() {
                   Watch exercise video <span aria-hidden="true">↗</span>
                 </a>
               )}
+              {libraryAddMessage && (
+                <p role="status" className="rounded-xl border border-[#CDE8D5] bg-[#F0F8F2] px-4 py-3 text-sm font-semibold text-[#315B3D]">
+                  {libraryAddMessage}
+                </p>
+              )}
+              {libraryAddError && (
+                <p role="alert" className="rounded-xl border border-[#F1D1DC] bg-[#FFF5F8] px-4 py-3 text-sm font-semibold text-[#A45172]">
+                  {libraryAddError}
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleAddLibraryWorkoutToDaily}
+                disabled={addingLibraryWorkout}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#7855A6] px-4 py-3.5 text-sm font-bold text-white transition hover:bg-[#604184] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {addingLibraryWorkout ? 'Adding to daily workout...' : '＋ Add to Daily Workout'}
+              </button>
               <button type="button" onClick={() => setSelectedLibraryWorkout(null)} className="w-full rounded-xl border border-[#E5DCEB] bg-white px-4 py-3 text-sm font-semibold text-[#493456] transition hover:bg-[#F8F5FC]">Close details</button>
             </div>
           </section>
