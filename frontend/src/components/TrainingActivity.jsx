@@ -94,8 +94,8 @@ function normalizeExerciseName(value = '') {
     .toLowerCase()
     .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, ' ')
-    .replace(/\\b(machine|exercise|workout|with|the)\\b/g, ' ')
-    .replace(/\\s+/g, ' ')
+    .replace(/\b(machine|exercise|workout|with|the)\b/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim()
 }
 
@@ -113,7 +113,7 @@ function findLibraryGif(workout, exerciseIndex) {
   const exact = exerciseIndex.find((exercise) =>
     normalizeExerciseName(exercise.name) === name &&
     typeof exercise.gifUrl === 'string' &&
-    /^https?:\\/\\//i.test(exercise.gifUrl)
+    /^https?:\/\//i.test(exercise.gifUrl)
   )
   if (exact) return exact.gifUrl
 
