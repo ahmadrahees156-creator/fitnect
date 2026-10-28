@@ -94,7 +94,7 @@ class _DetailsScreenState extends State<DetailsScreen> {
     setState(() => _isLoading = true);
 
     
-    final url = Uri.parse('https://fitnect.onrender.com/api/fitness-profile/me');
+   final url = Uri.parse('https://fitnect-api-1k4t.onrender.com/api/fitness-profile/me');
 
     final Map<String, dynamic> body = {
       "age": int.tryParse(_ageController.text) ?? 20,
