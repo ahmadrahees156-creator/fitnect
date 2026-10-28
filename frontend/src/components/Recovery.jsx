@@ -669,7 +669,7 @@ export default function Recovery() {
                         stress: entry.stress,
                       })
                       const scoreTone =
-                              className={`h-full rounded-full ${score >= 75 ? 'bg-[#86B99A]' : score >= 50 ? 'bg-[#E9B77D]' : 'bg-[#D99AB9]'}`}
+                        score >= 75
                           ? 'bg-[#E7F5EC] text-[#4F8966]'
                           : score >= 50
                             ? 'bg-[#FFF1DF] text-[#A56E43]'
