@@ -74,8 +74,8 @@ class _SignInScreenState extends State<SignInScreen> {
    try {
     
       final GoogleSignIn googleSignIn = GoogleSignIn(
-  clientId: '334202896245-gj1k4om3qc4a6kb4gj5gqlsh8cqcmbic.apps.googleusercontent.com',
-    );
+     clientId: '334202896245-gj1k4om3qc4a6kb4gj5gqlsh8cqcmbic.apps.googleusercontent.com',
+      );
     
     
     
