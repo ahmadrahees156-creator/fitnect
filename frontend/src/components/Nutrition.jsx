@@ -53,21 +53,27 @@ function getErrorMessage(error, fallback) {
   return (
     error?.response?.data?.message ||
     error?.response?.data?.error ||
+    error?.message ||
     fallback
   )
 }
-
 
 function normalizeFoodResults(response) {
   const candidates = [
     response?.data?.foods,
     response?.data?.results,
+    response?.data?.data?.foods,
+    response?.data?.data?.results,
     response?.foods,
     response?.results,
     response?.data,
   ]
 
-  return candidates.find(Array.isArray) || []
+  const results = candidates.find(Array.isArray) || []
+  return results.map((food) => {
+    const id = food?.fdcId ?? food?.fdc_id ?? food?.id ?? food?.foodId ?? food?.food_id
+    return id === undefined || id === null ? food : { ...food, fdcId: id }
+  })
 }
 
 function unwrapNutritionPayload(response) {
@@ -533,8 +539,8 @@ export default function Nutrition() {
   }
 
   async function handleSelectFood(food) {
-    const fdcId = food?.fdcId ?? food?.fdc_id ?? food?.id
-    if (!fdcId) {
+    const fdcId = food?.fdcId ?? food?.fdc_id ?? food?.id ?? food?.foodId ?? food?.food_id
+    if (fdcId === undefined || fdcId === null || String(fdcId).trim() === '') {
       setError('This food result has no usable food ID. Please choose another result.')
       return
     }
