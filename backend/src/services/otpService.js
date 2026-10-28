@@ -3,9 +3,9 @@ const EmailOTP = require("../models/EmailOTP");
 const { sendOTPEmail } = require("./emailService");
 
 function getOtpSecret() {
-    const secret = process.env.OTP_SECRET;
+    const secret = process.env.OTP_SECRET || process.env.JWT_SECRET;
     if (!secret) {
-        throw new Error("OTP_SECRET is missing from environment variables");
+        throw new Error("OTP_SECRET (or JWT_SECRET) is missing from environment variables");
     }
     return secret;
 }
@@ -97,4 +97,4 @@ async function verifyOTP(email, otp) {
     return true;
 }
 
-module.exports = { generateAndSendOTP, verifyOTP };
+module.exports = { generateAndSendOTP, verifyOTP, getOtpSecret, hashOTP };

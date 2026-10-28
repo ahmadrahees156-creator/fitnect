@@ -132,7 +132,9 @@ async function importFoods() {
       }
     }
 
-    await connectDB();
+    if (mongoose.connection.readyState !== 1) {
+      await connectDB();
+    }
 
     let batch = [];
     let imported = 0;
@@ -236,12 +238,20 @@ async function importFoods() {
         "\nSample food 167512 was not imported; check the source records."
       );
     }
+
+    return { imported, skipped, total: totalInDatabase };
   } finally {
-    await mongoose.disconnect();
+    if (require.main === module) {
+      await mongoose.disconnect();
+    }
   }
 }
 
-importFoods().catch((error) => {
-  console.error("Food import failed:", error.message);
-  process.exitCode = 1;
-});
+module.exports = importFoods;
+
+if (require.main === module) {
+  importFoods().catch((error) => {
+    console.error("Food import failed:", error.message);
+    process.exitCode = 1;
+  });
+}

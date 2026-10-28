@@ -22,7 +22,6 @@ const injuryRiskRoutes = require("./routes/injuryRiskRoutes");
 const fitnessProfileRoutes = require("./routes/fitnessProfileRoutes");
 const foodRoutes = require("./routes/foodRoutes");
 const fitnessRecommendationRoutes = require("./routes/fitnessRecommendationRoutes");
-const nutritionApiRoutes = require("./routes/nutritionApiRoutes");
 
 const app = express();
 
@@ -31,6 +30,27 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+// Root info route
+app.get("/", (req, res) => {
+    res.status(200).json({
+        success: true,
+        service: "FitNect Backend API",
+        status: "healthy",
+        health: "/api/health"
+    });
+});
+
+// Health check
+app.get("/api/health", (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "FitNect backend is running",
+        service: "FitNect API"
+    });
+});
+
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/wellness", wellnessRoutes);
@@ -41,6 +61,7 @@ app.use("/api/recovery", recoveryRoutes);
 app.use("/api/hydration", hydrationRoutes);
 app.use("/api/nutrition", nutritionRoutes);
 app.use("/api/nutrition-api", nutritionApiRoutes);
+app.use("/api/nutrition-engine", nutritionApiRoutes);
 app.use("/api/nutrition-goals", nutritionGoalRoutes);
 app.use("/api/foods", foodRoutes);
 app.use("/api/activity-history", activityHistoryRoutes);
@@ -49,17 +70,6 @@ app.use("/api/coach-athletes", coachAthleteRoutes);
 app.use("/api/injury-risk", injuryRiskRoutes);
 app.use("/api/fitness-profile", fitnessProfileRoutes);
 app.use("/api/fitness-recommendations", fitnessRecommendationRoutes);
-app.use("/api/nutrition-engine", nutritionApiRoutes);
-app.use("/api/nutrition-api", nutritionApiRoutes);
-
-// Health check
-app.get("/api/health", (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "FitNect backend is running",
-        service: "FitNect API"
-    });
-});
 
 // Unknown routes
 app.use((req, res) => {
