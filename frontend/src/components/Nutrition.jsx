@@ -406,6 +406,7 @@ export default function Nutrition() {
   const [mealName, setMealName] = useState('')
   const [foodSearch, setFoodSearch] = useState('')
   const [foodResults, setFoodResults] = useState([])
+  const [noFoodsFound, setNoFoodsFound] = useState(false)
   const [searchingFoods, setSearchingFoods] = useState(false)
   const [selectedFoodId, setSelectedFoodId] = useState('')
   const [foodNutritionPer100g, setFoodNutritionPer100g] = useState(null)
@@ -573,6 +574,7 @@ export default function Nutrition() {
 
     setError('')
     setMessage('')
+    setNoFoodsFound(false)
     setSearchingFoods(true)
     setFoodResults([])
 
@@ -580,8 +582,9 @@ export default function Nutrition() {
       const response = await searchNutritionFoods(query)
       const results = normalizeFoodResults(response)
       setFoodResults(results)
-      if (!results.length) setMessage('No foods found. Try another search term.')
+      setNoFoodsFound(results.length === 0)
     } catch (err) {
+      setNoFoodsFound(false)
       setError(getErrorMessage(err, 'Food search is unavailable right now.'))
     } finally {
       setSearchingFoods(false)
@@ -1219,7 +1222,7 @@ export default function Nutrition() {
                       <input
                         id="food-search"
                         value={foodSearch}
-                        onChange={(event) => setFoodSearch(event.target.value)}
+                        onChange={(event) => { setFoodSearch(event.target.value); setNoFoodsFound(false) }}
                         minLength={2}
                         maxLength={100}
                         placeholder="Search foods, e.g. banana or rice"
@@ -1229,6 +1232,11 @@ export default function Nutrition() {
                         {searchingFoods ? 'Searching...' : 'Search foods'}
                       </button>
                     </div>
+                    {noFoodsFound && !searchingFoods && (
+                      <p role="status" className="mt-3 rounded-xl border border-[#EAE3F2] bg-white px-4 py-3 text-sm text-[#7E7E82]">
+                        No foods found. Try another search term.
+                      </p>
+                    )}
                     {foodResults.length > 0 && (
                       <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
                         {foodResults.map((food, index) => {
