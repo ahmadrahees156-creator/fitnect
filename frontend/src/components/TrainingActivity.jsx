@@ -680,87 +680,60 @@ function TrainingActivity() {
                 ? workout.exercises
                 : []
 
+              const exerciseNames = exercises.map((exercise) => exercise.name).filter(Boolean)
+              const workoutDescription = workout.notes || exercises.find((exercise) => exercise.description)?.description || 'A guided movement session to support your training routine.'
+              const workoutGif = getWorkoutGif(workout) ||
+                findLibraryGif(workout, exerciseGifIndex) ||
+                getWorkoutGif(exercises[0] || {}) ||
+                findLibraryGif(exercises[0] || {}, exerciseGifIndex)
+              const workoutImage = getWorkoutImage(workout)
+              const targetLabels = exerciseNames.length ? exerciseNames : []
               return (
-                <article
-                  key={workoutId}
-                  className="group overflow-hidden rounded-[22px] border border-[#ECE6F2] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D9C6E9] hover:shadow-[0_15px_35px_rgba(72,46,94,.07)]"
-                >
-                  <div className="relative h-44 overflow-hidden bg-[#EDE2F8] sm:h-48">
-                    {(() => {
-                      const workoutGif = getWorkoutGif(workout) ||
-                        findLibraryGif(workout, exerciseGifIndex) ||
-                        getWorkoutGif(exercises[0] || {}) ||
-                        findLibraryGif(exercises[0] || {}, exerciseGifIndex)
-                      const workoutImage = getWorkoutImage(workout)
-                      return (
-                        <img
-                          src={workoutGif || workoutImage}
-                          alt={`${workout.title || 'Workout'} preview`}
-                          loading="lazy"
-                          onError={(event) => {
-                            if (workoutGif && event.currentTarget.src === workoutGif) {
-                              event.currentTarget.onerror = null
-                              event.currentTarget.src = workoutImage
-                            } else {
-                              event.currentTarget.onerror = null
-                              event.currentTarget.src = categoryFallbackImages[categoryName] || categoryFallbackImages.other
-                            }
-                          }}
-                          className={`h-full w-full transition duration-500 ${workoutGif ? 'bg-[#F8F5FC] object-contain p-2' : 'object-cover group-hover:scale-105'}`}
-                        />
-                      )
-                    })()}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#21172D]/45 via-transparent to-transparent" />
-                    <span className="absolute bottom-3 left-3 rounded-full border border-white/40 bg-white/90 px-3 py-1.5 text-[10px] font-bold capitalize text-[#493456] shadow-sm backdrop-blur">
-                      {formatCategory(categoryName)}
-                    </span>
-                    <span className="absolute right-3 top-3 rounded-full border border-white/40 bg-white/90 px-3 py-1.5 text-[10px] font-bold text-[#493456] shadow-sm backdrop-blur">
-                      {duration} min
-                    </span>
-                  </div>
-
-                  <div className="p-5">
-                    <div className="flex flex-wrap gap-2">
-                      <span className="rounded-full bg-[#F3EDF9] px-2.5 py-1 text-[10px] font-bold text-[#806991]">
-                        {formatCategory(categoryName)}
-                      </span>
-
-                      <span className="rounded-full bg-[#F8F5FA] px-2.5 py-1 text-[10px] font-semibold text-[#9686A1]">
-                        {exercises.length} exercises
-                      </span>
+                <article key={workoutId} className="group flex min-w-0 flex-col overflow-hidden rounded-[26px] border border-[#EEE7F4] bg-white shadow-[0_5px_20px_rgba(55,36,72,0.035)] transition duration-300 hover:-translate-y-1.5 hover:border-[#D7C5E5] hover:shadow-[0_22px_44px_rgba(55,36,72,0.12)]">
+                  <div className="relative flex h-44 items-end overflow-hidden bg-gradient-to-br from-[#E4DBF4] to-[#F8E8F7] p-4 sm:h-48">
+                    <img
+                      src={workoutGif || workoutImage}
+                      alt={`${workout.title || 'Workout'} workout demonstration`}
+                      loading="lazy"
+                      onError={(event) => {
+                        if (workoutGif && event.currentTarget.src === workoutGif) {
+                          event.currentTarget.onerror = null
+                          event.currentTarget.src = workoutImage
+                        } else {
+                          event.currentTarget.onerror = null
+                          event.currentTarget.src = categoryFallbackImages[categoryName] || categoryFallbackImages.other
+                        }
+                      }}
+                      className={`absolute inset-0 h-full w-full transition duration-500 ${workoutGif ? 'bg-[#F8F5FC] object-contain p-2' : 'object-cover group-hover:scale-105'}`}
+                    />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#151517]/45 via-transparent to-[#151517]/5" />
+                    <div className="relative flex flex-wrap gap-2">
+                      <span className="rounded-full border border-white/70 bg-white/85 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#493456]">{formatCategory(categoryName)}</span>
+                      <span className="rounded-full border border-white/70 bg-white/85 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-[#493456]">{exercises.length} {exercises.length === 1 ? 'exercise' : 'exercises'}</span>
                     </div>
-
-                    <h3 className="mt-3 text-lg font-bold text-[#382749]">
-                      {workout.title || 'Untitled workout'}
-                    </h3>
-
-                    <p className="mt-2 min-h-10 whitespace-pre-line text-sm leading-5 text-[#92849D]">
-                      {workout.notes || 'Review the exercises in this session.'}
+                  </div>
+                  <div className="flex flex-1 flex-col p-5 sm:p-5">
+                    <h3 className="line-clamp-2 min-h-[3.25rem] text-[17px] font-bold leading-6 text-[#302442] transition-colors group-hover:text-[#7855A6]">{workout.title || 'Untitled workout'}</h3>
+                    <p className="mt-2 line-clamp-3 min-h-[4.5rem] whitespace-pre-line text-sm leading-6 text-[#77717F]">
+                      {workoutDescription}
                     </p>
-                    {exercises.length > 0 && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#F8F5FC] px-3 py-2 text-xs font-semibold text-[#655472]">◷ {duration ? `${duration} min` : 'Flexible duration'}</span>
+                      {targetLabels.length > 0 && (
+                        <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#F8F5FC] px-3 py-2 text-xs font-semibold text-[#655472]">↔ {targetLabels.length} {targetLabels.length === 1 ? 'exercise' : 'exercises'}</span>
+                      )}
+                    </div>
+                    {targetLabels.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-1.5">
-                        {exercises.slice(0, 3).map((exercise, index) => (
-                          <span key={exercise._id || `${exercise.name}-${index}`} className="rounded-full bg-[#F0F8F2] px-2.5 py-1 text-[11px] font-medium text-[#41664E]">
-                            {exercise.name}
-                          </span>
+                        {targetLabels.slice(0, 3).map((name, index) => (
+                          <span key={`${name}-${index}`} className="rounded-full bg-[#F0F8F2] px-2.5 py-1 text-[11px] font-medium text-[#41664E]">{name}</span>
                         ))}
-                        {exercises.length > 3 && (
-                          <span className="rounded-full bg-[#F8F5FC] px-2.5 py-1 text-[11px] text-[#77717F]">+{exercises.length - 3} more</span>
-                        )}
+                        {targetLabels.length > 3 && <span className="rounded-full bg-[#F8F5FC] px-2.5 py-1 text-[11px] text-[#77717F]">+{targetLabels.length - 3} more</span>}
                       </div>
                     )}
-
-                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#F0EAF4] pt-4">
-                      <span className="text-xs font-semibold text-[#8D7C9C]">
-                        ◷ {duration} minutes
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => setSelectedId(workoutId)}
-                        className="rounded-xl bg-[#332743] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#4A365D]"
-                      >
-                        View workout →
+                    <div className="mt-auto pt-5">
+                      <button type="button" onClick={() => setSelectedId(workoutId)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#151517] px-4 py-3.5 text-sm font-semibold text-white transition duration-200 hover:bg-[#7855A6] focus:outline-none focus:ring-4 focus:ring-[#E4DBF4]">
+                        <span>View workout</span><span aria-hidden="true">↗</span>
                       </button>
                     </div>
                   </div>
