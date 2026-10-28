@@ -531,7 +531,7 @@ function TrainingActivity() {
             <p className="mt-2 text-sm text-[#92849D]">{error}</p>
             <button
               type="button"
-              onClick={() => setCategory((current) => current)}
+              onClick={() => setRefreshKey((key) => key + 1)}
               className="mt-4 rounded-xl bg-[#332743] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#4A365D]"
             >
               Retry
