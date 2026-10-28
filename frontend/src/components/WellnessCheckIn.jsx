@@ -272,7 +272,7 @@ export default function WellnessCheckIn() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl space-y-6 text-[#151517] sm:space-y-8">
+    <section className="mx-auto w-full max-w-7xl space-y-6 text-[#151517] sm:space-y-8">
       <style>{`
         .wellness-range {
           height: 6px;
@@ -315,11 +315,11 @@ export default function WellnessCheckIn() {
         }
       `}</style>
 
-      <header className="relative overflow-hidden rounded-[2rem] border border-[#E4DBF4] bg-[#F8F5FC] p-6 shadow-[0_16px_45px_rgba(72,46,94,.06)] sm:p-9 lg:p-10">
+      <header className="relative overflow-hidden rounded-[2rem] border border-[#DDD0ED] bg-gradient-to-br from-[#F8F5FC] via-[#F8F5FC] to-[#E4DBF4] p-6 shadow-[0_18px_50px_rgba(72,46,94,.08)] sm:p-9 lg:p-10">
         <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-[#FDC381]/35 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 right-28 h-40 w-40 rounded-full bg-[#F373D4]/10 blur-3xl" />
 
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative grid gap-7 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
           <div className="max-w-xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#E5DCEF] bg-white/80 px-3 py-1.5">
               <span className="h-2 w-2 rounded-full bg-[#8CC9A3]" />
@@ -340,8 +340,8 @@ export default function WellnessCheckIn() {
             </p>
           </div>
 
-          <div className="flex items-center gap-4 self-start rounded-2xl border border-white bg-white/80 p-4 shadow-sm sm:min-w-44 sm:flex-col sm:items-center sm:justify-center sm:self-auto sm:p-6">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FDC381]/40 text-3xl">
+          <div className="flex items-center gap-4 rounded-2xl border border-white/90 bg-white/85 p-4 shadow-[0_10px_28px_rgba(72,46,94,.07)] backdrop-blur-sm sm:p-5 lg:flex-col lg:items-start lg:p-6">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#FDC381]/45 text-3xl ring-4 ring-[#FDC381]/15">
               {moods.find((mood) => mood.value === form.mood)?.emoji || '🌿'}
             </div>
             <div className="sm:text-center">
@@ -355,7 +355,7 @@ export default function WellnessCheckIn() {
           </div>
         </div>
 
-        <div className="relative mt-7 flex flex-wrap items-center gap-2 border-t border-[#E5DCEF] pt-5">
+        <div className="relative mt-7 flex flex-wrap items-center gap-2 border-t border-[#DCCFEA] pt-5">
           <span className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-[#62596F]">
             {new Date().toLocaleDateString('en-IN', {
               weekday: 'short',
@@ -450,7 +450,7 @@ export default function WellnessCheckIn() {
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-2 xl:items-stretch">
         <div className={cardClass}>
           <SectionHeading
             number="02"
@@ -651,7 +651,7 @@ export default function WellnessCheckIn() {
       </div>
 
         
-      <footer className="rounded-3xl border border-[#EEEAF3] bg-white p-5 shadow-[0_8px_28px_rgba(72,46,94,.035)] sm:p-6">
+      <footer className="rounded-[1.75rem] border border-[#EEEAF3] bg-white p-5 shadow-[0_8px_28px_rgba(72,46,94,.035)] sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#CAECD6]/70 text-lg">
