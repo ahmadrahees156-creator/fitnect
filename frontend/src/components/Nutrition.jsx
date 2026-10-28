@@ -639,20 +639,18 @@ export default function Nutrition() {
       !mealName.trim() ||
       calories === '' ||
       protein === '' ||
-      carbohydrates === '' ||
       fat === ''
     ) {
       setError('Enter the meal name, calories and all macronutrient values.')
       return
     }
 
-    const values = [calories, protein, carbohydrates, fat, servingSize].map(Number)
+    const values = [calories, protein, fat, servingSize].map(Number)
 
     if (
       values.some((value) => !Number.isFinite(value) || value < 0) ||
       Number(calories) > 10000 ||
       Number(protein) > 1000 ||
-      Number(carbohydrates) > 2000 ||
       Number(fat) > 1000 ||
       Number(servingSize) <= 0
     ) {
@@ -1195,7 +1193,6 @@ export default function Nutrition() {
                     {[
                       [ 'meal-calories', foodNutritionPer100g ? 'Calories (per 100 g)' : 'Calories (kcal)', calories, setCalories, 10000],
                       ['meal-protein', foodNutritionPer100g ? 'Protein (per 100 g)' : 'Protein (g)', protein, setProtein, 2000],
-                      ['meal-carbs', foodNutritionPer100g ? 'Carbs (per 100 g)' : 'Carbohydrates (g)', carbohydrates, setCarbohydrates, 2000],
                       ['meal-fat', foodNutritionPer100g ? 'Fat (per 100 g)' : 'Fat (g)', fat, setFat, 2000],
                     ].map(([id, label, value, setter, max]) => (
                       <div key={id}>
@@ -1244,7 +1241,7 @@ export default function Nutrition() {
                           <p className="break-words text-sm font-semibold">{meal.foodName || meal.name}</p>
                           <p className="mt-1 text-xs capitalize text-[#7E7E82]">{meal.mealType} · {meal.servingSize} {meal.servingUnit}</p>
                           <p className="mt-1 text-xs text-[#7E7E82]">
-                            Protein {Number(meal.protein || 0)} g · Carbs {Number(meal.carbohydrates || 0)} g · Fat {Number(meal.fat || 0)} g
+                            Protein {Number(meal.protein || 0)} g · Fat {Number(meal.fat || 0)} g
                           </p>
                         </div>
                         <div className="shrink-0 text-right">
@@ -1255,11 +1252,10 @@ export default function Nutrition() {
                   </div>
                 )}
 
-                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {[
                     ['Calories', totalCalories, 'kcal', 'bg-[#F3EDF9]'],
                     ['Protein', totalProtein, 'g', 'bg-[#E7F5EB]'],
-                    ['Carbs', totalCarbohydrates, 'g', 'bg-[#FFF0DF]'],
                     ['Fat', totalFat, 'g', 'bg-[#FCE4F5]'],
                   ].map(([label, value, unit, color]) => (
                     <div key={label} className={`rounded-2xl p-4 ${color}`}>
