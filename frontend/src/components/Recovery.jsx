@@ -426,90 +426,92 @@ export default function Recovery() {
                   </select>
                 </div>
 
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <label
-                      htmlFor="recovery-energy"
-                      className="text-sm font-semibold text-[#493956]"
-                    >
-                      Energy level
-                    </label>
-                    <span className="rounded-full bg-[#E5F4E9] px-3 py-1 text-xs font-bold text-[#4C8C68]">
-                      {form.energy}/10
-                    </span>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-[#E7F1E9] bg-[#FBFEFC] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="recovery-energy"
+                        className="text-sm font-semibold text-[#493956]"
+                      >
+                        Energy level
+                      </label>
+                      <span className="rounded-full bg-[#E5F4E9] px-3 py-1 text-xs font-bold text-[#4C8C68]">
+                        {form.energy}/10
+                      </span>
+                    </div>
+                    <input
+                      id="recovery-energy"
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={form.energy}
+                      onChange={(event) =>
+                        updateField('energy', Number(event.target.value))
+                      }
+                      className="w-full cursor-pointer accent-[#7CB993]"
+                    />
+                    <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
+                      <span>Very low</span>
+                      <span>Excellent</span>
+                    </div>
                   </div>
-                  <input
-                    id="recovery-energy"
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={form.energy}
-                    onChange={(event) =>
-                      updateField('energy', Number(event.target.value))
-                    }
-                    className="w-full accent-[#7CB993]"
-                  />
-                  <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
-                    <span>Very low</span>
-                    <span>Excellent</span>
-                  </div>
-                </div>
 
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <label
-                      htmlFor="recovery-soreness"
-                      className="text-sm font-semibold text-[#493956]"
-                    >
-                      Muscle soreness
-                    </label>
-                    <span className="rounded-full bg-[#FBE8D8] px-3 py-1 text-xs font-bold text-[#A56E43]">
-                      {form.soreness}/5
-                    </span>
+                  <div className="rounded-2xl border border-[#F6E6D8] bg-[#FFFCF8] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="recovery-soreness"
+                        className="text-sm font-semibold text-[#493956]"
+                      >
+                        Muscle soreness
+                      </label>
+                      <span className="rounded-full bg-[#FBE8D8] px-3 py-1 text-xs font-bold text-[#A56E43]">
+                        {form.soreness}/5
+                      </span>
+                    </div>
+                    <input
+                      id="recovery-soreness"
+                      type="range"
+                      min="1"
+                      max="5"
+                      value={form.soreness}
+                      onChange={(event) =>
+                        updateField('soreness', Number(event.target.value))
+                      }
+                      className="w-full cursor-pointer accent-[#D99B68]"
+                    />
+                    <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
+                      <span>None</span>
+                      <span>Very sore</span>
+                    </div>
                   </div>
-                  <input
-                    id="recovery-soreness"
-                    type="range"
-                    min="1"
-                    max="5"
-                    value={form.soreness}
-                    onChange={(event) =>
-                      updateField('soreness', Number(event.target.value))
-                    }
-                    className="w-full accent-[#D99B68]"
-                  />
-                  <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
-                    <span>None</span>
-                    <span>Very sore</span>
-                  </div>
-                </div>
 
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <label
-                      htmlFor="recovery-stress"
-                      className="text-sm font-semibold text-[#493956]"
-                    >
-                      Stress level
-                    </label>
-                    <span className="rounded-full bg-[#F3E8F8] px-3 py-1 text-xs font-bold text-[#875E9E]">
-                      {form.stress}/5
-                    </span>
-                  </div>
-                  <input
-                    id="recovery-stress"
-                    type="range"
-                    min="1"
-                    max="5"
-                    value={form.stress}
-                    onChange={(event) =>
-                      updateField('stress', Number(event.target.value))
-                    }
-                    className="w-full accent-[#A879C4]"
-                  />
-                  <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
-                    <span>Relaxed</span>
-                    <span>Very stressed</span>
+                  <div className="rounded-2xl border border-[#EAE0F2] bg-[#FDFBFE] p-4 sm:col-span-2">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="recovery-stress"
+                        className="text-sm font-semibold text-[#493956]"
+                      >
+                        Stress level
+                      </label>
+                      <span className="rounded-full bg-[#F3E8F8] px-3 py-1 text-xs font-bold text-[#875E9E]">
+                        {form.stress}/5
+                      </span>
+                    </div>
+                    <input
+                      id="recovery-stress"
+                      type="range"
+                      min="1"
+                      max="5"
+                      value={form.stress}
+                      onChange={(event) =>
+                        updateField('stress', Number(event.target.value))
+                      }
+                      className="w-full cursor-pointer accent-[#A879C4]"
+                    />
+                    <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
+                      <span>Relaxed</span>
+                      <span>Very stressed</span>
+                    </div>
                   </div>
                 </div>
 
@@ -538,18 +540,43 @@ export default function Recovery() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="mt-6 w-full rounded-xl bg-[#332743] px-5 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#4A365D] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-busy={saving}
+                className="group mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#332743] px-5 py-3.5 text-sm font-bold text-white shadow-[0_8px_18px_rgba(51,39,67,0.12)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4A365D] hover:shadow-[0_12px_24px_rgba(51,39,67,0.18)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               >
-                {saving ? 'Saving check-in...' : 'Save recovery check-in'}
+                {saving ? (
+                  <>
+                    <span
+                      className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                      aria-hidden="true"
+                    />
+                    Saving check-in...
+                  </>
+                ) : (
+                  <>
+                    Save recovery check-in
+                    <span
+                      className="transition-transform duration-200 group-hover:translate-x-0.5"
+                      aria-hidden="true"
+                    >
+                      →
+                    </span>
+                  </>
+                )}
               </button>
 
               {savedMessage && (
-                <p
+                <div
                   role="status"
-                  className="mt-3 rounded-xl bg-[#EAF6EE] px-4 py-3 text-xs font-medium text-[#4F8966]"
+                  className="mt-3 flex items-start gap-3 rounded-xl border border-[#CFE9D7] bg-[#F0FAF3] px-4 py-3.5 text-xs leading-5 text-[#477B59]"
                 >
-                  {savedMessage}
-                </p>
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D8F0DF] text-sm font-bold">
+                    ✓
+                  </span>
+                  <div>
+                    <p className="font-bold">Check-in saved</p>
+                    <p className="mt-0.5">{savedMessage}</p>
+                  </div>
+                </div>
               )}
             </article>
 
@@ -586,19 +613,28 @@ export default function Recovery() {
                   Small steps, better routines
                 </h2>
 
-                <div className="mt-5 space-y-4">
-                  {recoveryTips.map((tip) => (
-                    <div key={tip.title} className="flex gap-3">
+                <div className="mt-5 space-y-3">
+                  {recoveryTips.map((tip, index) => (
+                    <div
+                      key={tip.title}
+                      className="group flex gap-3 rounded-2xl border border-[#F0EAF4] bg-[#FDFBFE] p-3.5 transition duration-200 hover:-translate-y-0.5 hover:border-[#E3D5EE] hover:bg-white hover:shadow-[0_8px_24px_rgba(70,45,90,0.06)]"
+                    >
                       <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg transition-transform duration-200 group-hover:scale-105"
                         style={{ backgroundColor: tip.color }}
+                        aria-hidden="true"
                       >
                         {tip.icon}
                       </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-[#493956]">
-                          {tip.title}
-                        </h3>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <h3 className="text-sm font-bold text-[#493956]">
+                            {tip.title}
+                          </h3>
+                          <span className="text-[10px] font-bold tracking-wide text-[#B0A0BB]">
+                            0{index + 1}
+                          </span>
+                        </div>
                         <p className="mt-1 text-xs leading-5 text-[#92849D]">
                           {tip.detail}
                         </p>
@@ -623,7 +659,7 @@ export default function Recovery() {
                     first check-in.
                   </p>
                 ) : (
-                  <div className="mt-4 divide-y divide-[#F0EAF4]">
+                  <div className="mt-5 space-y-3">
                     {historyEntries.map((entry, index) => {
                       const date = getDateKey(entry)
                       const score = calculateScore({
@@ -632,24 +668,49 @@ export default function Recovery() {
                         soreness: entry.soreness,
                         stress: entry.stress,
                       })
+                      const scoreTone =
+                        score >= 75
+                          ? 'bg-[#E7F5EC] text-[#4F8966]'
+                          : score >= 50
+                            ? 'bg-[#FFF1DF] text-[#A56E43]'
+                            : 'bg-[#F9E8EF] text-[#A45172]'
 
                       return (
                         <div
                           key={entry._id || `${date}-${index}`}
-                          className="flex items-center justify-between gap-3 py-3 first:pt-0"
+                          className="rounded-2xl border border-[#F0EAF4] bg-[#FDFBFE] p-4 transition duration-200 hover:border-[#E3D5EE] hover:bg-white"
                         >
-                          <div>
-                            <p className="text-sm font-semibold text-[#493956]">
-                              {formatDate(date, today)}
-                            </p>
-                            <p className="mt-1 text-xs text-[#9A8CA5]">
-                              {entry.sleepHours} hrs sleep · Energy{' '}
-                              {entry.energy}/10
-                            </p>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-start gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDE3F7] text-xs font-bold text-[#78578F]">
+                                {String(index + 1).padStart(2, '0')}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-[#493956]">
+                                  {formatDate(date, today)}
+                                </p>
+                                <p className="mt-1 text-xs text-[#9A8CA5]">
+                                  {entry.sleepHours} hrs sleep <span className="px-1">·</span> Energy {entry.energy}/10
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${scoreTone}`}>
+                              {score}/100
+                            </span>
                           </div>
-                          <span className="rounded-full bg-[#F0E7F8] px-3 py-1.5 text-xs font-bold text-[#78578F]">
-                            {score}/100
-                          </span>
+                          <div
+                            className="mt-4 h-1.5 overflow-hidden rounded-full bg-[#EDE5F4]"
+                            role="progressbar"
+                            aria-label={`Recovery score for ${formatDate(date, today)}`}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={score}
+                          >
+                            <div
+                              className={`h-full rounded-full ${score >= 75 ? 'bg-[#86B99A]' : score >= 50 ? 'bg-[#E9B77D]' : 'bg-[#D99AB9']}`}
+                              style={{ width: `${score}%` }}
+                            />
+                          </div>
                         </div>
                       )
                     })}

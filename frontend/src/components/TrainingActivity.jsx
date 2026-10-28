@@ -531,7 +531,7 @@ function TrainingActivity() {
             <p className="mt-2 text-sm text-[#92849D]">{error}</p>
             <button
               type="button"
-              onClick={() => setCategory((current) => current)}
+              onClick={() => setRefreshKey((key) => key + 1)}
               className="mt-4 rounded-xl bg-[#332743] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#4A365D]"
             >
               Retry
@@ -563,16 +563,23 @@ function TrainingActivity() {
                   key={workoutId}
                   className="group overflow-hidden rounded-[22px] border border-[#ECE6F2] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D9C6E9] hover:shadow-[0_15px_35px_rgba(72,46,94,.07)]"
                 >
-                  <div className="relative flex h-32 items-center justify-center overflow-hidden bg-[#EDE2F8]">
-                    <div className="absolute h-24 w-24 rounded-full border border-white/70" />
-                    <div className="absolute h-16 w-16 rounded-full border border-white/70" />
-
-                    <span className="relative text-4xl font-black text-[#69527D] transition duration-300 group-hover:scale-110">
-                      {categoryName === 'strength'
-                        ? '↗'
-                        : categoryName === 'cardio'
-                          ? '〰'
-                          : '＋'}
+                  <div className="relative h-44 overflow-hidden bg-[#EDE2F8] sm:h-48">
+                    <img
+                      src={getWorkoutImage(workout)}
+                      alt={`${workout.title || 'Workout'} preview`}
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null
+                        event.currentTarget.src = categoryFallbackImages[categoryName] || categoryFallbackImages.other
+                      }}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#21172D]/45 via-transparent to-transparent" />
+                    <span className="absolute bottom-3 left-3 rounded-full border border-white/40 bg-white/90 px-3 py-1.5 text-[10px] font-bold capitalize text-[#493456] shadow-sm backdrop-blur">
+                      {formatCategory(categoryName)}
+                    </span>
+                    <span className="absolute right-3 top-3 rounded-full border border-white/40 bg-white/90 px-3 py-1.5 text-[10px] font-bold text-[#493456] shadow-sm backdrop-blur">
+                      {duration} min
                     </span>
                   </div>
 
@@ -655,8 +662,18 @@ function TrainingActivity() {
                 value={librarySearch}
                 onChange={(event) => setLibrarySearch(event.target.value)}
                 placeholder="Search workouts or muscles..."
-                className="w-full rounded-2xl border border-[#EAE3F0] bg-[#FCFAFE] py-3 pl-11 pr-4 text-sm text-[#302442] outline-none transition placeholder:text-[#A49AAE] focus:border-[#B99AD0] focus:ring-4 focus:ring-[#E4DBF4]/60"
+                className="w-full rounded-2xl border border-[#EAE3F0] bg-[#FCFAFE] py-3 pl-11 pr-12 text-sm text-[#302442] outline-none transition placeholder:text-[#A49AAE] focus:border-[#B99AD0] focus:ring-4 focus:ring-[#E4DBF4]/60"
               />
+              {librarySearch && (
+                <button
+                  type="button"
+                  onClick={() => setLibrarySearch('')}
+                  aria-label="Clear workout search"
+                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-[#92879F] transition hover:bg-[#E4DBF4] hover:text-[#493456]"
+                >
+                  ×
+                </button>
+              )}
             </label>
             <label className="block">
               <span className="sr-only">Filter by category</span>
@@ -797,7 +814,7 @@ function TrainingActivity() {
               </span>
               <h3 className="mt-4 font-bold text-[#302442]">No matching workouts</h3>
               <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#77717F]">
-                Try another search or clear the filters to explore the full library.
+                Try a different keyword, category or difficulty—or reset all filters to explore the full library.
               </p>
               <button type="button" onClick={() => { setLibrarySearch(''); setLibraryCategory('all'); setLibraryDifficulty('all') }} className="mt-4 rounded-full border border-[#E4DBF4] px-4 py-2 text-sm font-semibold text-[#735A86] transition hover:bg-[#F8F5FC]">
                 Clear filters
@@ -808,8 +825,12 @@ function TrainingActivity() {
       </section>
 
       {selectedLibraryWorkout && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[#21172D]/50 p-0 backdrop-blur-sm sm:items-center sm:p-5" onClick={(event) => { if (event.target === event.currentTarget) setSelectedLibraryWorkout(null) }}>
-          <section role="dialog" aria-modal="true" aria-labelledby="library-workout-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] bg-[#FCFAFE] shadow-2xl sm:rounded-[28px]">
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-[#21172D]/50 p-0 backdrop-blur-sm sm:items-center sm:p-5"
+          onClick={(event) => { if (event.target === event.currentTarget) setSelectedLibraryWorkout(null) }}
+          onKeyDown={(event) => { if (event.key === 'Escape') setSelectedLibraryWorkout(null) }}
+        >
+          <section role="dialog" aria-modal="true" aria-labelledby="library-workout-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] border border-white/70 bg-[#FCFAFE] shadow-2xl sm:rounded-[28px]">
             <div className="relative overflow-hidden bg-[#E4DBF4] px-5 py-6 sm:px-7">
               <div className="pointer-events-none absolute -right-6 -top-10 h-36 w-36 rounded-full bg-[#F373D4]/20 blur-2xl" />
               <div className="relative flex items-start justify-between gap-4">
@@ -823,9 +844,12 @@ function TrainingActivity() {
             </div>
             <div className="space-y-6 p-5 sm:p-7">
               {findLibraryGif(selectedLibraryWorkout, exerciseGifIndex) ? (
-                <section className="overflow-hidden rounded-2xl border border-[#EEE7F4] bg-white">
-                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] px-4 py-3">
-                    <h3 className="text-sm font-bold text-[#302442]">Animated exercise demo</h3>
+                <section className="overflow-hidden rounded-2xl border border-[#E6D9EF] bg-white shadow-sm">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] bg-[#FCFAFE] px-4 py-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-[#302442]">Animated exercise demo</h3>
+                      <p className="mt-1 text-xs text-[#92879F]">Watch the movement before you begin</p>
+                    </div>
                     <span className="rounded-full bg-[#CAECD6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#315B3D]">GIF</span>
                   </div>
                   <div className="flex justify-center bg-[#F8F5FC] p-3 sm:p-5">
@@ -842,9 +866,12 @@ function TrainingActivity() {
                   </div>
                 </section>
               ) : (
-                <section className="overflow-hidden rounded-2xl border border-[#EEE7F4] bg-white">
-                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] px-4 py-3">
-                    <h3 className="text-sm font-bold text-[#302442]">Exercise demonstration</h3>
+                <section className="overflow-hidden rounded-2xl border border-[#E6D9EF] bg-white shadow-sm">
+                  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAF4] bg-[#FCFAFE] px-4 py-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-[#302442]">Exercise demonstration</h3>
+                      <p className="mt-1 text-xs text-[#92879F]">Visual reference for this movement</p>
+                    </div>
                     <span className="rounded-full bg-[#FDC381]/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#76502A]">Image preview</span>
                   </div>
                   <img
@@ -867,13 +894,13 @@ function TrainingActivity() {
                 </section>
               )}
               <div className="grid gap-4 sm:grid-cols-2">
-                <section className="rounded-2xl bg-white p-4">
+                <section className="rounded-2xl border border-[#E5F0E8] bg-white p-4 sm:p-5">
                   <h3 className="text-sm font-bold text-[#302442]">Target muscles</h3>
                   {Array.isArray(selectedLibraryWorkout.targetMuscles) && selectedLibraryWorkout.targetMuscles.length ? (
                     <div className="mt-3 flex flex-wrap gap-2">{selectedLibraryWorkout.targetMuscles.map((muscle) => <span key={muscle} className="rounded-full bg-[#CAECD6] px-3 py-1.5 text-xs font-semibold capitalize text-[#315B3D]">{formatLibraryLabel(muscle)}</span>)}</div>
                   ) : <p className="mt-2 text-sm text-[#92879F]">Not specified</p>}
                 </section>
-                <section className="rounded-2xl bg-white p-4">
+                <section className="rounded-2xl border border-[#F3E4D3] bg-white p-4 sm:p-5">
                   <h3 className="text-sm font-bold text-[#302442]">Equipment</h3>
                   {Array.isArray(selectedLibraryWorkout.equipment) && selectedLibraryWorkout.equipment.length ? (
                     <div className="mt-3 flex flex-wrap gap-2">{selectedLibraryWorkout.equipment.map((gear) => <span key={gear} className="rounded-full bg-[#FDC381]/40 px-3 py-1.5 text-xs font-semibold capitalize text-[#76502A]">{formatLibraryLabel(gear)}</span>)}</div>
@@ -888,7 +915,7 @@ function TrainingActivity() {
                 {Array.isArray(selectedLibraryWorkout.instructions) && selectedLibraryWorkout.instructions.length ? (
                   <ol className="mt-4 space-y-3">
                     {selectedLibraryWorkout.instructions.map((instruction, index) => (
-                      <li key={index} className="flex gap-3 rounded-2xl border border-[#EEE7F4] bg-white p-4">
+                      <li key={index} className="flex gap-3 rounded-2xl border border-[#EEE7F4] bg-white p-4 transition-colors hover:border-[#DCCBE9] hover:bg-[#FDFBFE]">
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#E4DBF4] text-xs font-bold text-[#493456]">{String(index + 1).padStart(2, '0')}</span>
                         <p className="pt-1 text-sm leading-6 text-[#68676D]">{formatLibraryText(instruction)}</p>
                       </li>
