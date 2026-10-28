@@ -253,7 +253,7 @@ export default function WellnessCheckIn() {
     'w-full rounded-xl border border-[#EAE4F1] bg-white px-4 py-3 text-sm text-[#151517] outline-none transition placeholder:text-[#A4A0AA] focus:border-[#B9A4D7] focus:ring-4 focus:ring-[#E4DBF4]/60'
 
   const cardClass =
-    'rounded-2xl border border-[#ECE7F2] bg-white p-5 shadow-[0_3px_18px_rgba(35,25,55,0.025)] transition-shadow duration-300 hover:shadow-[0_8px_28px_rgba(35,25,55,0.045)] sm:p-6'
+    'rounded-3xl border border-[#EEEAF3] bg-white p-5 shadow-[0_8px_28px_rgba(72,46,94,.035)] transition duration-300 hover:-translate-y-0.5 hover:border-[#DFD1EC] hover:shadow-[0_14px_34px_rgba(72,46,94,.07)] sm:p-7'
 
   if (loading) {
     return (
@@ -272,7 +272,7 @@ export default function WellnessCheckIn() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-5xl space-y-5 text-[#151517]">
+    <section className="mx-auto w-full max-w-6xl space-y-6 text-[#151517] sm:space-y-8">
       <style>{`
         .wellness-range {
           height: 6px;
@@ -315,7 +315,7 @@ export default function WellnessCheckIn() {
         }
       `}</style>
 
-      <header className="relative overflow-hidden rounded-3xl border border-[#E4DBF4] bg-[#F8F5FC] p-6 sm:p-8 lg:p-9">
+      <header className="relative overflow-hidden rounded-[2rem] border border-[#E4DBF4] bg-[#F8F5FC] p-6 shadow-[0_16px_45px_rgba(72,46,94,.06)] sm:p-9 lg:p-10">
         <div className="pointer-events-none absolute -right-10 -top-16 h-48 w-48 rounded-full bg-[#FDC381]/35 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 right-28 h-40 w-40 rounded-full bg-[#F373D4]/10 blur-3xl" />
 
@@ -328,7 +328,7 @@ export default function WellnessCheckIn() {
               </span>
             </div>
 
-            <h2 className="mt-5 text-3xl font-bold leading-tight tracking-[-0.04em] text-[#151517] sm:text-4xl">
+            <h2 className="mt-5 text-3xl font-bold leading-tight tracking-tight text-[#151517] sm:text-4xl lg:text-5xl">
               Check in with
               <br />
               <span className="text-[#8975A5]">yourself.</span>
@@ -414,7 +414,7 @@ export default function WellnessCheckIn() {
           }
         />
 
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {moods.map((mood) => {
             const selected = form.mood === mood.value
 
@@ -450,7 +450,7 @@ export default function WellnessCheckIn() {
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-2">
         <div className={cardClass}>
           <SectionHeading
             number="02"
@@ -651,7 +651,7 @@ export default function WellnessCheckIn() {
       </div>
 
         
-      <footer className="rounded-2xl border border-[#EAE4F1] bg-white p-4 shadow-sm sm:p-5">
+      <footer className="rounded-3xl border border-[#EEEAF3] bg-white p-5 shadow-[0_8px_28px_rgba(72,46,94,.035)] sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#CAECD6]/70 text-lg">
