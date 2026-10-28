@@ -130,7 +130,7 @@ function findLibraryGif(workout, exerciseIndex) {
   const aliasMatch = exerciseIndex.find((exercise) =>
     alternatives.includes(String(exercise.name || '').toLowerCase().trim()) &&
     typeof exercise.gifUrl === 'string' &&
-    /^https?:\\/\\//i.test(exercise.gifUrl)
+    /^https?:\/\//i.test(exercise.gifUrl)
   )
 
   return aliasMatch?.gifUrl || ''
