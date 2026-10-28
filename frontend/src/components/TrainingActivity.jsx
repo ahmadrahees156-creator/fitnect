@@ -174,6 +174,7 @@ function TrainingActivity() {
   const [workouts, setWorkouts] = useState([])
   const [category, setCategory] = useState('All')
   const [selectedId, setSelectedId] = useState(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState('')
@@ -348,14 +349,56 @@ function TrainingActivity() {
     }
   }, [category, refreshKey])
 
-  const filteredWorkouts = useMemo(() => {
-    if (category === 'All') return workouts
+  function getWorkoutDateKey(workout) {
+    const rawDate = workout.date || workout.workoutDate || workout.createdAt
+    if (!rawDate) return ''
+    const date = new Date(rawDate)
+    if (Number.isNaN(date.getTime())) return String(rawDate).slice(0, 10)
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
 
-    return workouts.filter(
-      (workout) =>
+  function getLocalDateKey(date = new Date()) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  }
+
+  function formatHistoryDate(dateKey) {
+    if (dateKey === getLocalDateKey()) return 'Today'
+    if (!dateKey) return 'Date not recorded'
+    return new Date(`${dateKey}T12:00:00`).toLocaleDateString('en-IN', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+
+  const filteredWorkouts = useMemo(() => {
+    const today = getLocalDateKey()
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
+    const firstDay = getLocalDateKey(sevenDaysAgo)
+
+    return workouts.filter((workout) => {
+      const dateKey = getWorkoutDateKey(workout)
+      const inDateRange = historyOpen
+        ? dateKey >= firstDay && dateKey <= today
+        : dateKey === today
+      const inCategory =
+        category === 'All' ||
         workout.category?.toLowerCase() === category.toLowerCase()
-    )
-  }, [workouts, category])
+      return inDateRange && inCategory
+    })
+  }, [workouts, category, historyOpen])
+
+  const workoutDateGroups = useMemo(() => {
+    const groups = new Map()
+    filteredWorkouts.forEach((workout) => {
+      const dateKey = getWorkoutDateKey(workout) || 'unknown'
+      if (!groups.has(dateKey)) groups.set(dateKey, [])
+      groups.get(dateKey).push(workout)
+    })
+    return Array.from(groups.entries()).sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+  }, [filteredWorkouts])
 
   const selectedWorkout = filteredWorkouts.find(
     (workout) => String(workout._id ?? workout.id) === String(selectedId)
@@ -529,18 +572,25 @@ function TrainingActivity() {
       </section>
 
       <section>
-        <div className="mb-5">
-          <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
-            Training library
-          </p>
-
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#302442]">
-            Your workouts
-          </h2>
-
-          <p className="mt-1 text-sm text-[#92879F]">
-            Workouts are loaded from your FitNect account.
-          </p>
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
+              {historyOpen ? 'Your recent activity' : 'Today’s training'}
+            </p>
+            <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#302442]">
+              {historyOpen ? '7-day workout history' : 'Today’s workouts'}
+            </h2>
+            <p className="mt-1 text-sm text-[#92879F]">
+              {historyOpen ? 'Your workouts grouped by date for the last seven days.' : 'Only workouts saved for today appear here.'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setHistoryOpen((open) => !open); setSelectedId(null) }}
+            className="rounded-xl border border-[#E4DBF4] bg-white px-4 py-2.5 text-sm font-bold text-[#604184] transition hover:bg-[#F8F5FC]"
+          >
+            {historyOpen ? '← Back to today' : 'View 7-day history'}
+          </button>
         </div>
 
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -600,14 +650,24 @@ function TrainingActivity() {
           <div className="rounded-2xl border border-dashed border-[#DCCFE7] bg-white p-8 text-center">
             <p className="font-bold text-[#493456]">No workouts found</p>
             <p className="mt-2 text-sm text-[#92849D]">
-              There are no saved workouts for this category yet.
+              {historyOpen ? 'No workouts were saved during the last seven days.' : 'No workouts saved today yet. Add one from the Workout Library below.'}
             </p>
           </div>
         )}
 
         {!loading && !error && filteredWorkouts.length > 0 && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filteredWorkouts.map((workout) => {
+          <div className="space-y-7">
+            {workoutDateGroups.map(([dateKey, dateWorkouts]) => (
+              <section key={dateKey} className="space-y-4">
+                {historyOpen && (
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-sm font-bold text-[#493456]">{formatHistoryDate(dateKey === 'unknown' ? '' : dateKey)}</h3>
+                    <span className="rounded-full bg-[#F3EDF9] px-2.5 py-1 text-[10px] font-bold text-[#806991]">{dateWorkouts.length} {dateWorkouts.length === 1 ? 'workout' : 'workouts'}</span>
+                    <div className="h-px flex-1 bg-[#EEE7F4]" />
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {dateWorkouts.map((workout) => {
               const workoutId = workout._id ?? workout.id
               const categoryName = workout.category || 'other'
               const duration = Number(workout.durationMinutes) || 0
@@ -675,7 +735,10 @@ function TrainingActivity() {
                   </div>
                 </article>
               )
-            })}
+                  })}
+                </div>
+              </section>
+            ))}
           </div>
         )}
       </section>
