@@ -97,14 +97,23 @@ class _DetailsScreenState extends State<DetailsScreen> {
    final url = Uri.parse('https://fitnect-api-1k4t.onrender.com/api/fitness-profile/me');
 
     final Map<String, dynamic> body = {
+      //"age": int.tryParse(_ageController.text) ?? 20,
+      //"height": double.tryParse(_heightController.text) ?? 160,
+      //"weight": double.tryParse(_weightController.text) ?? 55,
+      //"goal": _selectedGoal,
+      //"activityLevel": _selectedActivityLevel,
+      //"experienceLevel": _selectedExperienceLevel,
+      //"workoutLocation": _selectedWorkoutLocation,
+      //"dietaryPreference": _selectedDietaryPreference,
       "age": int.tryParse(_ageController.text) ?? 20,
-      "heightCm": double.tryParse(_heightController.text) ?? 160,
-      "weightKg": double.tryParse(_weightController.text) ?? 55,
-      "goal": _selectedGoal,
-      "activityLevel": _selectedActivityLevel,
-      "experienceLevel": _selectedExperienceLevel,
-      "workoutLocation": _selectedWorkoutLocation,
-      "dietaryPreference": _selectedDietaryPreference,
+  "sex": "other", 
+  "heightCm": double.tryParse(_heightController.text) ?? 160.0,
+  "weightKg": double.tryParse(_weightController.text) ?? 55.0,
+  "goal": _selectedGoal,
+  "activityLevel": _selectedActivityLevel,
+  "experienceLevel": _selectedExperienceLevel,
+  "workoutLocation": _selectedWorkoutLocation,
+  "dietaryPreference": _selectedDietaryPreference,
     };
 
     try {
@@ -307,11 +316,11 @@ class _DetailsScreenState extends State<DetailsScreen> {
           fontSize: 16,
           fontWeight: FontWeight.bold,
           color: Colors.green,
-        ),
-      ),
-    ],
-  ),
-),
+                   ),
+                   ),
+                   ],
+                   ),
+                  ),
                   const SizedBox(height: 16),
 
                   

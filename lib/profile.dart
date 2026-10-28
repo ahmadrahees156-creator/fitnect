@@ -107,14 +107,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final url = Uri.parse('https://fitnect-api-1k4t.onrender.com/api/fitness-profile/me');
 
     final Map<String, dynamic> body = {
+      //"age": int.tryParse(_ageController.text) ?? 20,
+      //"height": double.tryParse(_heightController.text) ?? 165.0,
+      //"weight": double.tryParse(_weightController.text) ?? 60.0,
+      //"fitnessGoal": _selectedGoal,
+      //"activityLevel": _selectedActivity,
+      //"experienceLevel": _selectedExperience,
+      //"workoutLocation": _selectedLocation,
+      //"dietaryPreference": _selectedDiet,
       "age": int.tryParse(_ageController.text) ?? 20,
-      "height": double.tryParse(_heightController.text) ?? 165.0,
-      "weight": double.tryParse(_weightController.text) ?? 60.0,
-      "fitnessGoal": _selectedGoal,
-      "activityLevel": _selectedActivity,
-      "experienceLevel": _selectedExperience,
-      "workoutLocation": _selectedLocation,
-      "dietaryPreference": _selectedDiet,
+  "sex": "other", 
+  "heightCm": double.tryParse(_heightController.text) ?? 160.0,
+  "weightKg": double.tryParse(_weightController.text) ?? 55.0,
+  "goal": _selectedGoal,
+  "activityLevel": _selectedActivity,
+  "experienceLevel": _selectedExperience,
+  "workoutLocation": _selectedLocation,
+  "dietaryPreference": _selectedDiet,
     };
 
     try {
