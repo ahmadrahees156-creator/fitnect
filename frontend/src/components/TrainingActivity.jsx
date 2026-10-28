@@ -662,8 +662,18 @@ function TrainingActivity() {
                 value={librarySearch}
                 onChange={(event) => setLibrarySearch(event.target.value)}
                 placeholder="Search workouts or muscles..."
-                className="w-full rounded-2xl border border-[#EAE3F0] bg-[#FCFAFE] py-3 pl-11 pr-4 text-sm text-[#302442] outline-none transition placeholder:text-[#A49AAE] focus:border-[#B99AD0] focus:ring-4 focus:ring-[#E4DBF4]/60"
+                className="w-full rounded-2xl border border-[#EAE3F0] bg-[#FCFAFE] py-3 pl-11 pr-12 text-sm text-[#302442] outline-none transition placeholder:text-[#A49AAE] focus:border-[#B99AD0] focus:ring-4 focus:ring-[#E4DBF4]/60"
               />
+              {librarySearch && (
+                <button
+                  type="button"
+                  onClick={() => setLibrarySearch('')}
+                  aria-label="Clear workout search"
+                  className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-lg text-[#92879F] transition hover:bg-[#E4DBF4] hover:text-[#493456]"
+                >
+                  ×
+                </button>
+              )}
             </label>
             <label className="block">
               <span className="sr-only">Filter by category</span>
