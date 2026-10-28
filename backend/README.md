@@ -410,4 +410,4 @@ The API should validate inputs, run the agreed inference process, and return a d
 Route-count note
 The supplied source declares 53 route handlers when counting the root and health routes and each router's declarations once. The nutrition API router is mounted under two prefixes, adding four alternate full paths. This gives 57 reachable method/path combinations in the source configuration if both aliases are counted separately. This is a source-derived route count, not a live deployment test.
 Implementation status
-This README describes the code visible in the supplied project structure document. It does not claim that every route has been tested against the deployed server. Before release, compare this file with the current repository, package.json, environment configuration, and live API responses.
+This README describes the code visible in the supplied project structure document. It does not claim that every route has been tested against the deployed server. Before release, compare this file with the current repository, package.json, environment configuration, and live API responses.git commit -m "docs: add backend API documentation"
