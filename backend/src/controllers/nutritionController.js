@@ -1,6 +1,7 @@
-
 const mongoose = require("mongoose");
 const Nutrition = require("../models/Nutrition");
+const Food = require("../models/Food");
+const nutritionApi = require("../services/nutritionApiService");
 
 const mealTypes = ["breakfast", "lunch", "dinner", "snack"];
 const servingUnits = ["g", "ml", "piece", "cup", "serving"];
@@ -121,6 +122,156 @@ exports.addNutrition = async (req, res, next) => {
 
     return res.status(201).json({
       message: "Nutrition entry saved",
+      entry,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.addFoodFromCatalogue = async (req, res, next) => {
+  try {
+    const {
+      fdcId,
+      servingSize,
+      mealType,
+      date,
+      notes,
+    } = req.body;
+
+    // Validate the selected catalogue food.
+    if (
+      typeof fdcId !== "number" ||
+      !Number.isSafeInteger(fdcId) ||
+      fdcId <= 0
+    ) {
+      return res.status(400).json({
+        message: "A valid numeric fdcId is required",
+      });
+    }
+
+    // This calculation uses nutrition values per 100 grams.
+    if (
+      typeof servingSize !== "number" ||
+      !Number.isFinite(servingSize) ||
+      servingSize < 0.1 ||
+      servingSize > 10000
+    ) {
+      return res.status(400).json({
+        message: "servingSize must be between 0.1 and 10000 grams",
+      });
+    }
+
+    if (!mealTypes.includes(mealType)) {
+      return res.status(400).json({
+        message: "Valid mealType is required",
+      });
+    }
+
+    if (
+      notes !== undefined &&
+      (typeof notes !== "string" || notes.length > 300)
+    ) {
+      return res.status(400).json({
+        message: "Notes must be text with at most 300 characters",
+      });
+    }
+
+    const entryDate = getDateOnly(date);
+    const today = getDateOnly();
+
+    if (!entryDate || entryDate.getTime() > today.getTime()) {
+      return res.status(400).json({
+        message: "Enter a valid date that is not in the future",
+      });
+    }
+
+    // Look up the food in our own catalogue.
+    let food = await Food.findOne({ fdcId }).lean();
+
+    if (!food) {
+      try {
+        const extNutrition = await nutritionApi.getFoodNutrition(fdcId);
+        if (Array.isArray(extNutrition) && extNutrition.length > 0) {
+          const item = extNutrition[0];
+          const gw = Number(item.gram_weight) || 100;
+          food = {
+            name: item.description,
+            nutritionPer100g: {
+              caloriesKcal: (Number(item.calories_kcal) / gw) * 100,
+              proteinG: (Number(item.protein_g) / gw) * 100,
+              carbohydratesG: (Number(item.carbs_g) / gw) * 100,
+              fatG: (Number(item.fat_g) / gw) * 100,
+            },
+          };
+        }
+      } catch (err) {
+        // Fall through to 404
+      }
+    }
+
+    if (!food) {
+      return res.status(404).json({
+        message: "Food not found in the catalogue",
+      });
+    }
+
+    const nutrition = food.nutritionPer100g;
+
+    // Required macro values must exist to calculate the entry.
+    const requiredNutrients = [
+      nutrition?.caloriesKcal,
+      nutrition?.proteinG,
+      nutrition?.carbohydratesG,
+      nutrition?.fatG,
+    ];
+
+    if (
+      requiredNutrients.some(
+        (value) => typeof value !== "number" || !Number.isFinite(value)
+      )
+    ) {
+      return res.status(422).json({
+        message: "Nutrition information is incomplete for this food",
+      });
+    }
+
+    // Convert the entered quantity into a multiplier of 100 grams.
+    const multiplier = servingSize / 100;
+
+    const roundToTwo = (value) =>
+      Math.round((value + Number.EPSILON) * 100) / 100;
+
+    const calories = roundToTwo(
+      nutrition.caloriesKcal * multiplier
+    );
+    const protein = roundToTwo(
+      nutrition.proteinG * multiplier
+    );
+    const carbohydrates = roundToTwo(
+      nutrition.carbohydratesG * multiplier
+    );
+    const fat = roundToTwo(
+      nutrition.fatG * multiplier
+    );
+
+    // Save using the existing Nutrition schema.
+    const entry = await Nutrition.create({
+      user: new mongoose.Types.ObjectId(req.user.id),
+      date: entryDate,
+      foodName: food.name,
+      mealType,
+      servingSize,
+      servingUnit: "g",
+      calories,
+      protein,
+      carbohydrates,
+      fat,
+      notes: notes || "",
+    });
+
+    return res.status(201).json({
+      message: "Food added to nutrition log",
       entry,
     });
   } catch (error) {

@@ -1,2 +1,6 @@
 .env
 node_modules
+data/nutrition-source/
+data/sangat-food-db.zip
+data/usda-sr-legacy.zip
+handoffnutrition/

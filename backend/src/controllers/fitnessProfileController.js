@@ -1,8 +1,6 @@
-
 const FitnessProfile = require("../models/FitnessProfile");
 
 function getBmiCategory(age, bmi) {
-    
   if (age < 20) {
     return "age_specific_assessment_required";
   }
@@ -32,7 +30,8 @@ exports.getMyFitnessProfile = async (req, res, next) => {
       onboardingCompleted: profile.onboardingCompleted,
       profile: {
         age: profile.age,
-        gender: profile.gender || "prefer_not_to_say",
+        sex: profile.sex,
+        gender: profile.gender || profile.sex || "prefer_not_to_say",
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         bmi: profile.bmi,
@@ -55,6 +54,7 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
   try {
     const {
       age,
+      sex,
       gender,
       heightCm,
       weightKg,
@@ -65,9 +65,13 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
       dietaryPreference
     } = req.body;
 
-    // Require every field for the initial onboarding submission.
+    // Accept either field name while clients migrate between sex and gender.
+    const profileSex = sex || ((gender === "female" || gender === "male") ? gender : undefined);
+    const profileGender = gender || ((sex === "female" || sex === "male") ? sex : "prefer_not_to_say");
+
     const requiredFields = {
       age,
+      sex: profileSex,
       heightCm,
       weightKg,
       goal,
@@ -86,8 +90,16 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
     if (missingFields.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Please provide all required fitness profile fields.",
+        message: "Please provide all required fitness profile fields, including sex.",
         missingFields
+      });
+    }
+
+    // Validate sex values
+    if (profileSex !== "female" && profileSex !== "male") {
+      return res.status(400).json({
+        success: false,
+        message: "Sex must be either 'female' or 'male'."
       });
     }
 
@@ -135,13 +147,14 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
       (numericWeight / Math.pow(numericHeight / 100, 2)).toFixed(1)
     );
 
-    // Only accept the supported profile fields from the request.
     const profileData = {
       age: numericAge,
       gender: ["female", "male", "non_binary", "prefer_not_to_say"].includes(gender) ? gender : "prefer_not_to_say",
       heightCm: numericHeight,
       weightKg: numericWeight,
       bmi,
+      sex: profileSex,
+      gender: profileGender,
       goal,
       activityLevel,
       experienceLevel,
@@ -171,7 +184,7 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
       onboardingCompleted: profile.onboardingCompleted,
       profile: {
         age: profile.age,
-        gender: profile.gender || "prefer_not_to_say",
+        sex: profile.sex,
         heightCm: profile.heightCm,
         weightKg: profile.weightKg,
         bmi: profile.bmi,

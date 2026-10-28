@@ -1,17 +1,18 @@
-
 const crypto = require("crypto");
 const EmailOTP = require("../models/EmailOTP");
 const { sendOTPEmail } = require("./emailService");
 
-const OTP_SECRET = process.env.OTP_SECRET;
-
-if (!OTP_SECRET) {
-    throw new Error("OTP_SECRET is missing from environment variables");
+function getOtpSecret() {
+    const secret = process.env.OTP_SECRET;
+    if (!secret) {
+        throw new Error("OTP_SECRET is missing from environment variables");
+    }
+    return secret;
 }
 
 function hashOTP(email, otp) {
     return crypto
-        .createHmac("sha256", OTP_SECRET)
+        .createHmac("sha256", getOtpSecret())
         .update(`${email}:${otp}`)
         .digest("hex");
 }

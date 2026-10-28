@@ -89,8 +89,15 @@ const fitnessProfileSchema = new mongoose.Schema(
     onboardingCompleted: {
       type: Boolean,
       default: false
-    }
+    },
+    
+    sex: {
+      type: String,
+      enum: ["female", "male"],
+      required: false
+    },
   },
+
   {
     timestamps: true
   }
