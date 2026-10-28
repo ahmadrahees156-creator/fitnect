@@ -1248,34 +1248,6 @@ export default function Nutrition() {
 
             <NutritionHistory refreshTrigger={nutrition?.entryCount ?? 0} />
 
-            <section>
-              <div>
-                <p className="text-sm font-medium text-[#8B7A9D]">SIMPLE MEAL IDEAS</p>
-                <h2 className="mt-1 text-2xl font-bold">Quick add</h2>
-                <p className="mt-2 text-sm text-[#7E7E82]">Example nutrition estimates. Review serving sizes before logging.</p>
-              </div>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {mealSuggestions.map((meal, index) => (
-                  <div key={meal.name} className="group rounded-2xl border border-[#EAE3F2] bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md">
-                    <div className="flex items-start justify-between gap-3">
-                      <span className={`flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${index % 3 === 0 ? 'bg-[#FDE8D5]' : index % 3 === 1 ? 'bg-[#E4DBF4]' : 'bg-[#DDF3E6]'}`}>
-                        {index % 3 === 0 ? '🥣' : index % 3 === 1 ? '🥑' : '🥗'}
-                      </span>
-                      <span className="rounded-full bg-[#F8F5FC] px-3 py-1 text-xs font-medium text-[#7E7E82]">{meal.type}</span>
-                    </div>
-                    <h3 className="mt-4 font-semibold">{meal.name}</h3>
-                    <div className="mt-3 flex flex-wrap gap-3 text-sm text-[#7E7E82]">
-                      <span>{meal.calories} kcal</span>
-                      <span>{meal.protein} g protein</span>
-                    </div>
-                    <button disabled={savingMeal} type="button" onClick={() => addSuggestion(meal)} className="mt-5 w-full rounded-xl border border-[#E4DBF4] bg-[#F8F5FC] px-4 py-3 text-sm font-semibold text-[#745496] transition hover:bg-[#EDE4F8] disabled:opacity-60">
-                      {savingMeal ? 'Please wait...' : '+ Add to diary'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
           </>
         )}
 
