@@ -540,18 +540,43 @@ export default function Recovery() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="mt-6 w-full rounded-xl bg-[#332743] px-5 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#4A365D] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-busy={saving}
+                className="group mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#332743] px-5 py-3.5 text-sm font-bold text-white shadow-[0_8px_18px_rgba(51,39,67,0.12)] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4A365D] hover:shadow-[0_12px_24px_rgba(51,39,67,0.18)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               >
-                {saving ? 'Saving check-in...' : 'Save recovery check-in'}
+                {saving ? (
+                  <>
+                    <span
+                      className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                      aria-hidden="true"
+                    />
+                    Saving check-in...
+                  </>
+                ) : (
+                  <>
+                    Save recovery check-in
+                    <span
+                      className="transition-transform duration-200 group-hover:translate-x-0.5"
+                      aria-hidden="true"
+                    >
+                      →
+                    </span>
+                  </>
+                )}
               </button>
 
               {savedMessage && (
-                <p
+                <div
                   role="status"
-                  className="mt-3 rounded-xl bg-[#EAF6EE] px-4 py-3 text-xs font-medium text-[#4F8966]"
+                  className="mt-3 flex items-start gap-3 rounded-xl border border-[#CFE9D7] bg-[#F0FAF3] px-4 py-3.5 text-xs leading-5 text-[#477B59]"
                 >
-                  {savedMessage}
-                </p>
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#D8F0DF] text-sm font-bold">
+                    ✓
+                  </span>
+                  <div>
+                    <p className="font-bold">Check-in saved</p>
+                    <p className="mt-0.5">{savedMessage}</p>
+                  </div>
+                </div>
               )}
             </article>
 
