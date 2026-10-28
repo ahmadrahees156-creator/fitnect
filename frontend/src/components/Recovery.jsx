@@ -632,7 +632,7 @@ export default function Recovery() {
                     first check-in.
                   </p>
                 ) : (
-                  <div className="mt-4 divide-y divide-[#F0EAF4]">
+                  <div className="mt-5 space-y-3">
                     {historyEntries.map((entry, index) => {
                       const date = getDateKey(entry)
                       const score = calculateScore({
@@ -641,24 +641,49 @@ export default function Recovery() {
                         soreness: entry.soreness,
                         stress: entry.stress,
                       })
+                      const scoreTone =
+                        score >= 75
+                          ? 'bg-[#E7F5EC] text-[#4F8966]'
+                          : score >= 50
+                            ? 'bg-[#FFF1DF] text-[#A56E43]'
+                            : 'bg-[#F9E8EF] text-[#A45172]'
 
                       return (
                         <div
                           key={entry._id || `${date}-${index}`}
-                          className="flex items-center justify-between gap-3 py-3 first:pt-0"
+                          className="rounded-2xl border border-[#F0EAF4] bg-[#FDFBFE] p-4 transition duration-200 hover:border-[#E3D5EE] hover:bg-white"
                         >
-                          <div>
-                            <p className="text-sm font-semibold text-[#493956]">
-                              {formatDate(date, today)}
-                            </p>
-                            <p className="mt-1 text-xs text-[#9A8CA5]">
-                              {entry.sleepHours} hrs sleep · Energy{' '}
-                              {entry.energy}/10
-                            </p>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-start gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#EDE3F7] text-xs font-bold text-[#78578F]">
+                                {String(index + 1).padStart(2, '0')}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-[#493956]">
+                                  {formatDate(date, today)}
+                                </p>
+                                <p className="mt-1 text-xs text-[#9A8CA5]">
+                                  {entry.sleepHours} hrs sleep <span className="px-1">·</span> Energy {entry.energy}/10
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold ${scoreTone}`}>
+                              {score}/100
+                            </span>
                           </div>
-                          <span className="rounded-full bg-[#F0E7F8] px-3 py-1.5 text-xs font-bold text-[#78578F]">
-                            {score}/100
-                          </span>
+                          <div
+                            className="mt-4 h-1.5 overflow-hidden rounded-full bg-[#EDE5F4]"
+                            role="progressbar"
+                            aria-label={`Recovery score for ${formatDate(date, today)}`}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={score}
+                          >
+                            <div
+                              className={`h-full rounded-full ${score >= 75 ? 'bg-[#86B99A]' : score >= 50 ? 'bg-[#E9B77D]' : 'bg-[#D99AB9']}`}
+                              style={{ width: `${score}%` }}
+                            />
+                          </div>
                         </div>
                       )
                     })}
