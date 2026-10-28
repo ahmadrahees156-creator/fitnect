@@ -97,9 +97,9 @@ class _DetailsScreenState extends State<DetailsScreen> {
     final url = Uri.parse('https://fitnect.onrender.com/api/fitness-profile/me');
 
     final Map<String, dynamic> body = {
-      "age": int.tryParse(_ageController.text) ?? '',
-      "heightCm": double.tryParse(_heightController.text) ?? '',
-      "weightKg": double.tryParse(_weightController.text) ?? '',
+      "age": int.tryParse(_ageController.text) ?? 20,
+      "heightCm": double.tryParse(_heightController.text) ?? 160,
+      "weightKg": double.tryParse(_weightController.text) ?? 55,
       "goal": _selectedGoal,
       "activityLevel": _selectedActivityLevel,
       "experienceLevel": _selectedExperienceLevel,
