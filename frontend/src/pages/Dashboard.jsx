@@ -760,20 +760,24 @@ function ActivityChart({ history, error, onRetry }) {
         </div>
       )}
 
-      <div className="mt-8 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm text-[#7E7E82]">
-            Total {selectedMetric.label.toLowerCase()}
-          </p>
-          <p className="mt-1 text-2xl font-bold text-[#151517]">
-            {Number(total.toFixed(1)).toLocaleString('en-IN')}
-            <span className="ml-1 text-sm font-medium text-[#7E7E82]">
-              {selectedMetric.unit}
-            </span>
-          </p>
+      {!(category === 'recovery' && metric === 'energy') && (
+        <div className="mt-8 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm text-[#7E7E82]">
+              Total {selectedMetric.label.toLowerCase()}
+            </p>
+            <p className="mt-1 text-2xl font-bold text-[#151517]">
+              {Number(total.toFixed(1)).toLocaleString('en-IN')}
+              <span className="ml-1 text-sm font-medium text-[#7E7E82]">
+                {selectedMetric.unit}
+              </span>
+            </p>
+          </div>
+          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: activeCategory.color }} />
         </div>
-        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: activeCategory.color }} />
-      </div>
+  
+  
+      )}
 
       {chronologicalHistory.length === 0 ? (
         <div className="flex min-h-48 items-center justify-center text-center">
