@@ -70,12 +70,28 @@ function normalizeFoodResults(response) {
   return candidates.find(Array.isArray) || []
 }
 
+function unwrapNutritionPayload(response) {
+  let current = response
+  for (let depth = 0; depth < 5; depth += 1) {
+    if (!current || typeof current !== 'object') break
+    if (
+      Array.isArray(current.foodNutrients) ||
+      Array.isArray(current.nutrients) ||
+      current.calories !== undefined ||
+      current.protein !== undefined
+    ) return current
+
+    const next = current.data ?? current.food ?? current.result ?? current.nutrition
+    if (!next || next === current) break
+    current = next
+  }
+  return current || {}
+}
+
 function getNutrientAmount(food, patterns, fallbackKeys = []) {
   const nutrients = [
     ...(Array.isArray(food?.foodNutrients) ? food.foodNutrients : []),
     ...(Array.isArray(food?.nutrients) ? food.nutrients : []),
-    ...(Array.isArray(food?.data?.foodNutrients) ? food.data.foodNutrients : []),
-    ...(Array.isArray(food?.data?.nutrients) ? food.data.nutrients : []),
   ]
 
   for (const nutrient of nutrients) {
@@ -83,21 +99,23 @@ function getNutrientAmount(food, patterns, fallbackKeys = []) {
       nutrient?.nutrientName || nutrient?.name || nutrient?.nutrient?.name || ''
     ).toLowerCase()
     if (patterns.some((pattern) => pattern.test(name))) {
-      const value = Number(nutrient?.value ?? nutrient?.amount ?? nutrient?.nutrient?.amount)
-      if (Number.isFinite(value)) return value
+      const rawValue = nutrient?.value ?? nutrient?.amount ?? nutrient?.nutrient?.amount
+      const value = Number(rawValue)
+      if (rawValue !== null && rawValue !== undefined && Number.isFinite(value)) return value
     }
   }
 
   for (const key of fallbackKeys) {
-    const value = Number(food?.[key] ?? food?.data?.[key])
-    if (Number.isFinite(value)) return value
+    const rawValue = food?.[key]
+    const value = Number(rawValue)
+    if (rawValue !== null && rawValue !== undefined && Number.isFinite(value)) return value
   }
 
-  return 0
+  return null
 }
 
 function extractFoodMacros(response) {
-  const food = response?.data?.food || response?.data || response?.food || response
+  const food = unwrapNutritionPayload(response)
   return {
     calories: getNutrientAmount(food, [/energy/, /calorie/], ['calories', 'caloriesKcal', 'energyKcal']),
     protein: getNutrientAmount(food, [/^protein/, /protein/], ['protein', 'proteinG']),
@@ -530,17 +548,26 @@ export default function Nutrition() {
       const response = await getFoodNutrition(fdcId)
       const macros = extractFoodMacros(response)
       const foodName = food?.description || food?.name || food?.foodName || food?.title || 'Selected food'
+      const missingMacros = Object.entries(macros)
+        .filter(([, value]) => value === null)
+        .map(([key]) => key)
+
+      if (missingMacros.length === 4) {
+        throw new Error('Nutrition data was returned in an unsupported format. Please try another food result.')
+      }
 
       setMealName(foodName)
       setFoodNutritionPer100g(macros)
-      setCalories(String(Number(macros.calories.toFixed(2))))
-      setProtein(String(Number(macros.protein.toFixed(2))))
-      setCarbohydrates(String(Number(macros.carbohydrates.toFixed(2))))
-      setFat(String(Number(macros.fat.toFixed(2))))
+      setCalories(macros.calories === null ? '' : String(Number(macros.calories.toFixed(2))))
+      setProtein(macros.protein === null ? '' : String(Number(macros.protein.toFixed(2))))
+      setCarbohydrates(macros.carbohydrates === null ? '' : String(Number(macros.carbohydrates.toFixed(2))))
+      setFat(macros.fat === null ? '' : String(Number(macros.fat.toFixed(2))))
       setServingSize('100')
       setServingUnit('g')
       setFoodResults([])
-      setMessage('Nutrition values loaded for 100 g. Adjust the serving size before saving.')
+      setMessage(missingMacros.length
+        ? `Nutrition loaded for 100 g. Some values were not provided: ${missingMacros.join(', ')}.`
+        : 'Nutrition values loaded for 100 g. Adjust the serving size before saving.')
     } catch (err) {
       setError(getErrorMessage(err, 'Could not load nutrition values for this food.'))
     } finally {
