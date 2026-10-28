@@ -563,16 +563,23 @@ function TrainingActivity() {
                   key={workoutId}
                   className="group overflow-hidden rounded-[22px] border border-[#ECE6F2] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D9C6E9] hover:shadow-[0_15px_35px_rgba(72,46,94,.07)]"
                 >
-                  <div className="relative flex h-32 items-center justify-center overflow-hidden bg-[#EDE2F8]">
-                    <div className="absolute h-24 w-24 rounded-full border border-white/70" />
-                    <div className="absolute h-16 w-16 rounded-full border border-white/70" />
-
-                    <span className="relative text-4xl font-black text-[#69527D] transition duration-300 group-hover:scale-110">
-                      {categoryName === 'strength'
-                        ? '↗'
-                        : categoryName === 'cardio'
-                          ? '〰'
-                          : '＋'}
+                  <div className="relative h-44 overflow-hidden bg-[#EDE2F8] sm:h-48">
+                    <img
+                      src={getWorkoutImage(workout)}
+                      alt={`${workout.title || 'Workout'} preview`}
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.onerror = null
+                        event.currentTarget.src = categoryFallbackImages[categoryName] || categoryFallbackImages.other
+                      }}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#21172D]/45 via-transparent to-transparent" />
+                    <span className="absolute bottom-3 left-3 rounded-full border border-white/40 bg-white/90 px-3 py-1.5 text-[10px] font-bold capitalize text-[#493456] shadow-sm backdrop-blur">
+                      {formatCategory(categoryName)}
+                    </span>
+                    <span className="absolute right-3 top-3 rounded-full border border-white/40 bg-white/90 px-3 py-1.5 text-[10px] font-bold text-[#493456] shadow-sm backdrop-blur">
+                      {duration} min
                     </span>
                   </div>
 
