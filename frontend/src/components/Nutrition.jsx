@@ -733,36 +733,52 @@ export default function Nutrition() {
     try {
       const response = await getPersonalNutritionTargets()
 
-      // The backend wraps the nutrition service response, and the external
-      // service may also return its own { success, data } envelope.
-      let targets = response
-      for (let depth = 0; depth < 4 && targets && typeof targets === 'object'; depth += 1) {
-        const nested = targets.targets ?? targets.nutrition_targets ?? targets.nutritionTargets ??
-          targets.daily_targets ?? targets.dailyTargets ?? targets.result ?? targets.data
-        if (!nested || nested === targets) break
-        targets = nested
+      // Backend returns { success, data }; the external nutrition service can
+      // also wrap its targets in nested objects. Search nested response fields
+      // rather than assuming one specific envelope.
+      const normalizeKey = (key) => String(key).toLowerCase().replace(/[^a-z0-9]/g, '')
+      const aliases = {
+        caloriesKcal: ['calorieskcal', 'calories', 'calorie', 'calorietarget', 'dailycalories', 'dailycalorietarget', 'energykcal', 'energy', 'tdee', 'calorieneeds', 'targetcalories', 'caloriesperday'],
+        proteinG: ['proteing', 'protein', 'proteingrams', 'proteintarget', 'dailyprotein', 'dailyproteintarget', 'targetprotein'],
+        carbohydratesG: ['carbohydratesg', 'carbohydrates', 'carbohydrate', 'carbs', 'carbsg', 'carbohydrateg', 'carbohydrategrams', 'carbohydratetarget', 'dailycarbs', 'dailycarbohydrates', 'targetcarbs'],
+        fatG: ['fatg', 'fat', 'fatgrams', 'fattarget', 'dailyfat', 'dailyfattarget', 'targetfat'],
       }
 
-      const pickNumber = (...values) => {
-        for (const value of values) {
-          if (value !== undefined && value !== null && value !== '') {
-            const parsed = Number(value)
-            if (Number.isFinite(parsed)) return parsed
+      const findValue = (object, acceptedKeys, depth = 0) => {
+        if (!object || typeof object !== 'object' || depth > 8) return undefined
+        if (Array.isArray(object)) {
+          for (const item of object) {
+            const found = findValue(item, acceptedKeys, depth + 1)
+            if (found !== undefined) return found
+          }
+          return undefined
+        }
+        for (const [key, value] of Object.entries(object)) {
+          if (!acceptedKeys.includes(normalizeKey(key))) continue
+          const candidate = value && typeof value === 'object'
+            ? value.value ?? value.amount ?? value.target
+            : value
+          if (candidate !== '' && candidate !== null && candidate !== undefined && Number.isFinite(Number(candidate))) {
+            return Number(candidate)
           }
         }
-        return NaN
+        for (const value of Object.values(object)) {
+          const found = findValue(value, acceptedKeys, depth + 1)
+          if (found !== undefined) return found
+        }
+        return undefined
       }
 
       const nextGoals = {
-        caloriesKcal: pickNumber(targets?.caloriesKcal, targets?.calories_kcal, targets?.calories, targets?.calorie_target, targets?.daily_calories, targets?.dailyCalories, targets?.calorie_needs, targets?.tdee),
-        proteinG: pickNumber(targets?.proteinG, targets?.protein_g, targets?.protein, targets?.protein_target, targets?.daily_protein, targets?.dailyProtein, targets?.protein_grams),
-        carbohydratesG: pickNumber(targets?.carbohydratesG, targets?.carbohydrates_g, targets?.carbohydrates, targets?.carbs, targets?.carbs_g, targets?.carbohydrate_target, targets?.daily_carbs, targets?.dailyCarbs, targets?.carbohydrate_g, targets?.carbohydrates_grams),
-        fatG: pickNumber(targets?.fatG, targets?.fat_g, targets?.fat, targets?.fat_target, targets?.daily_fat, targets?.dailyFat, targets?.fat_grams),
+        caloriesKcal: findValue(response, aliases.caloriesKcal),
+        proteinG: findValue(response, aliases.proteinG),
+        carbohydratesG: findValue(response, aliases.carbohydratesG),
+        fatG: findValue(response, aliases.fatG),
       }
 
       if (Object.values(nextGoals).some((value) => !Number.isFinite(value) || value <= 0)) {
-        console.error('Unsupported nutrition-target API response shape:', response)
-        throw new Error('The nutrition service response is missing calories, protein, carbohydrates, or fat targets. Please try again or contact support.')
+        console.error('Nutrition target response (inspect its structure):', response)
+        throw new Error('The nutrition service did not return all four daily targets in a recognized format. Check the browser console for details.')
       }
 
       setGoalForm(nextGoals)
