@@ -751,7 +751,8 @@ function TrainingActivity() {
               ))}
             </div>
           ) : filteredLibraryWorkouts.length ? (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filteredLibraryWorkouts.map((item, index) => {
                 const title = formatLibraryText(item.name || item.title || 'Workout')
                 const description = formatLibraryText(item.description)
@@ -841,6 +842,7 @@ function TrainingActivity() {
                 </button>
               </div>
             )}
+            </>
           ) : (
             <div className="mt-6 rounded-3xl border border-dashed border-[#DCCFE7] bg-[#FCFAFE] px-5 py-12 text-center">
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E4DBF4] text-[#69527D]">
