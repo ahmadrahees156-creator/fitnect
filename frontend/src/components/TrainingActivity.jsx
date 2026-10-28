@@ -190,6 +190,9 @@ function TrainingActivity() {
   const [error, setError] = useState('')
   const [libraryWorkouts, setLibraryWorkouts] = useState([])
   const [libraryLoading, setLibraryLoading] = useState(true)
+  const [libraryLoadingMore, setLibraryLoadingMore] = useState(false)
+  const [libraryPage, setLibraryPage] = useState(1)
+  const [libraryTotal, setLibraryTotal] = useState(0)
   const [libraryError, setLibraryError] = useState('')
   const [libraryCategory, setLibraryCategory] = useState('all')
   const [libraryDifficulty, setLibraryDifficulty] = useState('all')
@@ -219,6 +222,8 @@ function TrainingActivity() {
     async function loadLibrary() {
       setLibraryLoading(true)
       setLibraryError('')
+      setLibraryWorkouts([])
+      setLibraryPage(1)
       try {
         const response = await getWorkoutLibrary({
           page: 1,
@@ -227,7 +232,10 @@ function TrainingActivity() {
           difficulty: libraryDifficulty,
         })
         const items = response?.workouts ?? response?.data?.workouts ?? response?.data ?? []
-        if (active) setLibraryWorkouts(Array.isArray(items) ? items : [])
+        if (active) {
+          setLibraryWorkouts(Array.isArray(items) ? items : [])
+          setLibraryTotal(Number(response?.total ?? response?.data?.total ?? items.length) || 0)
+        }
       } catch (err) {
         if (active) setLibraryError(
           err.response?.data?.message || 'Workout library could not be loaded. Please try again.'
@@ -239,6 +247,38 @@ function TrainingActivity() {
     loadLibrary()
     return () => { active = false }
   }, [libraryCategory, libraryDifficulty])
+
+  async function handleLoadMoreLibrary() {
+    if (libraryLoadingMore || libraryWorkouts.length >= libraryTotal) return
+
+    const nextPage = libraryPage + 1
+    setLibraryLoadingMore(true)
+    setLibraryError('')
+    try {
+      const response = await getWorkoutLibrary({
+        page: nextPage,
+        limit: 50,
+        category: libraryCategory,
+        difficulty: libraryDifficulty,
+      })
+      const items = response?.workouts ?? response?.data?.workouts ?? response?.data ?? []
+      if (Array.isArray(items)) {
+        setLibraryWorkouts((current) => {
+          const existingIds = new Set(current.map((item) => String(item._id ?? item.id ?? item.name)))
+          const newItems = items.filter((item) => !existingIds.has(String(item._id ?? item.id ?? item.name)))
+          return [...current, ...newItems]
+        })
+        setLibraryPage(nextPage)
+        setLibraryTotal(Number(response?.total ?? response?.data?.total ?? libraryTotal) || 0)
+      }
+    } catch (err) {
+      setLibraryError(
+        err.response?.data?.message || 'More workouts could not be loaded. Please try again.'
+      )
+    } finally {
+      setLibraryLoadingMore(false)
+    }
+  }
 
   const filteredLibraryWorkouts = useMemo(() => {
     const query = librarySearch.trim().toLowerCase()
@@ -621,8 +661,8 @@ function TrainingActivity() {
                 </svg>
               </span>
               <div>
-                <p className="text-xl font-bold leading-none text-[#151517]">{filteredLibraryWorkouts.length}</p>
-                <p className="mt-1 text-xs text-[#77717F]">Workouts to explore</p>
+                <p className="text-xl font-bold leading-none text-[#151517]">{libraryWorkouts.length}{libraryTotal > 0 ? <span className="text-sm font-semibold text-[#77717F]"> / {libraryTotal}</span> : null}</p>
+                <p className="mt-1 text-xs text-[#77717F]">Workouts loaded</p>
               </div>
             </div>
           </div>
@@ -711,7 +751,8 @@ function TrainingActivity() {
               ))}
             </div>
           ) : filteredLibraryWorkouts.length ? (
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {filteredLibraryWorkouts.map((item, index) => {
                 const title = formatLibraryText(item.name || item.title || 'Workout')
                 const description = formatLibraryText(item.description)
@@ -786,6 +827,22 @@ function TrainingActivity() {
                 )
               })}
             </div>
+            {libraryWorkouts.length < libraryTotal && (
+              <div className="mt-8 flex flex-col items-center gap-2">
+                <p className="text-xs text-[#92879F]">
+                  Showing {libraryWorkouts.length} of {libraryTotal} workouts
+                </p>
+                <button
+                  type="button"
+                  onClick={handleLoadMoreLibrary}
+                  disabled={libraryLoadingMore}
+                  className="rounded-xl bg-[#332743] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#4A365D] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {libraryLoadingMore ? 'Loading more workouts...' : 'Load more workouts'}
+                </button>
+              </div>
+            )}
+            </>
           ) : (
             <div className="mt-6 rounded-3xl border border-dashed border-[#DCCFE7] bg-[#FCFAFE] px-5 py-12 text-center">
               <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E4DBF4] text-[#69527D]">
