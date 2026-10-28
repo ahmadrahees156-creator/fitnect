@@ -3,7 +3,7 @@ require("dotenv").config();
 const app = require("./app");
 const connectDB = require("./config/db");
 const WorkoutLibrary = require("./models/WorkoutLibrary");
-const importWorkouts = require("../scripts/importWorkouts");
+const importWorkouts = require("./scripts/importWorkouts");
 
 const PORT = process.env.PORT || 5000;
 
