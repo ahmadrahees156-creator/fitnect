@@ -426,90 +426,92 @@ export default function Recovery() {
                   </select>
                 </div>
 
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <label
-                      htmlFor="recovery-energy"
-                      className="text-sm font-semibold text-[#493956]"
-                    >
-                      Energy level
-                    </label>
-                    <span className="rounded-full bg-[#E5F4E9] px-3 py-1 text-xs font-bold text-[#4C8C68]">
-                      {form.energy}/10
-                    </span>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-[#E7F1E9] bg-[#FBFEFC] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="recovery-energy"
+                        className="text-sm font-semibold text-[#493956]"
+                      >
+                        Energy level
+                      </label>
+                      <span className="rounded-full bg-[#E5F4E9] px-3 py-1 text-xs font-bold text-[#4C8C68]">
+                        {form.energy}/10
+                      </span>
+                    </div>
+                    <input
+                      id="recovery-energy"
+                      type="range"
+                      min="1"
+                      max="10"
+                      value={form.energy}
+                      onChange={(event) =>
+                        updateField('energy', Number(event.target.value))
+                      }
+                      className="w-full cursor-pointer accent-[#7CB993]"
+                    />
+                    <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
+                      <span>Very low</span>
+                      <span>Excellent</span>
+                    </div>
                   </div>
-                  <input
-                    id="recovery-energy"
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={form.energy}
-                    onChange={(event) =>
-                      updateField('energy', Number(event.target.value))
-                    }
-                    className="w-full accent-[#7CB993]"
-                  />
-                  <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
-                    <span>Very low</span>
-                    <span>Excellent</span>
-                  </div>
-                </div>
 
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <label
-                      htmlFor="recovery-soreness"
-                      className="text-sm font-semibold text-[#493956]"
-                    >
-                      Muscle soreness
-                    </label>
-                    <span className="rounded-full bg-[#FBE8D8] px-3 py-1 text-xs font-bold text-[#A56E43]">
-                      {form.soreness}/5
-                    </span>
+                  <div className="rounded-2xl border border-[#F6E6D8] bg-[#FFFCF8] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="recovery-soreness"
+                        className="text-sm font-semibold text-[#493956]"
+                      >
+                        Muscle soreness
+                      </label>
+                      <span className="rounded-full bg-[#FBE8D8] px-3 py-1 text-xs font-bold text-[#A56E43]">
+                        {form.soreness}/5
+                      </span>
+                    </div>
+                    <input
+                      id="recovery-soreness"
+                      type="range"
+                      min="1"
+                      max="5"
+                      value={form.soreness}
+                      onChange={(event) =>
+                        updateField('soreness', Number(event.target.value))
+                      }
+                      className="w-full cursor-pointer accent-[#D99B68]"
+                    />
+                    <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
+                      <span>None</span>
+                      <span>Very sore</span>
+                    </div>
                   </div>
-                  <input
-                    id="recovery-soreness"
-                    type="range"
-                    min="1"
-                    max="5"
-                    value={form.soreness}
-                    onChange={(event) =>
-                      updateField('soreness', Number(event.target.value))
-                    }
-                    className="w-full accent-[#D99B68]"
-                  />
-                  <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
-                    <span>None</span>
-                    <span>Very sore</span>
-                  </div>
-                </div>
 
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <label
-                      htmlFor="recovery-stress"
-                      className="text-sm font-semibold text-[#493956]"
-                    >
-                      Stress level
-                    </label>
-                    <span className="rounded-full bg-[#F3E8F8] px-3 py-1 text-xs font-bold text-[#875E9E]">
-                      {form.stress}/5
-                    </span>
-                  </div>
-                  <input
-                    id="recovery-stress"
-                    type="range"
-                    min="1"
-                    max="5"
-                    value={form.stress}
-                    onChange={(event) =>
-                      updateField('stress', Number(event.target.value))
-                    }
-                    className="w-full accent-[#A879C4]"
-                  />
-                  <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
-                    <span>Relaxed</span>
-                    <span>Very stressed</span>
+                  <div className="rounded-2xl border border-[#EAE0F2] bg-[#FDFBFE] p-4 sm:col-span-2">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <label
+                        htmlFor="recovery-stress"
+                        className="text-sm font-semibold text-[#493956]"
+                      >
+                        Stress level
+                      </label>
+                      <span className="rounded-full bg-[#F3E8F8] px-3 py-1 text-xs font-bold text-[#875E9E]">
+                        {form.stress}/5
+                      </span>
+                    </div>
+                    <input
+                      id="recovery-stress"
+                      type="range"
+                      min="1"
+                      max="5"
+                      value={form.stress}
+                      onChange={(event) =>
+                        updateField('stress', Number(event.target.value))
+                      }
+                      className="w-full cursor-pointer accent-[#A879C4]"
+                    />
+                    <div className="mt-1 flex justify-between text-[10px] text-[#9C8EA6]">
+                      <span>Relaxed</span>
+                      <span>Very stressed</span>
+                    </div>
                   </div>
                 </div>
 
