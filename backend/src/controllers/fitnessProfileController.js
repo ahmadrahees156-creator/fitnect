@@ -149,6 +149,7 @@ exports.saveMyFitnessProfile = async (req, res, next) => {
 
     const profileData = {
       age: numericAge,
+      gender: ["female", "male", "non_binary", "prefer_not_to_say"].includes(gender) ? gender : "prefer_not_to_say",
       heightCm: numericHeight,
       weightKg: numericWeight,
       bmi,
