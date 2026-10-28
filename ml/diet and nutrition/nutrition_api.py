@@ -32,6 +32,8 @@ def get_nutrition():
         return jsonify({"error": "Please provide fdc_id"}), 400
 
     result = foods[foods["fdc_id"] == int(food_id)]
+    result = result[
+        ~result["portion_description"].astype(str).str.strip().str.casefold().eq("quantity not specified")]
 
     if result.empty:
         return jsonify({"error": "Food not found"}), 404
