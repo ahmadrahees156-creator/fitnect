@@ -72,7 +72,11 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> _handleGoogleSignIn() async {
     
    try {
-    final GoogleSignIn googleSignIn = GoogleSignIn();
+    
+      final GoogleSignIn googleSignIn = GoogleSignIn(
+  clientId: '334202896245-gj1k4om3qc4a6kb4gj5gqlsh8cqcmbic.apps.googleusercontent.com',
+    );
+    
     
     
     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
