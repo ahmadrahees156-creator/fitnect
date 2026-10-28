@@ -302,18 +302,38 @@ export default function Recovery() {
               </p>
             </article>
 
-            <article className="rounded-2xl border border-[#ECE6F2] bg-white p-5">
-              <p className="text-xs font-medium text-[#92849D]">
-                Check-in score
-              </p>
-              <p className="mt-3 text-3xl font-bold text-[#302442]">
-                {recoveryScore}
-                <span className="ml-1 text-sm font-medium text-[#9C8EAA]">
-                  /100
-                </span>
-              </p>
+            <article className="relative overflow-hidden rounded-2xl border border-[#E5D9F0] bg-gradient-to-br from-[#F7F1FC] to-white p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium text-[#92849D]">
+                    Check-in score
+                  </p>
+                  <p className="mt-3 text-3xl font-bold tracking-tight text-[#302442]">
+                    {recoveryScore}
+                    <span className="ml-1 text-sm font-medium text-[#9C8EAA]">
+                      /100
+                    </span>
+                  </p>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E9DDF6] text-lg font-bold text-[#78578F]">
+                  {recoveryScore >= 75 ? '↗' : recoveryScore >= 50 ? '−' : '↓'}
+                </div>
+              </div>
+              <div
+                className="mt-4 h-2 overflow-hidden rounded-full bg-[#EDE5F4]"
+                role="progressbar"
+                aria-label="Illustrative recovery check-in score"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={recoveryScore}
+              >
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${recoveryScore >= 75 ? 'bg-[#86B99A]' : recoveryScore >= 50 ? 'bg-[#E9B77D]' : 'bg-[#D99AB9'}`}
+                  style={{ width: `${recoveryScore}%` }}
+                />
+              </div>
               <p className="mt-2 text-xs text-[#9889A2]">
-                An illustrative score, not a medical measure
+                Illustrative only · Not a medical measure
               </p>
             </article>
           </section>
