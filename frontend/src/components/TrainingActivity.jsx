@@ -484,15 +484,20 @@ function TrainingActivity() {
     }
   }
 
-  async function handleAddLibraryWorkoutToDaily() {
-    if (!selectedLibraryWorkout || addingLibraryWorkout) return
+  async function handleAddLibraryWorkoutToDaily(workout = selectedLibraryWorkout) {
+    if (!workout || addingLibraryWorkout) return
 
-    const title = formatLibraryText(
-      selectedLibraryWorkout.name || selectedLibraryWorkout.title || 'Workout'
-    )
+    const title = formatLibraryText(workout.name || workout.title || 'Workout')
     const allowedCategories = ['strength', 'cardio', 'flexibility', 'yoga', 'sports', 'other']
-    const rawCategory = String(selectedLibraryWorkout.category || 'other').toLowerCase()
+    const rawCategory = String(workout.category || 'other').toLowerCase()
     const workoutCategory = allowedCategories.includes(rawCategory) ? rawCategory : 'other'
+    const description = formatLibraryText(workout.description || '')
+    const gifUrl = findLibraryGif(workout, exerciseGifIndex) || getWorkoutGif(workout)
+    const exercise = {
+      name: title,
+      description,
+      ...(gifUrl ? { gifUrl } : {}),
+    }
 
     setAddingLibraryWorkout(true)
     setLibraryAddError('')
@@ -503,11 +508,11 @@ function TrainingActivity() {
         title,
         category: workoutCategory,
         date: getLocalDateKey(),
-        durationMinutes: Number(selectedLibraryWorkout.durationMinutes) || 15,
-        notes: formatLibraryText(selectedLibraryWorkout.description || ''),
-        exercises: [{ name: title }],
+        durationMinutes: Number(workout.durationMinutes) || 15,
+        notes: description.length > 500 ? `${description.slice(0, 497).trimEnd()}...` : description,
+        exercises: [exercise],
       })
-      setLibraryAddMessage('Added to your daily workout.')
+      setLibraryAddMessage(`${title} added to today's workout.`)
       setCategory('All')
       setRefreshKey((key) => key + 1)
     } catch (err) {
@@ -681,16 +686,30 @@ function TrainingActivity() {
                   className="group overflow-hidden rounded-[22px] border border-[#ECE6F2] bg-white transition duration-300 hover:-translate-y-1 hover:border-[#D9C6E9] hover:shadow-[0_15px_35px_rgba(72,46,94,.07)]"
                 >
                   <div className="relative h-44 overflow-hidden bg-[#EDE2F8] sm:h-48">
-                    <img
-                      src={getWorkoutImage(workout)}
-                      alt={`${workout.title || 'Workout'} preview`}
-                      loading="lazy"
-                      onError={(event) => {
-                        event.currentTarget.onerror = null
-                        event.currentTarget.src = categoryFallbackImages[categoryName] || categoryFallbackImages.other
-                      }}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
+                    {(() => {
+                      const workoutGif = getWorkoutGif(workout) ||
+                        findLibraryGif(workout, exerciseGifIndex) ||
+                        getWorkoutGif(exercises[0] || {}) ||
+                        findLibraryGif(exercises[0] || {}, exerciseGifIndex)
+                      const workoutImage = getWorkoutImage(workout)
+                      return (
+                        <img
+                          src={workoutGif || workoutImage}
+                          alt={`${workout.title || 'Workout'} preview`}
+                          loading="lazy"
+                          onError={(event) => {
+                            if (workoutGif && event.currentTarget.src === workoutGif) {
+                              event.currentTarget.onerror = null
+                              event.currentTarget.src = workoutImage
+                            } else {
+                              event.currentTarget.onerror = null
+                              event.currentTarget.src = categoryFallbackImages[categoryName] || categoryFallbackImages.other
+                            }
+                          }}
+                          className={`h-full w-full transition duration-500 ${workoutGif ? 'bg-[#F8F5FC] object-contain p-2' : 'object-cover group-hover:scale-105'}`}
+                        />
+                      )
+                    })()}
                     <div className="absolute inset-0 bg-gradient-to-t from-[#21172D]/45 via-transparent to-transparent" />
                     <span className="absolute bottom-3 left-3 rounded-full border border-white/40 bg-white/90 px-3 py-1.5 text-[10px] font-bold capitalize text-[#493456] shadow-sm backdrop-blur">
                       {formatCategory(categoryName)}
@@ -756,6 +775,12 @@ function TrainingActivity() {
       </section>
 
       <section className="mb-8 overflow-hidden rounded-[28px] border border-[#EEE7F4] bg-white shadow-[0_18px_55px_rgba(54,35,73,0.05)]">
+        {(libraryAddMessage || libraryAddError) && (
+          <div className="px-5 pt-4 sm:px-7">
+            {libraryAddMessage && <p role="status" className="rounded-xl border border-[#CDE8D5] bg-[#F0F8F2] px-4 py-3 text-sm font-semibold text-[#315B3D]">{libraryAddMessage}</p>}
+            {libraryAddError && <p role="alert" className="rounded-xl border border-[#F1D1DC] bg-[#FFF5F8] px-4 py-3 text-sm font-semibold text-[#A45172]">{libraryAddError}</p>}
+          </div>
+        )}
         <div className="relative overflow-hidden bg-[#F1EAF8] px-5 py-6 sm:px-7 sm:py-8">
           <div className="pointer-events-none absolute -right-8 -top-12 h-44 w-44 rounded-full bg-[#F373D4]/15 blur-3xl" />
           <div className="pointer-events-none absolute bottom-[-65px] right-1/4 h-40 w-40 rounded-full bg-[#CAECD6]/70 blur-2xl" />
@@ -932,9 +957,19 @@ function TrainingActivity() {
                           {muscles.length > 3 && <span className="rounded-full bg-[#F8F5FC] px-2.5 py-1 text-[11px] text-[#77717F]">+{muscles.length - 3} more</span>}
                         </div>
                       )}
-                      <button type="button" onClick={() => setSelectedLibraryWorkout(item)} className="mt-5 flex w-full items-center justify-between rounded-xl bg-[#151517] px-4 py-3.5 text-sm font-semibold text-white transition duration-200 hover:bg-[#7855A6] focus:outline-none focus:ring-4 focus:ring-[#E4DBF4]">
-                        <span>View workout details</span><span aria-hidden="true">↗</span>
-                      </button>
+                      <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <button type="button" onClick={() => setSelectedLibraryWorkout(item)} className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#E4DBF4] bg-white px-3 py-3 text-sm font-semibold text-[#493456] transition hover:bg-[#F8F5FC] focus:outline-none focus:ring-4 focus:ring-[#E4DBF4]">
+                          <span>View details</span><span aria-hidden="true">↗</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleAddLibraryWorkoutToDaily(item)}
+                          disabled={addingLibraryWorkout}
+                          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#7855A6] px-3 py-3 text-sm font-bold text-white transition hover:bg-[#604184] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {addingLibraryWorkout ? 'Adding...' : '+ Add today'}
+                        </button>
+                      </div>
                     </div>
                   </article>
                 )
