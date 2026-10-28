@@ -707,7 +707,7 @@ export default function Recovery() {
                             aria-valuenow={score}
                           >
                             <div
-                              className={`h-full rounded-full ${score >= 75 ? 'bg-[#86B99A]' : score >= 50 ? 'bg-[#E9B77D]' : 'bg-[#D99AB9']}`}
+                              className={`h-full rounded-full ${score >= 75 ? 'bg-[#86B99A]' : score >= 50 ? 'bg-[#E9B77D]' : 'bg-[#D99AB9]'}`}
                               style={{ width: `${score}%` }}
                             />
                           </div>
