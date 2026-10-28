@@ -34,6 +34,7 @@ const initialProfile = {
   experienceLevel: 'beginner',
   workoutLocation: 'gym',
   dietaryPreference: 'vegetarian',
+  sex: '',
 }
 
 function Profile({ onBack }) {
@@ -87,6 +88,7 @@ function Profile({ onBack }) {
             experienceLevel: fitness.experienceLevel || 'beginner',
             workoutLocation: fitness.workoutLocation || 'gym',
             dietaryPreference: fitness.dietaryPreference || 'vegetarian',
+            sex: fitness.sex || '',
           })
 
           localStorage.setItem(
@@ -154,6 +156,7 @@ function Profile({ onBack }) {
 
       await saveMyFitnessProfile({
         age,
+        sex: profile.sex,
         heightCm,
         weightKg,
         goal: goalToApi[profile.goal] || 'general_fitness',
@@ -378,6 +381,27 @@ function Profile({ onBack }) {
                 type="number"
                 placeholder="e.g. 70"
               />
+              <div>
+                <label
+                  htmlFor="sex"
+                  className="mb-2 block text-sm font-semibold text-[#51435F]"
+                >
+                  Sex (for nutrition targets)
+                </label>
+                <select
+                  id="sex"
+                  name="sex"
+                  value={profile.sex}
+                  onChange={handleChange}
+                  disabled={!editMode}
+                  required={editMode}
+                  className="w-full rounded-xl border border-[#E6DDED] bg-white/80 px-4 py-3 text-sm text-[#302442] shadow-sm outline-none transition duration-200 hover:border-[#C4AFE0] focus:border-[#9872B5] focus:bg-white focus:ring-4 focus:ring-[#9872B5]/15 disabled:cursor-not-allowed disabled:bg-[#F8F5FC] disabled:opacity-100"
+                >
+                  <option value="">Select sex</option>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                </select>
+              </div>
 
               <div>
                 <label
