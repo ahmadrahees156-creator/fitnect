@@ -825,7 +825,11 @@ function TrainingActivity() {
       </section>
 
       {selectedLibraryWorkout && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[#21172D]/50 p-0 backdrop-blur-sm sm:items-center sm:p-5" onClick={(event) => { if (event.target === event.currentTarget) setSelectedLibraryWorkout(null) }}>
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-[#21172D]/50 p-0 backdrop-blur-sm sm:items-center sm:p-5"
+          onClick={(event) => { if (event.target === event.currentTarget) setSelectedLibraryWorkout(null) }}
+          onKeyDown={(event) => { if (event.key === 'Escape') setSelectedLibraryWorkout(null) }}
+        >
           <section role="dialog" aria-modal="true" aria-labelledby="library-workout-title" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-[28px] bg-[#FCFAFE] shadow-2xl sm:rounded-[28px]">
             <div className="relative overflow-hidden bg-[#E4DBF4] px-5 py-6 sm:px-7">
               <div className="pointer-events-none absolute -right-6 -top-10 h-36 w-36 rounded-full bg-[#F373D4]/20 blur-2xl" />
