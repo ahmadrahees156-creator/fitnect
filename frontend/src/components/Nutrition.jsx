@@ -79,16 +79,20 @@ function normalizeFoodResults(response) {
 
 function unwrapNutritionPayload(response) {
   let current = response
-  for (let depth = 0; depth < 8; depth += 1) {
-    if (!current || typeof current !== 'object') break
-    if (
+  for (let depth = 0; depth < 10; depth += 1) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) break
+
+    const hasNutritionData =
       Array.isArray(current.foodNutrients) ||
       Array.isArray(current.nutrients) ||
       current.calories !== undefined ||
       current.caloriesKcal !== undefined ||
+      current.calories_kcal !== undefined ||
       current.protein !== undefined ||
-      current.proteinG !== undefined
-    ) return current
+      current.proteinG !== undefined ||
+      current.protein_g !== undefined
+
+    if (hasNutritionData) return current
 
     const next =
       current.data ??
@@ -96,7 +100,8 @@ function unwrapNutritionPayload(response) {
       current.result ??
       current.nutrition ??
       current.nutritionFacts ??
-      current.foodItem
+      current.foodItem ??
+      current.details
     if (!next || next === current) break
     current = next
   }
@@ -104,44 +109,60 @@ function unwrapNutritionPayload(response) {
 }
 
 function getNutrientAmount(food, patterns, fallbackKeys = []) {
-  const nutrients = [
-    ...(Array.isArray(food?.foodNutrients) ? food.foodNutrients : []),
-    ...(Array.isArray(food?.nutrients) ? food.nutrients : []),
-    ...(Array.isArray(food?.nutrition?.nutrients) ? food.nutrition.nutrients : []),
-    ...(Array.isArray(food?.nutritionFacts) ? food.nutritionFacts : []),
-  ]
-
-  for (const nutrient of nutrients) {
-    const name = String(
-      nutrient?.nutrientName ||
-      nutrient?.nutrient_name ||
-      nutrient?.name ||
-      nutrient?.nutrient?.name ||
-      nutrient?.label ||
-      ''
-    ).toLowerCase()
-    if (patterns.some((pattern) => pattern.test(name))) {
-      const rawValue =
-        nutrient?.value ??
-        nutrient?.amount ??
-        nutrient?.quantity ??
-        nutrient?.nutrient?.amount
-      const value = Number(rawValue)
-      if (rawValue !== null && rawValue !== undefined && Number.isFinite(value)) return value
-    }
-  }
-
   const aliases = {
     calories: ['calories', 'caloriesKcal', 'calories_kcal', 'energyKcal', 'energy_kcal', 'energy'],
     protein: ['protein', 'proteinG', 'protein_g'],
-    carbohydrates: ['carbohydrates', 'carbs', 'carbohydratesG', 'carbohydrates_g', 'carbs_g'],
-    fat: ['fat', 'fatG', 'fat_g', 'totalFat', 'total_fat', 'totalLipid'],
+    carbohydrates: ['carbohydrates', 'carbs', 'carbohydratesG', 'carbohydrates_g', 'carbs_g', 'totalCarbohydrates'],
+    fat: ['fat', 'fatG', 'fat_g', 'totalFat', 'total_fat', 'totalLipid', 'total_lipid'],
   }
-  const keys = [...new Set([...fallbackKeys, ...(aliases[fallbackKeys[0]] || [])])]
-  for (const key of keys) {
-    const rawValue = food?.[key] ?? food?.nutrition?.[key] ?? food?.nutritionFacts?.[key]
-    const value = Number(rawValue)
-    if (rawValue !== null && rawValue !== undefined && Number.isFinite(value)) return value
+  const allKeys = [...new Set([...fallbackKeys, ...(aliases[fallbackKeys[0]] || [])])]
+  const visited = new Set()
+  const queue = [food]
+
+  while (queue.length) {
+    const current = queue.shift()
+    if (!current || typeof current !== 'object' || visited.has(current)) continue
+    visited.add(current)
+
+    for (const key of allKeys) {
+      const rawValue = current[key]
+      if (rawValue !== null && rawValue !== undefined && rawValue !== '' && typeof rawValue !== 'object') {
+        const value = Number(rawValue)
+        if (Number.isFinite(value)) return value
+      }
+    }
+
+    const nutrients = [
+      ...(Array.isArray(current.foodNutrients) ? current.foodNutrients : []),
+      ...(Array.isArray(current.nutrients) ? current.nutrients : []),
+      ...(Array.isArray(current.nutritionFacts) ? current.nutritionFacts : []),
+    ]
+
+    for (const nutrient of nutrients) {
+      const name = String(
+        nutrient?.nutrientName ||
+        nutrient?.nutrient_name ||
+        nutrient?.name ||
+        nutrient?.label ||
+        nutrient?.nutrient?.name ||
+        nutrient?.nutrient?.nutrientName ||
+        ''
+      ).toLowerCase()
+      if (patterns.some((pattern) => pattern.test(name))) {
+        const rawValue =
+          nutrient?.value ??
+          nutrient?.amount ??
+          nutrient?.quantity ??
+          nutrient?.nutrient?.amount ??
+          nutrient?.nutrient?.value
+        const value = Number(rawValue)
+        if (rawValue !== null && rawValue !== undefined && rawValue !== '' && Number.isFinite(value)) return value
+      }
+    }
+
+    for (const [key, value] of Object.entries(current)) {
+      if (value && typeof value === 'object') queue.push(value)
+    }
   }
 
   return null
