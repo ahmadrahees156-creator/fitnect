@@ -182,7 +182,7 @@ function TrainingActivity() {
   const [newWorkout, setNewWorkout] = useState({
     title: '',
     category: 'strength',
-    date: new Date().toISOString().slice(0, 10),
+    date: getLocalDateKey(),
     durationMinutes: '',
     notes: '',
     exercises: [{ name: '', sets: '', reps: '', weightKg: '' }],
@@ -430,7 +430,7 @@ function TrainingActivity() {
     setNewWorkout({
       title: '',
       category: 'strength',
-      date: new Date().toISOString().slice(0, 10),
+      date: getLocalDateKey(),
       durationMinutes: '',
       notes: '',
       exercises: [{ name: '', sets: '', reps: '', weightKg: '' }],
@@ -502,7 +502,7 @@ function TrainingActivity() {
       await createWorkout({
         title,
         category: workoutCategory,
-        date: new Date().toISOString().slice(0, 10),
+        date: getLocalDateKey(),
         durationMinutes: Number(selectedLibraryWorkout.durationMinutes) || 15,
         notes: formatLibraryText(selectedLibraryWorkout.description || ''),
         exercises: [{ name: title }],
@@ -715,9 +715,21 @@ function TrainingActivity() {
                       {workout.title || 'Untitled workout'}
                     </h3>
 
-                    <p className="mt-2 min-h-10 text-sm leading-5 text-[#92849D]">
+                    <p className="mt-2 min-h-10 whitespace-pre-line text-sm leading-5 text-[#92849D]">
                       {workout.notes || 'Review the exercises in this session.'}
                     </p>
+                    {exercises.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {exercises.slice(0, 3).map((exercise, index) => (
+                          <span key={exercise._id || `${exercise.name}-${index}`} className="rounded-full bg-[#F0F8F2] px-2.5 py-1 text-[11px] font-medium text-[#41664E]">
+                            {exercise.name}
+                          </span>
+                        ))}
+                        {exercises.length > 3 && (
+                          <span className="rounded-full bg-[#F8F5FC] px-2.5 py-1 text-[11px] text-[#77717F]">+{exercises.length - 3} more</span>
+                        )}
+                      </div>
+                    )}
 
                     <div className="mt-4 flex items-center justify-between gap-3 border-t border-[#F0EAF4] pt-4">
                       <span className="text-xs font-semibold text-[#8D7C9C]">
