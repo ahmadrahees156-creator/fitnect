@@ -8,6 +8,7 @@ import {
   getNutritionGoals,
   getNutritionGoalsProgress,
   saveNutritionGoals,
+  getPersonalNutritionTargets,
 } from '../services/nutritionService'
 import NutritionHistory from './NutritionHistory'
 import {
@@ -352,6 +353,7 @@ export default function Nutrition() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [showGoalEditor, setShowGoalEditor] = useState(false)
+  const [loadingPersonalTargets, setLoadingPersonalTargets] = useState(false)
 
   const totals = nutrition.totals || {}
   const entries = Array.isArray(nutrition.entries) ? nutrition.entries : []
@@ -641,6 +643,50 @@ export default function Nutrition() {
       setError(getErrorMessage(err, 'Could not add this meal.'))
     } finally {
       setSavingMeal(false)
+    }
+  }
+
+  async function handleGeneratePersonalTargets() {
+    setError('')
+    setMessage('')
+    setLoadingPersonalTargets(true)
+
+    try {
+      const response = await getPersonalNutritionTargets()
+      const root = response?.data ?? response
+      const targets = root?.targets ?? root?.nutrition_targets ?? root?.nutritionTargets ?? root
+
+      const pickNumber = (...values) => {
+        for (const value of values) {
+          if (value !== undefined && value !== null && value !== '') {
+            const parsed = Number(value)
+            if (Number.isFinite(parsed)) return parsed
+          }
+        }
+        return NaN
+      }
+
+      const nextGoals = {
+        caloriesKcal: pickNumber(targets?.caloriesKcal, targets?.calories_kcal, targets?.calories, targets?.calorie_target, targets?.daily_calories, targets?.dailyCalories),
+        proteinG: pickNumber(targets?.proteinG, targets?.protein_g, targets?.protein, targets?.protein_target, targets?.daily_protein, targets?.dailyProtein),
+        carbohydratesG: pickNumber(targets?.carbohydratesG, targets?.carbohydrates_g, targets?.carbohydrates, targets?.carbs, targets?.carbs_g, targets?.carbohydrate_target, targets?.daily_carbs, targets?.dailyCarbs),
+        fatG: pickNumber(targets?.fatG, targets?.fat_g, targets?.fat, targets?.fat_target, targets?.daily_fat, targets?.dailyFat),
+      }
+
+      if (Object.values(nextGoals).some((value) => !Number.isFinite(value) || value <= 0)) {
+        throw new Error('The nutrition-target API returned an unsupported response format. Please check the backend API response.')
+      }
+
+      setGoalForm(nextGoals)
+      await saveNutritionGoals(nextGoals)
+      setGoals(nextGoals)
+      setShowGoalEditor(false)
+      setMessage('Personalized calories, protein, carbs and fat targets have been saved from your fitness profile.')
+      await loadNutrition()
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not generate personalized nutrition targets. Complete your fitness profile and try again.'))
+    } finally {
+      setLoadingPersonalTargets(false)
     }
   }
 
@@ -991,15 +1037,25 @@ export default function Nutrition() {
                     <div>
                       <p className="text-sm font-medium text-[#8B7A9D]">DAILY TARGETS</p>
                       <h2 className="mt-1 text-xl font-bold">Nutrition overview</h2>
-                      <p className="mt-2 text-sm text-[#7E7E82]">Compare intake with your saved goals.</p>
+                      <p className="mt-2 text-sm text-[#7E7E82]">Compare intake with your saved goals, or generate personalized targets from your fitness profile.</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowGoalEditor(!showGoalEditor)}
-                      className="rounded-xl border border-[#E4DBF4] px-3 py-2 text-sm font-semibold text-[#745496] hover:bg-[#F8F5FC]"
-                    >
-                      {showGoalEditor ? 'Cancel' : 'Edit goals'}
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleGeneratePersonalTargets}
+                        disabled={loadingPersonalTargets || savingGoals}
+                        className="rounded-xl bg-[#151517] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#34343A] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {loadingPersonalTargets ? 'Generating targets…' : 'Personalize targets'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowGoalEditor(!showGoalEditor)}
+                        className="rounded-xl border border-[#E4DBF4] px-3 py-2 text-sm font-semibold text-[#745496] hover:bg-[#F8F5FC]"
+                      >
+                        {showGoalEditor ? 'Cancel' : 'Edit goals'}
+                      </button>
+                    </div>
                   </div>
 
                   {showGoalEditor && (
