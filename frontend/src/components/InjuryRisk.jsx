@@ -82,8 +82,8 @@ const numericFields = [
   {
     name: 'fatigue_index',
     label: 'Fatigue index',
-    unit: 'model value (150–270)',
-    min: 150,
+    unit: 'model value (15–270)',
+    min: 15,
     max: 270,
   },
   { name: 'age', label: 'Age', unit: 'years', min: 1, max: 120 },
