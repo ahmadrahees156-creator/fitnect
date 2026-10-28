@@ -261,30 +261,30 @@ function InjuryRisk() {
   const alertRaised = Number(result?.alert) === 1
 
   return (
-    <div className="fitnect-enter space-y-7">
-      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#302442] via-[#473451] to-[#69466B] p-6 text-white sm:p-9">
-        <div className="pointer-events-none absolute -right-12 -top-16 h-64 w-64 rounded-full bg-[#F7BBD9]/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 right-1/3 h-48 w-48 rounded-full bg-[#FDC381]/15 blur-3xl" />
+    <div className="fitnect-enter space-y-8 sm:space-y-10">
+      <section className="relative overflow-hidden rounded-[2rem] border border-[#E8DDF0] bg-[#E4DBF4] p-6 text-[#151517] shadow-[0_16px_45px_rgba(72,46,94,.07)] sm:p-9 lg:p-10">
+        <div className="pointer-events-none absolute -right-12 -top-16 h-64 w-64 rounded-full bg-[#F373D4]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 right-1/3 h-48 w-48 rounded-full bg-[#FDC381]/30 blur-3xl" />
 
         <div className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
           <div className="max-w-2xl">
-            <span className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[1.7px] text-[#F7D1E9]">
+            <span className="inline-flex rounded-full border border-[#D7C6E8] bg-white/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[1.7px] text-[#72529A]">
               ML-powered assessment
             </span>
 
             <h2 className="mt-5 text-3xl font-bold leading-tight tracking-[-1px] sm:text-4xl">
               Listen to your body.
               <br />
-              <span className="text-[#FDC381]">Train with awareness.</span>
+              <span className="text-[#8A5C20]">Train with awareness.</span>
             </h2>
 
-            <p className="mt-4 max-w-lg text-sm leading-6 text-[#E0D5E8]">
+            <p className="mt-4 max-w-lg text-sm leading-6 text-[#68616F]">
               Enter your current wellness and training measurements to request
               a severe-injury risk estimate from FitNect's prediction service.
             </p>
           </div>
 
-          <div className="flex min-w-[175px] flex-col items-center justify-center rounded-[24px] border border-white/15 bg-white/[.08] p-6 text-center">
+          <div className="flex min-w-[175px] flex-col items-center justify-center rounded-[24px] border border border-white/70 bg-white/65 p-6 text-center shadow-sm backdrop-blur-sm">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-2xl text-[#FDC381]">
               {result ? (alertRaised ? '!' : '✓') : '↗'}
             </div>
@@ -295,12 +295,12 @@ function InjuryRisk() {
                 : 'Ready when you are'}
             </p>
 
-            <p className="mt-1 text-xs text-[#D7C9DF]">
+            <p className="mt-1 text-xs text-[#7E7E82]">
               {result ? 'Severe-risk probability' : 'Complete the assessment'}
             </p>
 
             {result && (
-              <span className="mt-3 rounded-full bg-white/10 px-3 py-1 text-[10px] text-[#E6D9EB]">
+              <span className="mt-3 rounded-full bg-[#F8F5FC] px-3 py-1 text-[10px] font-semibold text-[#5C4675]">
                 {riskLevel} risk
               </span>
             )}
@@ -309,16 +309,16 @@ function InjuryRisk() {
       </section>
 
       <section>
-        <div className="mb-5">
-          <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
+        <div className="mb-6">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8B7A9D]">
             Prediction inputs
           </p>
 
-          <h2 className="mt-1 text-xl font-bold tracking-[-.7px] text-[#302442] sm:text-2xl">
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-[#151517] sm:text-3xl">
             Your training and recovery details
           </h2>
 
-          <p className="mt-2 text-sm leading-6 text-[#92879F]">
+          <p className="mt-2 text-sm leading-6 text-[#7E7E82]">
             Use values measured or recorded for you. The stress, sleep,
             recovery, training-load and fatigue fields must follow the model's
             input scale; don't guess if you don't know those values.
@@ -327,14 +327,14 @@ function InjuryRisk() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-[24px] border border-[#ECE6F2] bg-white p-5 sm:p-7"
+          className="rounded-3xl border border-[#EEEAF3] bg-white p-5 shadow-[0_8px_28px_rgba(72,46,94,.035)] sm:p-7"
         >
           {profileLoading ? (
-            <p className="mb-4 rounded-xl bg-[#F8F3FC] px-4 py-3 text-sm text-[#795B96]">Loading saved profile details…</p>
+            <p className="mb-4 rounded-2xl border border-[#E7DDF4] bg-[#F8F4FD] px-4 py-3 text-sm text-[#6D5684]">Loading saved profile details…</p>
           ) : profileMessage ? (
             <p role="status" className="mb-4 rounded-xl bg-[#F8F3FC] px-4 py-3 text-sm text-[#795B96]">{profileMessage}</p>
           ) : (
-            <p className="mb-4 rounded-xl bg-[#F2FBF5] px-4 py-3 text-sm text-[#397B58]">Age and BMI were prefilled from your saved profile where available. Confirm today's training and recovery values below.</p>
+            <p className="mb-4 rounded-2xl border border-[#D2EBDD] bg-[#F0F9F3] px-4 py-3 text-sm text-[#397A52]">Age and BMI were prefilled from your saved profile where available. Confirm today's training and recovery values below.</p>
           )}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {numericFields.map((field) => (
@@ -359,7 +359,7 @@ function InjuryRisk() {
                   }
                   readOnly={(field.name === 'age' || field.name === 'bmi') && Boolean(form[field.name])}
                   required
-                  className="mt-2 w-full rounded-xl border border-[#E9E1EF] bg-[#FCFAFD] px-3.5 py-3 text-sm text-[#40304F] outline-none transition placeholder:text-[#B5A9BF] focus:border-[#B99ACF] focus:ring-2 focus:ring-[#F1E8F8]"
+                  className="mt-2 w-full rounded-xl border border-[#E5DCEC] bg-[#FCFAFE] px-3.5 py-3 text-sm text-[#302442] outline-none transition placeholder:text-[#AAA0B4] focus:border-[#A98BC5] focus:ring-2 focus:ring-[#E4DBF4]"
                   placeholder="Enter value"
                 />
               </label>
@@ -379,7 +379,7 @@ function InjuryRisk() {
                 onChange={(event) =>
                   updateField('sport_type', event.target.value)
                 }
-                className="mt-2 w-full rounded-xl border border-[#E9E1EF] bg-[#FCFAFD] px-3.5 py-3 text-sm text-[#40304F] outline-none focus:border-[#B99ACF] focus:ring-2 focus:ring-[#F1E8F8]"
+                className="mt-2 w-full rounded-xl border border-[#E5DCEC] bg-[#FCFAFE] px-3.5 py-3 text-sm text-[#302442] outline-none focus:border-[#A98BC5] focus:ring-2 focus:ring-[#E4DBF4]"
                 required
               >
                 {['Basketball', 'Other', 'Soccer', 'Track'].map((sport) => (
@@ -425,7 +425,7 @@ function InjuryRisk() {
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center justify-center rounded-xl bg-[#473451] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#302442] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-xl bg-[#151517] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#34343A] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? 'Getting prediction…' : 'Predict severe-injury risk'}
             </button>
@@ -438,7 +438,7 @@ function InjuryRisk() {
                 setErrorMessage('')
               }}
               disabled={loading}
-              className="rounded-xl border border-[#E9E1EF] px-5 py-3 text-sm font-semibold text-[#795B96] transition hover:bg-[#FCFAFD] disabled:opacity-60"
+              className="rounded-xl border border-[#E5DCEC] px-5 py-3 text-sm font-semibold text-[#493456] transition hover:bg-[#F8F5FC] disabled:opacity-60"
             >
               Clear inputs
             </button>
@@ -453,7 +453,7 @@ function InjuryRisk() {
       {result && (
         <section
           aria-live="polite"
-          className="rounded-[24px] border border-[#ECE6F2] bg-white p-5 sm:p-7"
+          className="rounded-3xl border border-[#EEEAF3] bg-white p-5 shadow-[0_8px_28px_rgba(72,46,94,.035)] sm:p-7"
         >
           <p className="text-[10px] font-bold uppercase tracking-[1.8px] text-[#A08BAF]">
             Model response
@@ -525,7 +525,7 @@ function InjuryRisk() {
         ))}
       </section>
 
-      <p className="rounded-2xl border border-[#E9DFF0] bg-[#F2EBF8] p-4 text-xs leading-5 text-[#786787]">
+      <p className="rounded-2xl border border-[#E7DDF4] bg-[#F8F4FD] p-4 text-xs leading-5 text-[#6D5684]">
         This model provides an estimate for a severe-injury alert and is not a
         diagnosis or a substitute for professional care. Stop exercising if
         you experience concerning pain and consult a qualified healthcare
