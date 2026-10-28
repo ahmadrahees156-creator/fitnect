@@ -64,6 +64,7 @@ function normalizeFoodResults(response) {
     response?.data?.results,
     response?.data?.data?.foods,
     response?.data?.data?.results,
+    response?.data?.data,
     response?.foods,
     response?.results,
     response?.data,
@@ -78,16 +79,24 @@ function normalizeFoodResults(response) {
 
 function unwrapNutritionPayload(response) {
   let current = response
-  for (let depth = 0; depth < 5; depth += 1) {
+  for (let depth = 0; depth < 8; depth += 1) {
     if (!current || typeof current !== 'object') break
     if (
       Array.isArray(current.foodNutrients) ||
       Array.isArray(current.nutrients) ||
       current.calories !== undefined ||
-      current.protein !== undefined
+      current.caloriesKcal !== undefined ||
+      current.protein !== undefined ||
+      current.proteinG !== undefined
     ) return current
 
-    const next = current.data ?? current.food ?? current.result ?? current.nutrition
+    const next =
+      current.data ??
+      current.food ??
+      current.result ??
+      current.nutrition ??
+      current.nutritionFacts ??
+      current.foodItem
     if (!next || next === current) break
     current = next
   }
@@ -98,21 +107,39 @@ function getNutrientAmount(food, patterns, fallbackKeys = []) {
   const nutrients = [
     ...(Array.isArray(food?.foodNutrients) ? food.foodNutrients : []),
     ...(Array.isArray(food?.nutrients) ? food.nutrients : []),
+    ...(Array.isArray(food?.nutrition?.nutrients) ? food.nutrition.nutrients : []),
+    ...(Array.isArray(food?.nutritionFacts) ? food.nutritionFacts : []),
   ]
 
   for (const nutrient of nutrients) {
     const name = String(
-      nutrient?.nutrientName || nutrient?.name || nutrient?.nutrient?.name || ''
+      nutrient?.nutrientName ||
+      nutrient?.nutrient_name ||
+      nutrient?.name ||
+      nutrient?.nutrient?.name ||
+      nutrient?.label ||
+      ''
     ).toLowerCase()
     if (patterns.some((pattern) => pattern.test(name))) {
-      const rawValue = nutrient?.value ?? nutrient?.amount ?? nutrient?.nutrient?.amount
+      const rawValue =
+        nutrient?.value ??
+        nutrient?.amount ??
+        nutrient?.quantity ??
+        nutrient?.nutrient?.amount
       const value = Number(rawValue)
       if (rawValue !== null && rawValue !== undefined && Number.isFinite(value)) return value
     }
   }
 
-  for (const key of fallbackKeys) {
-    const rawValue = food?.[key]
+  const aliases = {
+    calories: ['calories', 'caloriesKcal', 'calories_kcal', 'energyKcal', 'energy_kcal', 'energy'],
+    protein: ['protein', 'proteinG', 'protein_g'],
+    carbohydrates: ['carbohydrates', 'carbs', 'carbohydratesG', 'carbohydrates_g', 'carbs_g'],
+    fat: ['fat', 'fatG', 'fat_g', 'totalFat', 'total_fat', 'totalLipid'],
+  }
+  const keys = [...new Set([...fallbackKeys, ...(aliases[fallbackKeys[0]] || [])])]
+  for (const key of keys) {
+    const rawValue = food?.[key] ?? food?.nutrition?.[key] ?? food?.nutritionFacts?.[key]
     const value = Number(rawValue)
     if (rawValue !== null && rawValue !== undefined && Number.isFinite(value)) return value
   }
