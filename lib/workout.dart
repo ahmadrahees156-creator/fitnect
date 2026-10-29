@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 
 class WorkoutScreen extends StatefulWidget {
   final String token;
-
   const WorkoutScreen({super.key, required this.token});
 
   @override
@@ -12,435 +11,438 @@ class WorkoutScreen extends StatefulWidget {
 }
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
-  bool _isLoading = false;
-  List<dynamic> _workouts = [];
-  String _selectedCategoryFilter = 'All categories';
+  static const String _baseUrl = 'https://fitnect-api-1k4t.onrender.com';
 
-  final List<String> _categories = ['All categories', 'strength', 'cardio', 'flexibility', 'yoga', 'sports', 'other'];
+  // ignore: unused_field
+  bool _isLoadingStats = true;
+  bool _isLoadingLibrary = true;
+  // ignore: unused_field
+  bool _isSaving = false;     
+
+  int _totalWorkouts = 0;
+  int _totalMinutes = 0;
+
+  List<dynamic> _libraryWorkouts = [];
+  String _searchQuery = '';
+  final _selectedCategory = 'all';
+  final _selectedDifficulty = 'all';
 
   @override
   void initState() {
     super.initState();
-    _fetchWorkouts();
+    _fetchWorkoutStats();
+    _fetchWorkoutLibrary();
   }
 
-  Future<void> _fetchWorkouts() async {
-    setState(() => _isLoading = true);
-    
-    String urlStr = 'https://fitnect.onrender.com/api/workouts';
-    if (_selectedCategoryFilter != 'All categories') {
-      urlStr += '?category=$_selectedCategoryFilter';
-    }
-
+  Future<void> _fetchWorkoutStats() async {
+    final url = Uri.parse('$_baseUrl/api/workouts/stats');
     try {
       final response = await http.get(
-        Uri.parse(urlStr),
-        headers: {"Authorization": "Bearer ${widget.token}"},
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() {
-          _workouts = data['workouts'] ?? [];
-        });
+        if (data['success'] == true && data['summary'] != null) {
+          setState(() {
+            _totalWorkouts = data['summary']['totalWorkouts'] ?? 0;
+            _totalMinutes = data['summary']['totalDurationMinutes'] ?? 0;
+          });
+        }
       }
     } catch (e) {
-      debugPrint('Error fetching workouts: $e');
+      debugPrint('Error fetching stats: $e');
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoadingStats = false); 
     }
   }
 
-  void _openAddWorkoutModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => AddWorkoutModal(
-        token: widget.token,
-        onWorkoutAdded: _fetchWorkouts,
-      ),
-    );
+  Future<void> _fetchWorkoutLibrary() async {
+    setState(() => _isLoadingLibrary = true);
+    
+    String queryParams = '?limit=12';
+    if (_searchQuery.isNotEmpty) queryParams += '&search=$_searchQuery';
+    if (_selectedCategory != 'all') queryParams += '&category=$_selectedCategory';
+    if (_selectedDifficulty != 'all') queryParams += '&difficulty=$_selectedDifficulty';
+
+    final url = Uri.parse('$_baseUrl/api/workout-library$queryParams');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['workouts'] != null) {
+          setState(() {
+            _libraryWorkouts = data['workouts'];
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching library: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingLibrary = false);
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    int totalWorkouts = _workouts.length;
-    int totalMinutes = _workouts.fold(0, (sum, item) => sum + ((item['durationMinutes'] ?? 0) as int));
+  Future<void> _logWorkout({
+    required String title,
+    required String category,
+    required int durationMinutes,
+    required String exerciseName,
+    required int sets,
+    required int reps,
+    required double weightKg,
+    String? notes,
+  }) async {
+    setState(() => _isSaving = true);
+    final url = Uri.parse('$_baseUrl/api/workouts');
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF9F6FC),
-      appBar: AppBar(
-        title: const Text('Training & Activity'),
-        backgroundColor: const Color(0xFF8E24AA),
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF4A148C), Color(0xFF7B1FA2)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('YOUR MOVEMENT, YOUR PACE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white70, letterSpacing: 1.2)),
-                  const SizedBox(height: 6),
-                  const Text('Make every session count.', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                  const SizedBox(height: 4),
-                  const Text('Explore your saved workouts and review the exercises in each session.', style: TextStyle(fontSize: 12, color: Colors.white70)),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      _buildHeaderStatCard('$totalWorkouts', 'Workouts logged'),
-                      const SizedBox(width: 12),
-                      _buildHeaderStatCard('$totalMinutes', 'Total workout minutes'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('TRAINING LIBRARY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.1)),
-                    SizedBox(height: 2),
-                    Text('Your workouts', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                ElevatedButton.icon(
-                  onPressed: _openAddWorkoutModal,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A148C),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text('+ Add Workout', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: DropdownButton<String>(
-                value: _selectedCategoryFilter,
-                isExpanded: true,
-                underline: const SizedBox(),
-                items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => _selectedCategoryFilter = val);
-                    _fetchWorkouts();
-                  }
-                },
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            
-            _isLoading
-                ? const Center(child: Padding(padding: EdgeInsets.all(40.0), child: CircularProgressIndicator()))
-                : _workouts.isEmpty
-                    ? Container(
-                        padding: const EdgeInsets.all(30),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: const Column(
-                          children: [
-                            Text('No workouts found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                            SizedBox(height: 6),
-                            Text('There are no saved workouts for this category yet.', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _workouts.length,
-                        itemBuilder: (context, index) {
-                          final workout = _workouts[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            child: ListTile(
-                              title: Text(workout['title'] ?? 'Workout', style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text('Category: ${workout['category']} · ${workout['durationMinutes']} mins'),
-                              trailing: const Icon(Icons.fitness_center, color: Color(0xFF8E24AA)),
-                            ),
-                          );
-                        },
-                      ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderStatCard(String value, String label) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 2),
-            Text(label, style: const TextStyle(fontSize: 11, color: Colors.white70)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-class AddWorkoutModal extends StatefulWidget {
-  final String token;
-  final VoidCallback onWorkoutAdded;
-
-  const AddWorkoutModal({super.key, required this.token, required this.onWorkoutAdded});
-
-  @override
-  State<AddWorkoutModal> createState() => _AddWorkoutModalState();
-}
-
-class _AddWorkoutModalState extends State<AddWorkoutModal> {
-  final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _durationController = TextEditingController(text: '45');
-  final _exerciseNameController = TextEditingController(text: 'Push-ups');
-  final _setsController = TextEditingController(text: '3');
-  final _repsController = TextEditingController(text: '12');
-  final _weightController = TextEditingController(text: '0');
-  final _notesController = TextEditingController();
-
-  String _selectedCategory = 'strength';
-  bool _isLoading = false;
-
-  final List<String> _categories = ['strength', 'cardio', 'flexibility', 'yoga', 'sports', 'other'];
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _durationController.dispose();
-    _exerciseNameController.dispose();
-    _setsController.dispose();
-    _repsController.dispose();
-    _weightController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submitWorkout() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    final url = Uri.parse('https://fitnect.onrender.com/api/workouts');
-
-    final Map<String, dynamic> body = {
-      "title": _titleController.text.trim(),
-      "category": _selectedCategory,
-      "durationMinutes": int.tryParse(_durationController.text) ?? 45,
+    final body = {
+      "title": title,
+      "category": category,
+      "date": DateTime.now().toIso8601String(),
+      "durationMinutes": durationMinutes,
       "exercises": [
         {
-          "name": _exerciseNameController.text.trim(),
-          "sets": int.tryParse(_setsController.text) ?? 3,
-          "reps": int.tryParse(_repsController.text) ?? 12,
-          "weightKg": double.tryParse(_weightController.text) ?? 0.0,
+          "name": exerciseName,
+          "sets": sets,
+          "reps": reps,
+          "weightKg": weightKg,
         }
       ],
-      "notes": _notesController.text.trim(),
+      "notes": notes ?? ""
     };
 
     try {
       final response = await http.post(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer ${widget.token}",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
         },
         body: jsonEncode(body),
       );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        if (mounted) {
-          widget.onWorkoutAdded();
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Workout created successfully! (201 Created)')),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to save workout: Status ${response.statusCode}')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+      if (!mounted) return;
+      if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connection error: $e')),
+          const SnackBar(content: Text('Workout logged successfully!')),
+        );
+        _fetchWorkoutStats(); 
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to log workout: ${response.statusCode}')),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  void _showAddWorkoutDialog() {
+    final titleController = TextEditingController(text: 'Upper Body Day');
+    final durationController = TextEditingController(text: '45');
+    final exerciseController = TextEditingController(text: 'Pushups');
+    final setsController = TextEditingController(text: '3');
+    final repsController = TextEditingController(text: '12');
+    final weightController = TextEditingController(text: '0');
+    final notesController = TextEditingController(text: 'Felt great!');
+    String selectedCat = 'strength';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add a workout', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Workout Title')),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: selectedCat,
+                items: ['strength', 'cardio', 'flexibility', 'yoga', 'sports', 'other']
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c.toUpperCase())))
+                    .toList(),
+                onChanged: (val) => selectedCat = val ?? 'strength',
+                decoration: const InputDecoration(labelText: 'Category'),
+              ),
+              const SizedBox(height: 8),
+              TextField(controller: durationController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Duration (minutes)')),
+              const SizedBox(height: 8),
+              TextField(controller: exerciseController, decoration: const InputDecoration(labelText: 'Exercise Name')),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(child: TextField(controller: setsController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Sets'))),
+                  const SizedBox(width: 8),
+                  Expanded(child: TextField(controller: repsController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Reps'))),
+                  const SizedBox(width: 8),
+                  Expanded(child: TextField(controller: weightController, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Weight (kg)'))),
+                ],
+              ),
+              const SizedBox(height: 8),
+              TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notes (optional)')),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B2E)),
+            onPressed: () {
+              Navigator.pop(context);
+              _logWorkout(
+                title: titleController.text,
+                category: selectedCat,
+                durationMinutes: int.tryParse(durationController.text) ?? 45,
+                exerciseName: exerciseController.text,
+                sets: int.tryParse(setsController.text) ?? 3,
+                reps: int.tryParse(repsController.text) ?? 10,
+                weightKg: double.tryParse(weightController.text) ?? 0,
+                notes: notesController.text,
+              );
+            },
+            child: const Text('Save workout', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 20,
-        right: 20,
-        top: 20,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF7F5FC), 
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'FitNect\nTraining & Activity',
+          style: TextStyle(color: Colors.black54, fontSize: 12, height: 1.2),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: CircleAvatar(
+              backgroundColor: const Color(0xFF10B981),
+              radius: 14,
+              child: const Text('A', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
       ),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Add a workout', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-              const Text('Save a session to your FitNect account.', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              const SizedBox(height: 16),
-
-              const Text('Workout title *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              const SizedBox(height: 4),
-              TextFormField(
-                controller: _titleController,
-                decoration: _inputDecoration('e.g. Upper body day'),
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+          
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1B2E),
+                borderRadius: BorderRadius.circular(20),
               ),
-              const SizedBox(height: 12),
-
-              const Text('Category *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              const SizedBox(height: 4),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedCategory,
-                decoration: _inputDecoration(''),
-                items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                onChanged: (val) => setState(() => _selectedCategory = val!),
-              ),
-              const SizedBox(height: 12),
-
-              const Text('Duration (minutes) *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              const SizedBox(height: 4),
-              TextFormField(
-                controller: _durationController,
-                keyboardType: TextInputType.number,
-                decoration: _inputDecoration('45'),
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-
-              const Text('Exercise Name *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              const SizedBox(height: 4),
-              TextFormField(
-                controller: _exerciseNameController,
-                decoration: _inputDecoration('e.g. Squats'),
-              ),
-              const SizedBox(height: 12),
-
-              Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: _buildNumField('Sets', _setsController)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildNumField('Reps', _repsController)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _buildNumField('Weight (kg)', _weightController)),
+                  const Text('YOUR MOVEMENT, YOUR PACE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Make every session count.',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text('Explore your saved workouts and review the exercises in each session.', style: TextStyle(fontSize: 11, color: Colors.white70)),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      _buildStatBox('$_totalWorkouts', 'Workouts logged'),
+                      const SizedBox(width: 12),
+                      _buildStatBox('$_totalMinutes', 'Total workout minutes'),
+                    ],
+                  ),
                 ],
               ),
-              const SizedBox(height: 12),
+            ),
+            const SizedBox(height: 20),
 
-              const Text('Notes (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-              const SizedBox(height: 4),
-              TextFormField(
-                controller: _notesController,
-                decoration: _inputDecoration('How did the session feel?'),
-              ),
-              const SizedBox(height: 20),
-
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submitWorkout,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A148C),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Today's workouts", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E1B2E),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  onPressed: _showAddWorkoutDialog,
+                  icon: const Icon(Icons.add, size: 16, color: Colors.white),
+                  label: const Text('Add Workout', style: TextStyle(fontSize: 11, color: Colors.white)),
                 ),
-                child: _isLoading
-                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Save workout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+              child: Column(
+                children: const [
+                  Text('No workouts found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  SizedBox(height: 4),
+                  Text('No workouts saved today yet. Add one from the Workout Library below.', style: TextStyle(fontSize: 11, color: Colors.grey), textAlign: TextAlign.center),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            const Text('Workout library', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            const Text('Explore guided sessions, find the right intensity, and choose a workout that fits your day.', style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const SizedBox(height: 12),
+
+            TextField(
+              onChanged: (val) {
+                setState(() => _searchQuery = val);
+                _fetchWorkoutLibrary();
+              },
+              decoration: InputDecoration(
+                hintText: 'Search workouts or muscles...',
+                prefixIcon: const Icon(Icons.search, size: 18),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            _isLoadingLibrary
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFF6B4FA0)))
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _libraryWorkouts.length,
+                    itemBuilder: (context, index) {
+                      final item = _libraryWorkouts[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 6, offset: const Offset(0, 2))],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(color: const Color(0xFFF0ECF9), borderRadius: BorderRadius.circular(6)),
+                                  child: Text(item['category']?.toUpperCase() ?? 'STRENGTH', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF6B4FA0))),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
+                                  child: Text(item['difficulty'] ?? 'Beginner', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.grey)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(item['name'] ?? 'Workout Exercise', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                            const SizedBox(height: 4),
+                            Text(
+                              item['instructions'] != null && (item['instructions'] as List).isNotEmpty
+                                  ? item['instructions'][0]
+                                  : 'Follow proper form and steady breathing throughout the movement.',
+                              style: const TextStyle(fontSize: 11, color: Colors.grey),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                OutlinedButton(
+                                  onPressed: () {},
+                                  child: const Text('View details', style: TextStyle(fontSize: 11, color: Colors.black87)),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B2E)),
+                                  onPressed: () {
+                                    _logWorkout(
+                                      title: item['name'] ?? 'Library Workout',
+                                      category: item['category'] ?? 'strength',
+                                      durationMinutes: 30,
+                                      exerciseName: item['name'] ?? 'Exercise',
+                                      sets: 3,
+                                      reps: 10,
+                                      weightKg: 0,
+                                    );
+                                  },
+                                  child: const Text('+ Add today', style: TextStyle(fontSize: 11, color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNumField(String label, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-        const SizedBox(height: 4),
-        TextFormField(
-          controller: controller,
-          keyboardType: TextInputType.number,
-          decoration: _inputDecoration('0'),
+  Widget _buildStatBox(String value, String label) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
-      ],
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: const Color(0xFFFAFAFA),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(fontSize: 10, color: Colors.white70)),
+          ],
+        ),
+      ),
     );
   }
 }
