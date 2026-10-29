@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 
 class WellnessScreen extends StatefulWidget {
   final String token;
-
   const WellnessScreen({super.key, required this.token});
 
   @override
@@ -12,50 +11,74 @@ class WellnessScreen extends StatefulWidget {
 }
 
 class _WellnessScreenState extends State<WellnessScreen> {
+  static const String _baseUrl = 'https://fitnect-api-1k4t.onrender.com';
+
+  bool _isLoading = true;
+  bool _isSaving = false;
+
   
   String _selectedMood = 'good';
-  double _energyLevel = 7.0;
-  double _sleepHours = 7.5;
+  double _sleepHours = 7.0;
   String _selectedSleepQuality = 'good';
+  double _energyLevel = 6.0;
   double _stressLevel = 2.0;
-  double _sorenessLevel = 2.0;
-  final _notesController = TextEditingController();
-
-  bool _isLoading = false;
-
-  final List<Map<String, String>> _moods = [
-    {'label': 'Great', 'value': 'great'},
-    {'label': 'Good', 'value': 'good'},
-    {'label': 'Okay', 'value': 'okay'},
-    {'label': 'Low', 'value': 'low'},
-    {'label': 'Bad', 'value': 'bad'},
-  ];
-
-  final List<Map<String, String>> _sleepQualities = [
-    {'label': 'Poor', 'value': 'poor'},
-    {'label': 'Fair', 'value': 'fair'},
-    {'label': 'Good', 'value': 'good'},
-    {'label': 'Excellent', 'value': 'excellent'},
-  ];
+  int _sorenessLevel = 2;
+  final TextEditingController _notesController = TextEditingController();
 
   @override
-  void dispose() {
-    _notesController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _fetchTodayWellness();
   }
 
-  Future<void> _submitWellnessCheckIn() async {
+  
+  Future<void> _fetchTodayWellness() async {
     setState(() => _isLoading = true);
+    final url = Uri.parse('$_baseUrl/api/wellness/today');
 
-    final url = Uri.parse('https://fitnect-api-1k4t.onrender.com/api/wellness');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
 
-    final Map<String, dynamic> body = {
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['wellness'] != null) {
+          final w = data['wellness'];
+          setState(() {
+            _selectedMood = w['mood'] ?? 'good';
+            _sleepHours = (w['sleepHours'] as num?)?.toDouble() ?? 7.0;
+            _selectedSleepQuality = w['sleepQuality'] ?? 'good';
+            _energyLevel = (w['energy'] as num?)?.toDouble() ?? 6.0;
+            _stressLevel = (w['stress'] as num?)?.toDouble() ?? 2.0;
+            _sorenessLevel = (w['soreness'] as num?)?.toInt() ?? 2;
+            _notesController.text = w['notes'] ?? '';
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching today wellness: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  
+  Future<void> _submitWellnessCheckIn() async {
+    setState(() => _isSaving = true);
+    final url = Uri.parse('$_baseUrl/api/wellness');
+
+    final body = {
       "mood": _selectedMood,
       "energy": _energyLevel.toInt(),
       "sleepHours": _sleepHours,
       "sleepQuality": _selectedSleepQuality,
       "stress": _stressLevel.toInt(),
-      "soreness": _sorenessLevel.toInt(),
+      "soreness": _sorenessLevel,
       "notes": _notesController.text.trim(),
     };
 
@@ -63,272 +86,285 @@ class _WellnessScreenState extends State<WellnessScreen> {
       final response = await http.post(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer ${widget.token}",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
         },
         body: jsonEncode(body),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Wellness check-in saved successfully!')),
-          );
-          Navigator.pop(context);
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to save check-in: Status ${response.statusCode}')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connection error: $e')),
+          const SnackBar(content: Text('Wellness check-in saved successfully!')),
+        );
+        _fetchTodayWellness(); 
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save: ${response.statusCode}')),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving check-in: $e')),
+      );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() => _isSaving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F6FC),
+      backgroundColor: const Color(0xFFA4A2B8), 
       appBar: AppBar(
         title: const Text('Wellness Check-in'),
-        backgroundColor: const Color(0xFF8E24AA),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFEEDCF8), Color(0xFFFCE4EC)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Column(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Check in with yourself.', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87)),
-                  SizedBox(height: 6),
-                  Text('A little awareness goes a long way. Track how you feel, how you recover, and what your body needs today.', style: TextStyle(fontSize: 12, color: Colors.black54)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+                  
+                  _buildHeroHeader(),
+                  const SizedBox(height: 16),
 
-            
-            _buildSectionCard(
-              title: 'Your mood',
-              subtitle: 'How has today been feeling so far?',
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: _moods.map((m) {
-                  bool isSelected = _selectedMood == m['value'];
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedMood = m['value']!),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFFEEDCF8) : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: isSelected ? const Color(0xFF8E24AA) : Colors.transparent),
+                  
+                  _buildMoodSection(),
+                  const SizedBox(height: 16),
+
+                  
+                  _buildSleepSection(),
+                  const SizedBox(height: 16),
+
+                  
+                  _buildEnergyAndStressSection(),
+                  const SizedBox(height: 16),
+
+                  
+                  _buildSorenessSection(),
+                  const SizedBox(height: 24),
+
+                
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E1B2E),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      child: Column(
-                        children: [
-                          const Text('😊', style: TextStyle(fontSize: 24)),
-                          const SizedBox(height: 4),
-                          Text(m['label']!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: isSelected ? const Color(0xFF8E24AA) : Colors.black87)),
-                        ],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            
-            _buildSectionCard(
-              title: 'Sleep & recovery',
-              subtitle: 'Rest is part of your progress.',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('HOURS SLEPT: ${_sleepHours.toStringAsFixed(1)} hours', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
-                  Slider(
-                    value: _sleepHours,
-                    min: 0,
-                    max: 12,
-                    divisions: 24,
-                    activeColor: const Color(0xFF8E24AA),
-                    onChanged: (val) => setState(() => _sleepHours = val),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('How well did you sleep?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _sleepQualities.map((sq) {
-                      bool isSelected = _selectedSleepQuality == sq['value'];
-                      return ChoiceChip(
-                        label: Text(sq['label']!),
-                        selected: isSelected,
-                        selectedColor: const Color(0xFFEEDCF8),
-                        onSelected: (bool selected) {
-                          setState(() => _selectedSleepQuality = sq['value']!);
-                        },
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            
-            _buildSectionCard(
-              title: 'Energy levels & stress',
-              subtitle: 'Tune into the energy you have.',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Current energy', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      Text('${_energyLevel.toInt()} / 10', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF8E24AA))),
-                    ],
-                  ),
-                  Slider(
-                    value: _energyLevel,
-                    min: 1,
-                    max: 10,
-                    divisions: 9,
-                    activeColor: const Color(0xFF8E24AA),
-                    onChanged: (val) => setState(() => _energyLevel = val),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Stress level', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      Text('${_stressLevel.toInt()} / 5', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-                    ],
-                  ),
-                  Slider(
-                    value: _stressLevel,
-                    min: 1,
-                    max: 5,
-                    divisions: 4,
-                    activeColor: Colors.orange,
-                    onChanged: (val) => setState(() => _stressLevel = val),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            
-            _buildSectionCard(
-              title: 'Muscle soreness',
-              subtitle: 'How is your body feeling after movement?',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Soreness level', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      Text('${_sorenessLevel.toInt()} / 5', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.redAccent)),
-                    ],
-                  ),
-                  Slider(
-                    value: _sorenessLevel,
-                    min: 1,
-                    max: 5,
-                    divisions: 4,
-                    activeColor: Colors.redAccent,
-                    onChanged: (val) => setState(() => _sorenessLevel = val),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-          
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Notes (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _notesController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      hintText: 'Anything you want to remember about how you feel...',
-                      filled: true,
-                      fillColor: const Color(0xFFFAFAFA),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      onPressed: _isSaving ? null : _submitWellnessCheckIn,
+                      child: _isSaving
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Save check-in', style: TextStyle(fontSize: 16, color: Colors.white)),
                     ),
                   ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+    );
+  }
 
-            
-            ElevatedButton(
-              onPressed: _isLoading ? null : _submitWellnessCheckIn,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8E24AA),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: _isLoading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('Save check-in', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
+  
+
+  Widget _buildHeroHeader() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white..withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Text(
+            'Check in with yourself.',
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF1E1B2E)),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'A little awareness goes a long way. Track how you feel, how you recover, and what your body needs today.',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSectionCard({required String title, required String subtitle, required Widget child}) {
+  Widget _buildMoodSection() {
+    final moods = [
+      {'key': 'great', 'label': 'Great', 'emoji': '😄'},
+      {'key': 'good', 'label': 'Good', 'emoji': '🙂'},
+      {'key': 'okay', 'label': 'Okay', 'emoji': '😐'},
+      {'key': 'low', 'label': 'Low', 'emoji': '😔'},
+      {'key': 'bad', 'label': 'Bad', 'emoji': '😫'},
+    ];
+
+    return _buildCardWrapper(
+      stepNumber: '01',
+      title: 'Your mood',
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: moods.map((m) {
+          final isSelected = _selectedMood == m['key'];
+          return ChoiceChip(
+            label: Text('${m['emoji']} ${m['label']}'),
+            selected: isSelected,
+            selectedColor: const Color(0xFFEADBFF),
+            onSelected: (val) {
+              if (val) setState(() => _selectedMood = m['key'] as String);
+            },
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildSleepSection() {
+    final hourPills = [4.0, 5.0, 6.0, 7.0, 8.0, 9.0];
+    final qualities = ['poor', 'fair', 'good', 'excellent'];
+
+    return _buildCardWrapper(
+      stepNumber: '02',
+      title: 'Sleep & recovery',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('HOURS SLEPT: ${_sleepHours.toStringAsFixed(1)} h', style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: hourPills.map((h) {
+              final isSelected = _sleepHours == h;
+              return ChoiceChip(
+                label: Text('${h.toInt()}h'),
+                selected: isSelected,
+                selectedColor: const Color(0xFF6B4FA0),
+                labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black),
+                onSelected: (val) {
+                  if (val) setState(() => _sleepHours = h);
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 16),
+          const Text('How well did you sleep?', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: qualities.map((q) {
+              final isSelected = _selectedSleepQuality == q;
+              return ChoiceChip(
+                label: Text(q.toUpperCase()),
+                selected: isSelected,
+                selectedColor: const Color(0xFFEADBFF),
+                onSelected: (val) {
+                  if (val) setState(() => _selectedSleepQuality = q);
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnergyAndStressSection() {
+    return _buildCardWrapper(
+      stepNumber: '03',
+      title: 'Energy & Stress levels',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Energy Level: ${_energyLevel.toInt()}/10', style: const TextStyle(fontWeight: FontWeight.w600)),
+          Slider(
+            value: _energyLevel,
+            min: 1,
+            max: 10,
+            divisions: 9,
+            activeColor: const Color(0xFF6B4FA0),
+            onChanged: (v) => setState(() => _energyLevel = v),
+          ),
+          const SizedBox(height: 12),
+          Text('Stress Level: ${_stressLevel.toInt()}/5', style: const TextStyle(fontWeight: FontWeight.w600)),
+          Slider(
+            value: _stressLevel,
+            min: 1,
+            max: 5,
+            divisions: 4,
+            activeColor: const Color(0xFF6B4FA0),
+            onChanged: (v) => setState(() => _stressLevel = v),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSorenessSection() {
+    final levels = [
+      {'val': 1, 'label': 'None'},
+      {'val': 2, 'label': 'Mild'},
+      {'val': 3, 'label': 'Moderate'},
+      {'val': 4, 'label': 'High'},
+      {'val': 5, 'label': 'Severe'},
+    ];
+
+    return _buildCardWrapper(
+      stepNumber: '04',
+      title: 'Muscle soreness',
+      child: Wrap(
+        spacing: 8,
+        children: levels.map((l) {
+          final isSelected = _sorenessLevel == l['val'];
+          return ChoiceChip(
+            label: Text('${l['val']} ${l['label']}'),
+            selected: isSelected,
+            selectedColor: const Color(0xFFEADBFF),
+            onSelected: (val) {
+              if (val) setState(() => _sorenessLevel = l['val'] as int);
+            },
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildCardWrapper({required String stepNumber, required String title, required Widget child}) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-          const SizedBox(height: 14),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0ECF9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(stepNumber, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF6B4FA0))),
+              ),
+              const SizedBox(width: 8),
+              Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 12),
           child,
         ],
       ),
