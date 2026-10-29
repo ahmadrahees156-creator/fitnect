@@ -47,7 +47,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
   Future<void> _submitWellnessCheckIn() async {
     setState(() => _isLoading = true);
 
-    final url = Uri.parse('https://fitnect.onrender.com/api/wellness');
+    final url = Uri.parse('https://fitnect-api-1k4t.onrender.com/api/wellness');
 
     final Map<String, dynamic> body = {
       "mood": _selectedMood,

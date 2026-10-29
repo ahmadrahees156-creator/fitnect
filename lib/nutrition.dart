@@ -14,7 +14,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // Form Controllers for Manual Logging
+  
   final _foodNameController = TextEditingController();
   final _servingSizeController = TextEditingController(text: '1');
   final _caloriesController = TextEditingController();
@@ -26,7 +26,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
   String _selectedMealType = 'breakfast';
   String _selectedServingUnit = 'serving';
 
-  // State data for dashboard overview & diary
+  
   double _todayCalories = 0;
   double _todayProtein = 0;
   final _todayFluid = 0.15;
@@ -50,7 +50,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
     super.dispose();
   }
 
-  // --- Fetch Today's Logged Data ---
+  
   Future<void> _fetchTodayNutrition() async {
     final url = Uri.parse('https://fitnect.onrender.com/api/nutrition/today');
     try {
@@ -70,11 +70,11 @@ class _NutritionScreenState extends State<NutritionScreen> {
         });
       }
     } catch (_) {
-      // Fallback state if offline
+      
     }
   }
 
-  // --- Submit Custom Meal Entry ---
+  
   Future<void> _submitFoodItem() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -127,7 +127,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
     }
   }
 
-  // --- Quick-Add / Catalogue Calculation (Nutrition Engine) ---
+  
   Future<void> _loadMealTemplate(String foodName, int fdcId, double defaultGrams, double cals, double prot, double carbs, double fat) async {
     setState(() => _isLoading = true);
     final url = Uri.parse('https://fitnect.onrender.com/api/nutrition-engine/meal-summary');
@@ -199,7 +199,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Header Banner Card ---
+            
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -249,7 +249,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
             const SizedBox(height: 20),
 
-            // --- Summary Cards Grid ---
+          
             Row(
               children: [
                 Expanded(child: _buildInfoCard('Calories consumed', '${_todayCalories.toInt()} kcal', Icons.local_fire_department, Colors.orange)),
@@ -267,7 +267,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
             const SizedBox(height: 28),
 
-            // --- Log Your Meal Form Section ---
+            
             const Text('Log your meal', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             const Text('Save meal details to your FitNect account.', style: TextStyle(color: Colors.grey, fontSize: 13)),
@@ -391,7 +391,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
             const SizedBox(height: 28),
 
-            // --- Meal Diary Section ---
+            
             const Text('Meal diary', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Container(
@@ -423,7 +423,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
             const SizedBox(height: 28),
 
-            // --- Quick Add Templates Section ---
+            
             const Text('Quick add', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             const Text('Example nutrition estimates. Review serving sizes before tapping.', style: TextStyle(color: Colors.grey, fontSize: 12)),

@@ -117,7 +117,7 @@ class SidebarDrawer extends StatelessWidget {
                       ),
                     );
                   }),
-                  _buildDrawerItem(context, 'Settings', false, () => Navigator.pop(context)),
+                 // _buildDrawerItem(context, 'Settings', false, () => Navigator.pop(context)),
                 ],
               ),
             ),
