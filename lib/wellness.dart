@@ -211,7 +211,7 @@ class _WellnessScreenState extends State<WellnessScreen> {
                                 color: const Color(0xFFFAF8FF),
                                 borderRadius: BorderRadius.circular(6),
                               ),
-                              child: const Text('Thu, 29 Oct', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600)),
+                              
                             ),
                             const SizedBox(width: 8),
                             Container(

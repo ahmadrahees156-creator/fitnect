@@ -17,25 +17,29 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   bool _isLoadingStats = true;
   bool _isLoadingLibrary = true;
   // ignore: unused_field
-  bool _isSaving = false;     
+  bool _isSaving = false;
 
+  // Stats Data
   int _totalWorkouts = 0;
   int _totalMinutes = 0;
 
+  // Workouts Lists & Library Data
+  List<dynamic> _todayWorkouts = [];
   List<dynamic> _libraryWorkouts = [];
   String _searchQuery = '';
-  final _selectedCategory = 'all';
-  final _selectedDifficulty = 'all';
+  final String _selectedCategory = 'all';
+  final String _selectedDifficulty = 'all';
 
   @override
   void initState() {
     super.initState();
-    _fetchWorkoutStats();
+    _fetchTodayWorkouts();
     _fetchWorkoutLibrary();
   }
 
-  Future<void> _fetchWorkoutStats() async {
-    final url = Uri.parse('$_baseUrl/api/workouts/stats');
+  // --- 1. FETCH TODAY'S WORKOUTS & CALCULATE STATS ---
+  Future<void> _fetchTodayWorkouts() async {
+    final url = Uri.parse('$_baseUrl/api/workouts');
     try {
       final response = await http.get(
         url,
@@ -47,20 +51,29 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['success'] == true && data['summary'] != null) {
+        if (data['workouts'] != null) {
+          final List workouts = data['workouts'];
+          
+          int totalMins = 0;
+          for (var item in workouts) {
+            totalMins += (item['durationMinutes'] as num?)?.toInt() ?? 0;
+          }
+
           setState(() {
-            _totalWorkouts = data['summary']['totalWorkouts'] ?? 0;
-            _totalMinutes = data['summary']['totalDurationMinutes'] ?? 0;
+            _todayWorkouts = workouts;
+            _totalWorkouts = workouts.length;
+            _totalMinutes = totalMins;
           });
         }
       }
     } catch (e) {
-      debugPrint('Error fetching stats: $e');
+      debugPrint('Error fetching today workouts: $e');
     } finally {
-      if (mounted) setState(() => _isLoadingStats = false); 
+      if (mounted) setState(() => _isLoadingStats = false);
     }
   }
 
+  // --- 2. FETCH WORKOUT LIBRARY ---
   Future<void> _fetchWorkoutLibrary() async {
     setState(() => _isLoadingLibrary = true);
     
@@ -94,6 +107,92 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
   }
 
+  // --- 3. FETCH INDIVIDUAL EXERCISE DETAILS ---
+  Future<void> _fetchExerciseDetails(String exerciseId) async {
+    final url = Uri.parse('$_baseUrl/api/workout-library/$exerciseId');
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final workout = data['workout'] ?? data;
+        
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(workout['name'] ?? 'Exercise Details', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Category: ${(workout['category'] ?? 'Strength').toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF6B4FA0))),
+                  const SizedBox(height: 8),
+                  const Text('Instructions:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 4),
+                  if (workout['instructions'] != null && (workout['instructions'] as List).isNotEmpty)
+                    ...((workout['instructions'] as List).map((inst) => Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text('• $inst', style: const TextStyle(fontSize: 11)),
+                        )))
+                  else
+                    const Text('Follow proper form and steady breathing throughout the movement.', style: TextStyle(fontSize: 11)),
+                  
+                  if (workout['equipment'] != null && (workout['equipment'] as List).isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    const Text('Equipment:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 4),
+                    Text((workout['equipment'] as List).join(', '), style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error fetching exercise details: $e');
+    }
+  }
+
+  // --- 4. DELETE WORKOUT ---
+  Future<void> _deleteWorkout(String id) async {
+    final url = Uri.parse('$_baseUrl/api/workouts/$id');
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Workout deleted successfully!')),
+        );
+        _fetchTodayWorkouts();
+      }
+    } catch (e) {
+      debugPrint('Error deleting workout: $e');
+    }
+  }
+
+  // --- 5. POST LOG WORKOUT ---
   Future<void> _logWorkout({
     required String title,
     required String category,
@@ -138,7 +237,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Workout logged successfully!')),
         );
-        _fetchWorkoutStats(); 
+        _fetchTodayWorkouts();     
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to log workout: ${response.statusCode}')),
@@ -154,6 +253,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
   }
 
+  // --- SHOW ADD WORKOUT MODAL ---
   void _showAddWorkoutDialog() {
     final titleController = TextEditingController(text: 'Upper Body Day');
     final durationController = TextEditingController(text: '45');
@@ -205,7 +305,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B2E)),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 116, 92, 129)),
             onPressed: () {
               Navigator.pop(context);
               _logWorkout(
@@ -229,7 +329,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5FC), 
+      backgroundColor: const Color.fromARGB(255, 221, 216, 235), 
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -257,12 +357,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          
+            // --- HERO BANNER ---
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1B2E),
+                color: const Color.fromARGB(255, 66, 25, 82),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
@@ -289,13 +389,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             const SizedBox(height: 20),
 
+            // --- TODAY'S TRAINING SECTION ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text("Today's workouts", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1E1B2E),
+                    backgroundColor: const Color.fromARGB(255, 66, 25, 82),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
@@ -306,28 +407,77 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: const [
-                  Text('No workouts found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  SizedBox(height: 4),
-                  Text('No workouts saved today yet. Add one from the Workout Library below.', style: TextStyle(fontSize: 11, color: Colors.grey), textAlign: TextAlign.center),
-                ],
-              ),
-            ),
+            _todayWorkouts.isEmpty
+                ? Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: const [
+                        Text('No workouts found', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        SizedBox(height: 4),
+                        Text('No workouts saved today yet. Add one from the Workout Library below.', style: TextStyle(fontSize: 11, color: Colors.grey), textAlign: TextAlign.center),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _todayWorkouts.length,
+                    itemBuilder: (context, index) {
+                      final workout = _todayWorkouts[index];
+                      final workoutId = workout['_id'] ?? workout['id'];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(workout['title'] ?? 'Workout', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                const SizedBox(height: 2),
+                                Text('${workout['category']?.toUpperCase()} • ${workout['durationMinutes']} mins', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                              ],
+                            ),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(color: const Color(0xFFF0ECF9), borderRadius: BorderRadius.circular(8)),
+                                  child: const Text('Logged', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF6B4FA0))),
+                                ),
+                                if (workoutId != null) ...[
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+                                    onPressed: () => _deleteWorkout(workoutId),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
             const SizedBox(height: 24),
 
+            // --- WORKOUT LIBRARY SECTION ---
             const Text('Workout library', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             const Text('Explore guided sessions, find the right intensity, and choose a workout that fits your day.', style: TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 12),
 
+            // Search Bar
             TextField(
               onChanged: (val) {
                 setState(() => _searchQuery = val);
@@ -344,6 +494,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             const SizedBox(height: 12),
 
+            // Library Cards Grid / List
             _isLoadingLibrary
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF6B4FA0)))
                 : ListView.builder(
@@ -394,12 +545,17 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                               mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 OutlinedButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    final exerciseId = item['_id'] ?? item['id'];
+                                    if (exerciseId != null) {
+                                      _fetchExerciseDetails(exerciseId);
+                                    }
+                                  },
                                   child: const Text('View details', style: TextStyle(fontSize: 11, color: Colors.black87)),
                                 ),
                                 const SizedBox(width: 8),
                                 ElevatedButton(
-                                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B2E)),
+                                  style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 66, 25, 82),),
                                   onPressed: () {
                                     _logWorkout(
                                       title: item['name'] ?? 'Library Workout',
