@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 
 class InjuryRiskScreen extends StatefulWidget {
   final String token;
-
   const InjuryRiskScreen({super.key, required this.token});
 
   @override
@@ -12,9 +11,11 @@ class InjuryRiskScreen extends StatefulWidget {
 }
 
 class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
-  final _formKey = GlobalKey<FormState>();
+  static const String _baseUrl = 'https://fitnect-api-1k4t.onrender.com';
 
-  
+  bool _isLoading = false;
+
+  // All controllers empty by default so "Enter value" shows up
   final _heartRateController = TextEditingController();
   final _stressLevelController = TextEditingController();
   final _hydrationLevelController = TextEditingController();
@@ -28,236 +29,371 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
   final _ageController = TextEditingController();
   final _bmiController = TextEditingController();
 
-  
-  String _selectedSportType = 'Soccer';
-  String _selectedGender = 'Male';
+  String _selectedSportType = 'Other';
+  String _selectedGender = 'Female';
 
-  bool _isLoading = false;
-  Map<String, dynamic>? _apiResult;
+  // --- PREDICT INJURY RISK API ---
+  Future<void> _predictInjuryRisk() async {
+    setState(() => _isLoading = true);
+    final url = Uri.parse('$_baseUrl/api/injury-risk/predict');
 
-  final List<String> _sportTypes = ['Basketball', 'Other', 'Soccer', 'Track'];
-  final List<String> _genders = ['Male', 'Female'];
-
-  @override
-  void dispose() {
-    _heartRateController.dispose();
-    _stressLevelController.dispose();
-    _hydrationLevelController.dispose();
-    _sleepQualityController.dispose();
-    _recoveryScoreController.dispose();
-    _stepCountController.dispose();
-    _trainingLoadController.dispose();
-    _trainingIntensityController.dispose();
-    _trainingDurationController.dispose();
-    _fatigueIndexController.dispose();
-    _ageController.dispose();
-    _bmiController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submitPredictionData() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-      _apiResult = null;
-    });
-
-    
-    final url = Uri.parse('https://fitnect.onrender.com/api/injury-risk/predict');
-
-    final Map<String, dynamic> body = {
-      "heart_rate": double.parse(_heartRateController.text),
-      "stress_level": double.parse(_stressLevelController.text),
-      "hydration_level": double.parse(_hydrationLevelController.text),
-      "sleep_quality": double.parse(_sleepQualityController.text),
-      "recovery_score": double.parse(_recoveryScoreController.text),
-      "step_count": double.parse(_stepCountController.text),
-      "training_load": double.parse(_trainingLoadController.text),
-      "training_intensity": double.parse(_trainingIntensityController.text),
-      "training_duration": double.parse(_trainingDurationController.text),
-      "fatigue_index": double.parse(_fatigueIndexController.text),
+    final body = {
+      "heart_rate": double.tryParse(_heartRateController.text) ?? 75,
+      "stress_level": double.tryParse(_stressLevelController.text) ?? 3,
+      "hydration_level": double.tryParse(_hydrationLevelController.text) ?? 4,
+      "sleep_quality": double.tryParse(_sleepQualityController.text) ?? 4,
+      "recovery_score": double.tryParse(_recoveryScoreController.text) ?? 80,
+      "step_count": double.tryParse(_stepCountController.text) ?? 8000,
+      "training_load": double.tryParse(_trainingLoadController.text) ?? 60,
+      "training_intensity": double.tryParse(_trainingIntensityController.text) ?? 6,
+      "training_duration": double.tryParse(_trainingDurationController.text) ?? 45,
+      "fatigue_index": double.tryParse(_fatigueIndexController.text) ?? 3,
       "sport_type": _selectedSportType,
       "gender": _selectedGender,
-      "age": double.parse(_ageController.text),
-      "bmi": double.parse(_bmiController.text),
+      "age": double.tryParse(_ageController.text) ?? 20,
+      "bmi": double.tryParse(_bmiController.text) ?? 20.6,
     };
 
     try {
       final response = await http.post(
         url,
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer ${widget.token}",
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
         },
         body: jsonEncode(body),
       );
 
+      if (!mounted) return;
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() {
-          _apiResult = data;
-        });
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Server Error: Status code ${response.statusCode}')),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+        _showResultDialog(data);
+      } else if (response.statusCode == 503) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connection Error: $e')),
+          const SnackBar(content: Text('Server is waking up (503). Please wait 10 seconds and retry.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Prediction failed: ${response.statusCode}')),
         );
       }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  // --- RESULT MODAL DIALOG ---
+  void _showResultDialog(Map<String, dynamic> data) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('AI Injury Risk Assessment', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Prediction: ${data['prediction'] ?? 'N/A'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF6B4FA0))),
+              const SizedBox(height: 8),
+              Text('Risk Level: ${data['risk_level'] ?? 'N/A'}', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text('Recovery Band: ${data['recovery_band'] ?? 'N/A'}'),
+              const SizedBox(height: 4),
+              Text('Severe Risk Probability: ${data['severe_risk_probability'] ?? 0}'),
+              const SizedBox(height: 4),
+              Text('Recovery Score Estimated: ${data['recovery_score_estimated'] ?? 0}'),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B2E)),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearInputs() {
+    _heartRateController.clear();
+    _stressLevelController.clear();
+    _hydrationLevelController.clear();
+    _sleepQualityController.clear();
+    _recoveryScoreController.clear();
+    _stepCountController.clear();
+    _trainingLoadController.clear();
+    _trainingIntensityController.clear();
+    _trainingDurationController.clear();
+    _fatigueIndexController.clear();
+    _ageController.clear();
+    _bmiController.clear();
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF9F6FC),
+      backgroundColor: const Color(0xFFF7F5FC),
       appBar: AppBar(
-        title: const Text('Injury Risk Analysis'),
-        backgroundColor: const Color(0xFF8E24AA),
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'FitNect\nInjury Risk',
+          style: TextStyle(color: Colors.black54, fontSize: 12, height: 1.2),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: CircleAvatar(
+              backgroundColor: const Color(0xFF10B981),
+              radius: 14,
+              child: const Text('A', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildNumberField('Heart Rate (bpm)', _heartRateController),
-              _buildNumberField('Stress Level (a.u.)', _stressLevelController),
-              _buildNumberField('Hydration Level (%)', _hydrationLevelController),
-              _buildNumberField('Sleep Quality Score', _sleepQualityController),
-              _buildNumberField('Recovery Score', _recoveryScoreController),
-              _buildNumberField('Step Count', _stepCountController),
-              _buildNumberField('Training Load', _trainingLoadController),
-              _buildNumberField('Training Intensity (RPE 2-10)', _trainingIntensityController),
-              _buildNumberField('Training Duration (mins)', _trainingDurationController),
-              _buildNumberField('Fatigue Index', _fatigueIndexController),
-              _buildNumberField('Age (years)', _ageController),
-              _buildNumberField('BMI', _bmiController),
-
-              // Sport Type Dropdown
-              const SizedBox(height: 12),
-              const Text('Sport Type', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedSportType,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
-                items: _sportTypes.map((sport) {
-                  return DropdownMenuItem(value: sport, child: Text(sport));
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedSportType = val);
-                },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- TOP BANNER ---
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1B2E),
+                borderRadius: BorderRadius.circular(20),
               ),
-
-              
-              const SizedBox(height: 12),
-              const Text('Gender', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                initialValue: _selectedGender,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
-                items: _genders.map((gender) {
-                  return DropdownMenuItem(value: gender, child: Text(gender));
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedGender = val);
-                },
-              ),
-
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submitPredictionData,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8E24AA),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: _isLoading
-                    .toString() == 'true' 
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Text('Analyze Injury Risk', style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-
-              
-              if (_apiResult != null) ...[
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF8E24AA).withValues(alpha: 0.3)), 
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('AI-POWERED ASSESSMENT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                        const SizedBox(height: 6),
+                        const Text('Listen to your body.\nTrain with awareness.', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white, height: 1.2)),
+                        const SizedBox(height: 6),
+                        const Text('Enter your current wellness and training measurements to request a severe injury risk estimate from FitNect’s prediction service.', style: TextStyle(fontSize: 10, color: Colors.white70)),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: const [
+                        Text('Ready when you are', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+                        SizedBox(height: 2),
+                        Text('Complete the assessment', style: TextStyle(color: Colors.white70, fontSize: 9)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            const Text('PREDICTION INPUTS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+            const SizedBox(height: 4),
+            const Text('Your training and recovery details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            const Text('Use values measured or recorded for you. The stress, sleep, recovery, training-load and fatigue fields must follow the model’s input scale. Don’t guess if you don’t know those values.', style: TextStyle(fontSize: 11, color: Colors.grey)),
+            const SizedBox(height: 16),
+
+            // --- INPUT FIELDS GRID WITH TIGHTER SPACING ---
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 1.65,
+              children: [
+                _buildTextField('Heart rate', 'bpm', _heartRateController),
+                _buildTextField('Stress level', 'model scale [0-10]', _stressLevelController),
+                _buildTextField('Hydration level', 'primary scale [1-10]', _hydrationLevelController),
+                _buildTextField('Sleep quality', 'model scale [1-10]', _sleepQualityController),
+                _buildTextField('Recovery score', 'model scale [0-100]', _recoveryScoreController),
+                _buildTextField('Steps today', 'steps', _stepCountController),
+                _buildTextField('Training load', 'model scale [0-250]', _trainingLoadController),
+                _buildTextField('Training intensity', 'RPE [1-10]', _trainingIntensityController),
+                _buildTextField('Training duration', 'minutes', _trainingDurationController),
+                _buildTextField('Fatigue index', 'model scale [1-10]', _fatigueIndexController),
+                _buildTextField('Age', 'years', _ageController),
+                _buildTextField('BMI', 'kg/m²', _bmiController),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // --- DROPDOWNS ---
+            Row(
+              children: [
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Prediction Results', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF8E24AA))),
-                      const Divider(),
-                      const SizedBox(height: 8),
-                      Text('Prediction: ${_apiResult!['prediction'] ?? 'N/A'}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      Text('Risk Level: ${_apiResult!['risk_level'] ?? 'N/A'}', style: const TextStyle(fontSize: 14)),
-                      const SizedBox(height: 6),
-                      Text('Severe Risk Probability: ${_apiResult!['severe_risk_percent'] ?? 0.0}%', style: const TextStyle(fontSize: 14)),
+                      const Text('Sport type', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedSportType,
+                        items: ['Basketball', 'Other', 'Soccer', 'Track']
+                            .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                            .toList(),
+                        onChanged: (val) => setState(() => _selectedSportType = val ?? 'Other'),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Gender', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      DropdownButtonFormField<String>(
+                        initialValue: _selectedGender,
+                        items: ['Male', 'Female']
+                            .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                            .toList(),
+                        onChanged: (val) => setState(() => _selectedGender = val ?? 'Female'),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ],
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+
+            // --- ACTION BUTTONS ---
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1E1B2E),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: _isLoading ? null : _predictInjuryRisk,
+                    child: _isLoading
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Text('Predict severe-injury risk', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    onPressed: _clearInputs,
+                    child: const Text('Clear inputs', style: TextStyle(color: Colors.black87, fontSize: 12)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // --- INFO CARDS BOTTOM ---
+            Row(
+              children: [
+                _buildInfoCard('BEFORE TRAINING', 'Warm up properly', 'Start sessions with 5–10 minutes of easy movement and dynamic mobility.'),
+                const SizedBox(width: 8),
+                _buildInfoCard('TRAINING LOAD', 'Increase load gradually', 'Avoid sudden spikes in workout duration, intensity or weekly frequency.'),
+                const SizedBox(width: 8),
+                _buildInfoCard('DAILY RECOVERY', 'Make recovery count', 'Prioritize sleep, hydration and nutrition. Adjust your session if you feel unusual.'),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNumberField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
-          const SizedBox(height: 6),
-          TextFormField(
+  Widget _buildTextField(String label, String limitHint, TextEditingController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(limitHint, style: const TextStyle(fontSize: 8, color: Colors.grey)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Expanded(
+          child: TextField(
             controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            enableSuggestions: false,
-            autocorrect: false,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(fontSize: 12),
             decoration: InputDecoration(
+              hintText: 'Enter value',
+              hintStyle: TextStyle(fontSize: 10, color: Colors.grey.shade400),
               filled: true,
               fillColor: Colors.white,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) return 'This field is required';
-              if (double.tryParse(value) == null) return 'Please enter a valid number';
-              return null;
-            },
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(String tag, String title, String description) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(tag, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Color(0xFF6B4FA0))),
+            const SizedBox(height: 4),
+            Text(title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Text(description, style: const TextStyle(fontSize: 9, color: Colors.grey), maxLines: 3, overflow: TextOverflow.ellipsis),
+          ],
+        ),
       ),
     );
   }

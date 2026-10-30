@@ -44,15 +44,14 @@ class _SignInScreenState extends State<SignInScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final String token = data['token'] ?? '';
-        final String email = _emailController.text.trim();
+        //final String email = _emailController.text.trim();
         debugPrint('Login Token: $token');  
       
 
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) =>  DetailsScreen(
-              userName: ' ',
-              userEmail: email,
+              
               token: token,
             ),
             ),
