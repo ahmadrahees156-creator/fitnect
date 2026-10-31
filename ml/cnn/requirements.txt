@@ -1,0 +1,6 @@
+flask
+numpy
+gunicorn
+tensorflow
+google-genai
+python-dotenv
