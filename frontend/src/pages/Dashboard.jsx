@@ -13,6 +13,7 @@ import WellnessCheckIn from '../components/WellnessCheckIn'
 import Recovery from '../components/Recovery'
 import Nutrition from '../components/Nutrition'
 import InjuryRisk from '../components/InjuryRisk'
+import PhotoInjuryAnalysis from '../components/PhotoInjuryAnalysis'
 import Footsteps from '../components/Footsteps'
 import Profile from './Profile'
 import Settings from './Settings'
@@ -23,6 +24,7 @@ const navItems = [
   { id: 'training', label: 'Training & Activity' },
   { id: 'footsteps', label: 'Footsteps' },
   { id: 'injury', label: 'Injury Risk' },
+  { id: 'photo-injury', label: 'Photo Injury Analysis' },
   { id: 'recovery', label: 'Recovery' },
   { id: 'nutrition', label: 'Nutrition' },
   { id: 'profile', label: 'Profile' },
@@ -499,6 +501,8 @@ function Dashboard() {
         return <Footsteps />
       case 'injury':
         return <InjuryRisk />
+      case 'photo-injury':
+        return <PhotoInjuryAnalysis />
       case 'recovery':
         return <Recovery />
       case 'nutrition':
