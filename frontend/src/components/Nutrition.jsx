@@ -8,6 +8,7 @@ import {
   getNutritionGoals,
   getNutritionGoalsProgress,
   saveNutritionGoals,
+  getPersonalNutritionTargets,
 } from '../services/nutritionService'
 import NutritionHistory from './NutritionHistory'
 import {
@@ -53,51 +54,123 @@ function getErrorMessage(error, fallback) {
   return (
     error?.response?.data?.message ||
     error?.response?.data?.error ||
+    error?.message ||
     fallback
   )
 }
-
 
 function normalizeFoodResults(response) {
   const candidates = [
     response?.data?.foods,
     response?.data?.results,
+    response?.data?.data?.foods,
+    response?.data?.data?.results,
+    response?.data?.data,
     response?.foods,
     response?.results,
     response?.data,
   ]
 
-  return candidates.find(Array.isArray) || []
+  const results = candidates.find(Array.isArray) || []
+  return results.map((food) => {
+    const id = food?.fdcId ?? food?.fdc_id ?? food?.id ?? food?.foodId ?? food?.food_id
+    return id === undefined || id === null ? food : { ...food, fdcId: id }
+  })
+}
+
+function unwrapNutritionPayload(response) {
+  let current = response
+  for (let depth = 0; depth < 10; depth += 1) {
+    if (!current || typeof current !== 'object' || Array.isArray(current)) break
+
+    const hasNutritionData =
+      Array.isArray(current.foodNutrients) ||
+      Array.isArray(current.nutrients) ||
+      current.calories !== undefined ||
+      current.caloriesKcal !== undefined ||
+      current.calories_kcal !== undefined ||
+      current.protein !== undefined ||
+      current.proteinG !== undefined ||
+      current.protein_g !== undefined
+
+    if (hasNutritionData) return current
+
+    const next =
+      current.data ??
+      current.food ??
+      current.result ??
+      current.nutrition ??
+      current.nutritionFacts ??
+      current.foodItem ??
+      current.details
+    if (!next || next === current) break
+    current = next
+  }
+  return current || {}
 }
 
 function getNutrientAmount(food, patterns, fallbackKeys = []) {
-  const nutrients = [
-    ...(Array.isArray(food?.foodNutrients) ? food.foodNutrients : []),
-    ...(Array.isArray(food?.nutrients) ? food.nutrients : []),
-    ...(Array.isArray(food?.data?.foodNutrients) ? food.data.foodNutrients : []),
-    ...(Array.isArray(food?.data?.nutrients) ? food.data.nutrients : []),
-  ]
+  const aliases = {
+    calories: ['calories', 'caloriesKcal', 'calories_kcal', 'energyKcal', 'energy_kcal', 'energy'],
+    protein: ['protein', 'proteinG', 'protein_g'],
+    carbohydrates: ['carbohydrates', 'carbs', 'carbohydratesG', 'carbohydrates_g', 'carbs_g', 'totalCarbohydrates'],
+    fat: ['fat', 'fatG', 'fat_g', 'totalFat', 'total_fat', 'totalLipid', 'total_lipid'],
+  }
+  const allKeys = [...new Set([...fallbackKeys, ...(aliases[fallbackKeys[0]] || [])])]
+  const visited = new Set()
+  const queue = [food]
 
-  for (const nutrient of nutrients) {
-    const name = String(
-      nutrient?.nutrientName || nutrient?.name || nutrient?.nutrient?.name || ''
-    ).toLowerCase()
-    if (patterns.some((pattern) => pattern.test(name))) {
-      const value = Number(nutrient?.value ?? nutrient?.amount ?? nutrient?.nutrient?.amount)
-      if (Number.isFinite(value)) return value
+  while (queue.length) {
+    const current = queue.shift()
+    if (!current || typeof current !== 'object' || visited.has(current)) continue
+    visited.add(current)
+
+    for (const key of allKeys) {
+      const rawValue = current[key]
+      if (rawValue !== null && rawValue !== undefined && rawValue !== '' && typeof rawValue !== 'object') {
+        const value = Number(rawValue)
+        if (Number.isFinite(value)) return value
+      }
+    }
+
+    const nutrients = [
+      ...(Array.isArray(current.foodNutrients) ? current.foodNutrients : []),
+      ...(Array.isArray(current.nutrients) ? current.nutrients : []),
+      ...(Array.isArray(current.nutritionFacts) ? current.nutritionFacts : []),
+    ]
+
+    for (const nutrient of nutrients) {
+      const name = String(
+        nutrient?.nutrientName ||
+        nutrient?.nutrient_name ||
+        nutrient?.name ||
+        nutrient?.label ||
+        nutrient?.nutrient?.name ||
+        nutrient?.nutrient?.nutrientName ||
+        ''
+      ).toLowerCase()
+      if (patterns.some((pattern) => pattern.test(name))) {
+        const rawValue =
+          nutrient?.value ??
+          nutrient?.amount ??
+          nutrient?.quantity ??
+          nutrient?.nutrient?.amount ??
+          nutrient?.nutrient?.value
+        const value = Number(rawValue)
+        if (rawValue !== null && rawValue !== undefined && rawValue !== '' && Number.isFinite(value)) return value
+      }
+    }
+
+    for (const [key, value] of Object.entries(current)) {
+      if (value && typeof value === 'object') queue.push(value)
     }
   }
 
-  for (const key of fallbackKeys) {
-    const value = Number(food?.[key] ?? food?.data?.[key])
-    if (Number.isFinite(value)) return value
-  }
-
-  return 0
+  return null
 }
 
 function extractFoodMacros(response) {
-  const food = response?.data?.food || response?.data || response?.food || response
+  const food = unwrapNutritionPayload(response)
   return {
     calories: getNutrientAmount(food, [/energy/, /calorie/], ['calories', 'caloriesKcal', 'energyKcal']),
     protein: getNutrientAmount(food, [/^protein/, /protein/], ['protein', 'proteinG']),
@@ -333,6 +406,7 @@ export default function Nutrition() {
   const [mealName, setMealName] = useState('')
   const [foodSearch, setFoodSearch] = useState('')
   const [foodResults, setFoodResults] = useState([])
+  const [noFoodsFound, setNoFoodsFound] = useState(false)
   const [searchingFoods, setSearchingFoods] = useState(false)
   const [selectedFoodId, setSelectedFoodId] = useState('')
   const [foodNutritionPer100g, setFoodNutritionPer100g] = useState(null)
@@ -352,6 +426,7 @@ export default function Nutrition() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [showGoalEditor, setShowGoalEditor] = useState(false)
+  const [loadingPersonalTargets, setLoadingPersonalTargets] = useState(false)
 
   const totals = nutrition.totals || {}
   const entries = Array.isArray(nutrition.entries) ? nutrition.entries : []
@@ -499,6 +574,7 @@ export default function Nutrition() {
 
     setError('')
     setMessage('')
+    setNoFoodsFound(false)
     setSearchingFoods(true)
     setFoodResults([])
 
@@ -506,8 +582,9 @@ export default function Nutrition() {
       const response = await searchNutritionFoods(query)
       const results = normalizeFoodResults(response)
       setFoodResults(results)
-      if (!results.length) setMessage('No foods found. Try another search term.')
+      setNoFoodsFound(results.length === 0)
     } catch (err) {
+      setNoFoodsFound(false)
       setError(getErrorMessage(err, 'Food search is unavailable right now.'))
     } finally {
       setSearchingFoods(false)
@@ -515,8 +592,8 @@ export default function Nutrition() {
   }
 
   async function handleSelectFood(food) {
-    const fdcId = food?.fdcId ?? food?.fdc_id ?? food?.id
-    if (!fdcId) {
+    const fdcId = food?.fdcId ?? food?.fdc_id ?? food?.id ?? food?.foodId ?? food?.food_id
+    if (fdcId === undefined || fdcId === null || String(fdcId).trim() === '') {
       setError('This food result has no usable food ID. Please choose another result.')
       return
     }
@@ -530,17 +607,26 @@ export default function Nutrition() {
       const response = await getFoodNutrition(fdcId)
       const macros = extractFoodMacros(response)
       const foodName = food?.description || food?.name || food?.foodName || food?.title || 'Selected food'
+      const missingMacros = Object.entries(macros)
+        .filter(([, value]) => value === null)
+        .map(([key]) => key)
+
+      if (missingMacros.length === 4) {
+        throw new Error('Nutrition data was returned in an unsupported format. Please try another food result.')
+      }
 
       setMealName(foodName)
       setFoodNutritionPer100g(macros)
-      setCalories(String(Number(macros.calories.toFixed(2))))
-      setProtein(String(Number(macros.protein.toFixed(2))))
-      setCarbohydrates(String(Number(macros.carbohydrates.toFixed(2))))
-      setFat(String(Number(macros.fat.toFixed(2))))
+      setCalories(macros.calories === null ? '' : String(Number(macros.calories.toFixed(2))))
+      setProtein(macros.protein === null ? '' : String(Number(macros.protein.toFixed(2))))
+      setCarbohydrates(macros.carbohydrates === null ? '' : String(Number(macros.carbohydrates.toFixed(2))))
+      setFat(macros.fat === null ? '' : String(Number(macros.fat.toFixed(2))))
       setServingSize('100')
       setServingUnit('g')
       setFoodResults([])
-      setMessage('Nutrition values loaded for 100 g. Adjust the serving size before saving.')
+      setMessage(missingMacros.length
+        ? `Nutrition loaded for 100 g. Some values were not provided: ${missingMacros.join(', ')}.`
+        : 'Nutrition values loaded for 100 g. Adjust the serving size before saving.')
     } catch (err) {
       setError(getErrorMessage(err, 'Could not load nutrition values for this food.'))
     } finally {
@@ -558,20 +644,18 @@ export default function Nutrition() {
       !mealName.trim() ||
       calories === '' ||
       protein === '' ||
-      carbohydrates === '' ||
       fat === ''
     ) {
       setError('Enter the meal name, calories and all macronutrient values.')
       return
     }
 
-    const values = [calories, protein, carbohydrates, fat, servingSize].map(Number)
+    const values = [calories, protein, fat, servingSize].map(Number)
 
     if (
       values.some((value) => !Number.isFinite(value) || value < 0) ||
       Number(calories) > 10000 ||
       Number(protein) > 1000 ||
-      Number(carbohydrates) > 2000 ||
       Number(fat) > 1000 ||
       Number(servingSize) <= 0
     ) {
@@ -641,6 +725,75 @@ export default function Nutrition() {
       setError(getErrorMessage(err, 'Could not add this meal.'))
     } finally {
       setSavingMeal(false)
+    }
+  }
+
+  async function handleGeneratePersonalTargets() {
+    setError('')
+    setMessage('')
+    setLoadingPersonalTargets(true)
+
+    try {
+      const response = await getPersonalNutritionTargets()
+
+      // Backend returns { success, data }; the external nutrition service can
+      // also wrap its targets in nested objects. Search nested response fields
+      // rather than assuming one specific envelope.
+      const normalizeKey = (key) => String(key).toLowerCase().replace(/[^a-z0-9]/g, '')
+      const aliases = {
+        caloriesKcal: ['calorieskcal', 'calories', 'calorie', 'calorietarget', 'dailycalories', 'dailycalorietarget', 'energykcal', 'energy', 'tdee', 'calorieneeds', 'targetcalories', 'caloriesperday'],
+        proteinG: ['proteing', 'protein', 'proteingrams', 'proteintarget', 'dailyprotein', 'dailyproteintarget', 'targetprotein'],
+        carbohydratesG: ['carbohydratesg', 'carbohydrates', 'carbohydrate', 'carbs', 'carbsg', 'carbohydrateg', 'carbohydrategrams', 'carbohydratetarget', 'dailycarbs', 'dailycarbohydrates', 'targetcarbs'],
+        fatG: ['fatg', 'fat', 'fatgrams', 'fattarget', 'dailyfat', 'dailyfattarget', 'targetfat'],
+      }
+
+      const findValue = (object, acceptedKeys, depth = 0) => {
+        if (!object || typeof object !== 'object' || depth > 8) return undefined
+        if (Array.isArray(object)) {
+          for (const item of object) {
+            const found = findValue(item, acceptedKeys, depth + 1)
+            if (found !== undefined) return found
+          }
+          return undefined
+        }
+        for (const [key, value] of Object.entries(object)) {
+          if (!acceptedKeys.includes(normalizeKey(key))) continue
+          const candidate = value && typeof value === 'object'
+            ? value.value ?? value.amount ?? value.target
+            : value
+          if (candidate !== '' && candidate !== null && candidate !== undefined && Number.isFinite(Number(candidate))) {
+            return Number(candidate)
+          }
+        }
+        for (const value of Object.values(object)) {
+          const found = findValue(value, acceptedKeys, depth + 1)
+          if (found !== undefined) return found
+        }
+        return undefined
+      }
+
+      const nextGoals = {
+        caloriesKcal: findValue(response, aliases.caloriesKcal),
+        proteinG: findValue(response, aliases.proteinG),
+        carbohydratesG: findValue(response, aliases.carbohydratesG),
+        fatG: findValue(response, aliases.fatG),
+      }
+
+      if (Object.values(nextGoals).some((value) => !Number.isFinite(value) || value <= 0)) {
+        console.error('Nutrition target response (inspect its structure):', response)
+        throw new Error('The nutrition service did not return all four daily targets in a recognized format. Check the browser console for details.')
+      }
+
+      setGoalForm(nextGoals)
+      await saveNutritionGoals(nextGoals)
+      setGoals(nextGoals)
+      setShowGoalEditor(false)
+      setMessage('Personalized calories, protein, carbs and fat targets have been saved from your fitness profile.')
+      await loadNutrition()
+    } catch (err) {
+      setError(getErrorMessage(err, 'Could not generate personalized nutrition targets. Complete your fitness profile and try again.'))
+    } finally {
+      setLoadingPersonalTargets(false)
     }
   }
 
@@ -991,15 +1144,25 @@ export default function Nutrition() {
                     <div>
                       <p className="text-sm font-medium text-[#8B7A9D]">DAILY TARGETS</p>
                       <h2 className="mt-1 text-xl font-bold">Nutrition overview</h2>
-                      <p className="mt-2 text-sm text-[#7E7E82]">Compare intake with your saved goals.</p>
+                      <p className="mt-2 text-sm text-[#7E7E82]">Compare intake with your saved goals, or generate personalized targets from your fitness profile.</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowGoalEditor(!showGoalEditor)}
-                      className="rounded-xl border border-[#E4DBF4] px-3 py-2 text-sm font-semibold text-[#745496] hover:bg-[#F8F5FC]"
-                    >
-                      {showGoalEditor ? 'Cancel' : 'Edit goals'}
-                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={handleGeneratePersonalTargets}
+                        disabled={loadingPersonalTargets || savingGoals}
+                        className="rounded-xl bg-[#151517] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#34343A] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {loadingPersonalTargets ? 'Generating targets…' : 'Personalize targets'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowGoalEditor(!showGoalEditor)}
+                        className="rounded-xl border border-[#E4DBF4] px-3 py-2 text-sm font-semibold text-[#745496] hover:bg-[#F8F5FC]"
+                      >
+                        {showGoalEditor ? 'Cancel' : 'Edit goals'}
+                      </button>
+                    </div>
                   </div>
 
                   {showGoalEditor && (
@@ -1059,7 +1222,7 @@ export default function Nutrition() {
                       <input
                         id="food-search"
                         value={foodSearch}
-                        onChange={(event) => setFoodSearch(event.target.value)}
+                        onChange={(event) => { setFoodSearch(event.target.value); setNoFoodsFound(false) }}
                         minLength={2}
                         maxLength={100}
                         placeholder="Search foods, e.g. banana or rice"
@@ -1069,6 +1232,11 @@ export default function Nutrition() {
                         {searchingFoods ? 'Searching...' : 'Search foods'}
                       </button>
                     </div>
+                    {noFoodsFound && !searchingFoods && (
+                      <p role="status" className="mt-3 rounded-xl border border-[#EAE3F2] bg-white px-4 py-3 text-sm text-[#7E7E82]">
+                        No foods found. Try another search term.
+                      </p>
+                    )}
                     {foodResults.length > 0 && (
                       <div className="mt-3 max-h-64 space-y-2 overflow-y-auto">
                         {foodResults.map((food, index) => {
@@ -1114,7 +1282,6 @@ export default function Nutrition() {
                     {[
                       [ 'meal-calories', foodNutritionPer100g ? 'Calories (per 100 g)' : 'Calories (kcal)', calories, setCalories, 10000],
                       ['meal-protein', foodNutritionPer100g ? 'Protein (per 100 g)' : 'Protein (g)', protein, setProtein, 2000],
-                      ['meal-carbs', foodNutritionPer100g ? 'Carbs (per 100 g)' : 'Carbohydrates (g)', carbohydrates, setCarbohydrates, 2000],
                       ['meal-fat', foodNutritionPer100g ? 'Fat (per 100 g)' : 'Fat (g)', fat, setFat, 2000],
                     ].map(([id, label, value, setter, max]) => (
                       <div key={id}>
@@ -1163,7 +1330,7 @@ export default function Nutrition() {
                           <p className="break-words text-sm font-semibold">{meal.foodName || meal.name}</p>
                           <p className="mt-1 text-xs capitalize text-[#7E7E82]">{meal.mealType} · {meal.servingSize} {meal.servingUnit}</p>
                           <p className="mt-1 text-xs text-[#7E7E82]">
-                            Protein {Number(meal.protein || 0)} g · Carbs {Number(meal.carbohydrates || 0)} g · Fat {Number(meal.fat || 0)} g
+                            Protein {Number(meal.protein || 0)} g · Fat {Number(meal.fat || 0)} g
                           </p>
                         </div>
                         <div className="shrink-0 text-right">
@@ -1174,11 +1341,10 @@ export default function Nutrition() {
                   </div>
                 )}
 
-                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                   {[
                     ['Calories', totalCalories, 'kcal', 'bg-[#F3EDF9]'],
                     ['Protein', totalProtein, 'g', 'bg-[#E7F5EB]'],
-                    ['Carbs', totalCarbohydrates, 'g', 'bg-[#FFF0DF]'],
                     ['Fat', totalFat, 'g', 'bg-[#FCE4F5]'],
                   ].map(([label, value, unit, color]) => (
                     <div key={label} className={`rounded-2xl p-4 ${color}`}>
@@ -1192,34 +1358,6 @@ export default function Nutrition() {
 
             <NutritionHistory refreshTrigger={nutrition?.entryCount ?? 0} />
 
-            <section>
-              <div>
-                <p className="text-sm font-medium text-[#8B7A9D]">SIMPLE MEAL IDEAS</p>
-                <h2 className="mt-1 text-2xl font-bold">Quick add</h2>
-                <p className="mt-2 text-sm text-[#7E7E82]">Example nutrition estimates. Review serving sizes before logging.</p>
-              </div>
-
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {mealSuggestions.map((meal, index) => (
-                  <div key={meal.name} className="group rounded-2xl border border-[#EAE3F2] bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-md">
-                    <div className="flex items-start justify-between gap-3">
-                      <span className={`flex h-12 w-12 items-center justify-center rounded-2xl text-2xl ${index % 3 === 0 ? 'bg-[#FDE8D5]' : index % 3 === 1 ? 'bg-[#E4DBF4]' : 'bg-[#DDF3E6]'}`}>
-                        {index % 3 === 0 ? '🥣' : index % 3 === 1 ? '🥑' : '🥗'}
-                      </span>
-                      <span className="rounded-full bg-[#F8F5FC] px-3 py-1 text-xs font-medium text-[#7E7E82]">{meal.type}</span>
-                    </div>
-                    <h3 className="mt-4 font-semibold">{meal.name}</h3>
-                    <div className="mt-3 flex flex-wrap gap-3 text-sm text-[#7E7E82]">
-                      <span>{meal.calories} kcal</span>
-                      <span>{meal.protein} g protein</span>
-                    </div>
-                    <button disabled={savingMeal} type="button" onClick={() => addSuggestion(meal)} className="mt-5 w-full rounded-xl border border-[#E4DBF4] bg-[#F8F5FC] px-4 py-3 text-sm font-semibold text-[#745496] transition hover:bg-[#EDE4F8] disabled:opacity-60">
-                      {savingMeal ? 'Please wait...' : '+ Add to diary'}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
           </>
         )}
 

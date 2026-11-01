@@ -1,5 +1,4 @@
-
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'fitnect_steps'
 const GOAL_KEY = 'fitnect_steps_goal'
@@ -27,29 +26,30 @@ function readGoal() {
   }
 }
 
+function formatDate(date) {
+  return new Date(`${date}T12:00:00`).toLocaleDateString('en-IN', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  })
+}
+
 function Footsteps() {
   const [today, setToday] = useState(getToday)
   const [records, setRecords] = useState(readData)
   const [goal, setGoal] = useState(readGoal)
   const [manualInput, setManualInput] = useState('')
   const [goalInput, setGoalInput] = useState(String(readGoal()))
-  const [sensorStatus, setSensorStatus] = useState('Not started')
-  const [sensorActive, setSensorActive] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const lastPeak = useRef(0)
-  const previousMagnitude = useRef(0)
-  const lastStepTime = useRef(0)
-  const sensorSteps = useRef(0)
 
   const steps = Number(records[today]?.steps || 0)
   const progress = Math.min((steps / goal) * 100, 100)
   const remaining = Math.max(goal - steps, 0)
-
   const history = Object.entries(records)
-    .filter(([date, entry]) => date !== today && Number(entry.steps) >= 0)
+    .filter(([date, entry]) => date !== today && Number(entry?.steps) >= 0)
     .sort(([a], [b]) => b.localeCompare(a))
-    .slice(0, 6)
+    .slice(0, 7)
 
   useEffect(() => {
     const updateDate = () => {
@@ -60,9 +60,8 @@ function Footsteps() {
       }
     }
 
-    const handleFocus = () => updateDate()
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
+    window.addEventListener('focus', updateDate)
+    return () => window.removeEventListener('focus', updateDate)
   }, [today])
 
   function saveSteps(nextSteps) {
@@ -126,197 +125,76 @@ function Footsteps() {
     }
   }
 
-  function handleMotion(event) {
-    const acceleration = event.accelerationIncludingGravity
-
-    if (
-      !acceleration ||
-      acceleration.x == null ||
-      acceleration.y == null ||
-      acceleration.z == null
-    ) {
-      return
-    }
-
-    const magnitude = Math.sqrt(
-      acceleration.x ** 2 +
-      acceleration.y ** 2 +
-      acceleration.z ** 2
-    )
-
-    const now = Date.now()
-    const change = Math.abs(magnitude - previousMagnitude.current)
-    previousMagnitude.current = magnitude
-
-    if (
-      change > 1.25 &&
-      magnitude > 10.5 &&
-      now - lastStepTime.current > 300
-    ) {
-      lastStepTime.current = now
-      sensorSteps.current += 1
-
-      if (sensorSteps.current % 5 === 0) {
-        const updated = {
-          ...records,
-          [today]: {
-            steps: Number(records[today]?.steps || 0) + sensorSteps.current,
-            updatedAt: new Date().toISOString(),
-          },
-        }
-
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
-          setRecords(updated)
-        } catch {
-          setError('Could not save sensor steps.')
-          setSensorStatus('Storage error')
-          setSensorActive(false)
-        }
-      }
-    }
-  }
-
-  async function startSensor() {
-    setError('')
-    setMessage('')
-
-    if (!('DeviceMotionEvent' in window)) {
-      setSensorStatus('Sensor unavailable')
-      setError('This device or browser does not provide motion sensor access.')
-      return
-    }
-
-    try {
-      if (
-        typeof window.DeviceMotionEvent.requestPermission === 'function'
-      ) {
-        const permission = await window.DeviceMotionEvent.requestPermission()
-
-        if (permission !== 'granted') {
-          setSensorStatus('Permission denied')
-          setError('Motion permission was not granted. You can still enter steps manually.')
-          return
-        }
-      }
-
-      sensorSteps.current = 0
-      lastStepTime.current = 0
-      previousMagnitude.current = 0
-      window.addEventListener('devicemotion', handleMotion)
-      setSensorActive(true)
-      setSensorStatus('Listening for movement')
-      setMessage('Sensor started. Carry your phone while walking.')
-    } catch {
-      setSensorStatus('Could not start')
-      setError('Could not access the motion sensor. Try manual entry instead.')
-    }
-  }
-
-  function stopSensor() {
-    window.removeEventListener('devicemotion', handleMotion)
-
-    if (sensorSteps.current > 0) {
-      const updated = {
-        ...records,
-        [today]: {
-          steps: Number(records[today]?.steps || 0) + sensorSteps.current,
-          updatedAt: new Date().toISOString(),
-        },
-      }
-
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
-        setRecords(updated)
-      } catch {
-        setError('Could not save all sensor steps.')
-      }
-    }
-
-    sensorSteps.current = 0
-    setSensorActive(false)
-    setSensorStatus('Stopped')
-    setMessage('Sensor tracking stopped.')
-  }
-
-  useEffect(() => {
-    return () => window.removeEventListener('devicemotion', handleMotion)
-  }, [])
-
   return (
-    <div className="fitnect-enter space-y-7">
-      <section className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#332743] via-[#49345B] to-[#76518B] p-6 text-white sm:p-9">
-        <div className="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full bg-[#F373D4]/20 blur-3xl" />
+    <div className="fitnect-enter space-y-6 sm:space-y-8">
+      <section className="relative overflow-hidden rounded-[2rem] border border-[#E9E0F2] bg-[#E4DBF4] p-6 sm:p-9 lg:p-10">
+        <div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-[#F373D4]/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 right-1/3 h-48 w-48 rounded-full bg-[#FDC381]/35 blur-3xl" />
 
-        <div className="relative grid gap-8 md:grid-cols-[1.2fr_0.8fr] md:items-center">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#EBC7EF]">
+        <div className="relative grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#806991]">
               Daily movement
             </p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#151517] sm:text-4xl">
               Every step counts.
             </h2>
-            <p className="mt-3 max-w-lg text-sm leading-6 text-[#DED2E7]">
-              Track your daily steps, build a walking habit and move towards
-              your personal activity goal.
+            <p className="mt-3 max-w-lg text-sm leading-6 text-[#68616F] sm:text-base">
+              Keep a simple record of your daily walking, build consistency, and
+              work towards an activity goal that suits you.
             </p>
 
-            <p className="mt-6 text-xs text-[#DED2E7]">
-              Today's progress · {today}
-            </p>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-4xl font-bold tabular-nums sm:text-5xl">
+            <div className="mt-7 flex flex-wrap items-end gap-x-3 gap-y-1">
+              <span className="text-4xl font-bold tabular-nums text-[#151517] sm:text-5xl">
                 {steps.toLocaleString('en-IN')}
               </span>
-              <span className="text-sm text-[#DED2E7]">steps</span>
+              <span className="pb-1 text-sm font-medium text-[#68616F]">steps today</span>
             </div>
-            <p className="mt-2 text-xs text-[#DED2E7]">
+            <p className="mt-2 text-sm text-[#68616F]">
               {remaining === 0
-                ? 'Daily goal reached. Great work!'
-                : `${remaining.toLocaleString('en-IN')} steps to your goal`}
+                ? 'Daily goal reached. Great consistency!'
+                : `${remaining.toLocaleString('en-IN')} steps left to reach your goal`}
             </p>
+
+            <div className="mt-5 h-2.5 max-w-md overflow-hidden rounded-full bg-white/70">
+              <div
+                className="h-full rounded-full bg-[#151517] transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="mt-2 flex max-w-md items-center justify-between text-xs font-medium text-[#68616F]">
+              <span>{Math.round(progress)}% completed</span>
+              <span>Goal: {goal.toLocaleString('en-IN')}</span>
+            </div>
           </div>
 
-          <div className="flex justify-center">
-            <div
-              className="relative flex h-48 w-48 items-center justify-center rounded-full"
-              style={{
-                background: `conic-gradient(#FDC381 ${progress}%, rgba(255,255,255,.15) ${progress}% 100%)`,
-              }}
-              role="img"
-              aria-label={`${Math.round(progress)} percent of daily step goal completed`}
-            >
-              <div className="flex h-40 w-40 flex-col items-center justify-center rounded-full bg-[#49345B]">
-                <span className="text-4xl">👟</span>
-                <span className="mt-2 text-3xl font-bold">
-                  {Math.round(progress)}%
-                </span>
-                <span className="mt-1 text-[10px] text-[#DED2E7]">
-                  of daily goal
-                </span>
-              </div>
-            </div>
+          <div className="mx-auto flex h-40 w-40 flex-col items-center justify-center rounded-full border-[10px] border-white/70 bg-white/60 shadow-sm sm:h-48 sm:w-48">
+            <span className="text-4xl" aria-hidden="true">👟</span>
+            <span className="mt-2 text-3xl font-bold text-[#302442]">{Math.round(progress)}%</span>
+            <span className="mt-1 text-xs font-medium text-[#806991]">daily goal</span>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-2">
-        <article className="rounded-[24px] border border-[#ECE6F2] bg-white p-5 sm:p-7">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FCEBD7] text-xl">
-              👣
+      <section className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
+        <article className="rounded-3xl border border-[#EEEAF3] bg-white p-5 sm:p-7">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FCEBD7] text-xl" aria-hidden="true">
+              <span>👣</span>
             </div>
             <div>
-              <h3 className="text-lg font-bold text-[#302442]">Manual entry</h3>
-              <p className="text-xs text-[#92879F]">Add steps from any device</p>
+              <h3 className="text-lg font-bold text-[#151517]">Log your steps</h3>
+              <p className="mt-1 text-sm leading-5 text-[#7E7E82]">
+                Add steps from your phone, watch, or any pedometer.
+              </p>
             </div>
           </div>
 
           <form onSubmit={addManualSteps} className="mt-6">
-            <label htmlFor="manual-steps" className="text-sm font-semibold text-[#493456]">
-              How many steps did you take?
+            <label htmlFor="manual-steps" className="text-sm font-semibold text-[#302442]">
+              Steps to add
             </label>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
               <input
                 id="manual-steps"
                 type="number"
@@ -326,11 +204,11 @@ function Footsteps() {
                 value={manualInput}
                 onChange={(event) => setManualInput(event.target.value)}
                 placeholder="e.g. 1500"
-                className="min-w-0 flex-1 rounded-xl border border-[#E8DDF0] bg-[#FCFAFE] px-4 py-3 text-sm outline-none focus:border-[#B88AD5]"
+                className="min-w-0 flex-1 rounded-xl border border-[#E5DCEC] bg-[#FCFAFE] px-4 py-3 text-sm outline-none transition placeholder:text-[#AAA0B4] focus:border-[#A98BC5] focus:ring-2 focus:ring-[#E4DBF4]"
               />
               <button
                 type="submit"
-                className="rounded-xl bg-[#332743] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#4A365D]"
+                className="rounded-xl bg-[#151517] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#34343A] focus:outline-none focus:ring-2 focus:ring-[#A98BC5] focus:ring-offset-2"
               >
                 Add steps
               </button>
@@ -338,10 +216,13 @@ function Footsteps() {
           </form>
 
           <form onSubmit={saveGoal} className="mt-6 border-t border-[#F0EAF4] pt-5">
-            <label htmlFor="step-goal" className="text-sm font-semibold text-[#493456]">
+            <label htmlFor="step-goal" className="text-sm font-semibold text-[#302442]">
               Daily step goal
             </label>
-            <div className="mt-2 flex gap-2">
+            <p className="mt-1 text-xs leading-5 text-[#7E7E82]">
+              Set a realistic target and adjust it whenever you need.
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
               <input
                 id="step-goal"
                 type="number"
@@ -350,11 +231,11 @@ function Footsteps() {
                 step="500"
                 value={goalInput}
                 onChange={(event) => setGoalInput(event.target.value)}
-                className="min-w-0 flex-1 rounded-xl border border-[#E8DDF0] bg-[#FCFAFE] px-4 py-3 text-sm outline-none focus:border-[#B88AD5]"
+                className="min-w-0 flex-1 rounded-xl border border-[#E5DCEC] bg-[#FCFAFE] px-4 py-3 text-sm outline-none transition focus:border-[#A98BC5] focus:ring-2 focus:ring-[#E4DBF4]"
               />
               <button
                 type="submit"
-                className="rounded-xl border border-[#DCCAE8] bg-[#F5EDF9] px-4 py-3 text-sm font-bold text-[#6C4A81] transition hover:bg-[#EDE1F5]"
+                className="rounded-xl border border-[#E5DCEC] bg-[#F8F5FC] px-5 py-3 text-sm font-semibold text-[#493456] transition hover:bg-[#EDE5F6]"
               >
                 Save goal
               </button>
@@ -362,113 +243,107 @@ function Footsteps() {
           </form>
         </article>
 
-        <article className="rounded-[24px] border border-[#ECE6F2] bg-white p-5 sm:p-7">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#E4F4E9] text-xl">
-              📱
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-[#302442]">Phone sensor</h3>
-              <p className="text-xs text-[#92879F]">Experimental motion-based tracking</p>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-2xl bg-[#F7F3FA] p-4">
-            <p className="text-xs text-[#92879F]">Sensor status</p>
-            <p className="mt-1 text-sm font-bold text-[#493456]">
-              {sensorStatus}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-[#92879F]">
-              Keep your phone with you while walking. Browser motion readings
-              can miss steps or count other movements, so this is an estimate.
-            </p>
-          </div>
-
-          {!sensorActive ? (
-            <button
-              type="button"
-              onClick={startSensor}
-              className="mt-4 w-full rounded-xl bg-[#CAECD6] px-4 py-3.5 text-sm font-bold text-[#315D42] transition hover:bg-[#B5E2C5]"
-            >
-              Start sensor tracking
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={stopSensor}
-              className="mt-4 w-full rounded-xl bg-[#FBE5E5] px-4 py-3.5 text-sm font-bold text-[#9D4242] transition hover:bg-[#F6D4D4]"
-            >
-              Stop and save sensor steps
-            </button>
-          )}
-
-          <p className="mt-3 text-[10px] leading-5 text-[#AA9DB3]">
-            Sensor access may require HTTPS and permission. This tracker is
-            not a substitute for a dedicated pedometer or health device.
+        <article className="flex flex-col rounded-3xl border border-[#EEEAF3] bg-white p-5 sm:p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8B7A9D]">
+            Your daily target
           </p>
+          <h3 className="mt-2 text-xl font-bold text-[#151517]">Small steps, steady progress</h3>
+          <p className="mt-2 text-sm leading-6 text-[#7E7E82]">
+            Consistent movement matters more than hitting a perfect number every day.
+            Use your step log to notice patterns and build a routine that works for you.
+          </p>
+
+          <div className="mt-6 rounded-2xl bg-[#F8F5FC] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-medium text-[#68616F]">Today's progress</span>
+              <span className="text-sm font-bold text-[#493456]">{Math.round(progress)}%</span>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#E8E0F0]">
+              <div
+                className="h-full rounded-full bg-[#CAECD6] transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="mt-3 flex items-center justify-between text-xs text-[#7E7E82]">
+              <span>{steps.toLocaleString('en-IN')} steps</span>
+              <span>{goal.toLocaleString('en-IN')} goal</span>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[#F1E4D2] bg-[#FFFAF2] p-4">
+            <span className="mt-0.5 text-lg" aria-hidden="true">💡</span>
+            <p className="text-sm leading-6 text-[#78654D]">
+              Tip: enter the total from your step counter for today. Each entry is
+              added to your existing daily count.
+            </p>
+          </div>
         </article>
       </section>
 
       {(message || error) && (
         <p
-          role="status"
-          className={`rounded-xl px-4 py-3 text-sm ${
+          role={error ? 'alert' : 'status'}
+          className={`rounded-2xl border px-4 py-3 text-sm leading-5 ${
             error
-              ? 'bg-[#FBEDE7] text-[#A15C48]'
-              : 'bg-[#EAF6EE] text-[#4F8966]'
+              ? 'border-[#F3CACA] bg-[#FFF3F3] text-[#9B4545]'
+              : 'border-[#D2EBDD] bg-[#F0F9F3] text-[#397A52]'
           }`}
         >
           {error || message}
         </p>
       )}
 
-      <section className="rounded-[24px] border border-[#ECE6F2] bg-white p-5 sm:p-7">
+      <section className="rounded-3xl border border-[#EEEAF3] bg-white p-5 sm:p-7">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#A08BAF]">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#8B7A9D]">
               Activity log
             </p>
-            <h3 className="mt-1 text-xl font-bold text-[#302442]">
-              Recent step history
-            </h3>
+            <h3 className="mt-2 text-xl font-bold text-[#151517]">Recent step history</h3>
+            <p className="mt-1 text-sm text-[#7E7E82]">Your previous 7 recorded days</p>
           </div>
-          <span className="rounded-full bg-[#F5EDF9] px-3 py-1.5 text-xs font-semibold text-[#806991]">
-            Goal: {goal.toLocaleString('en-IN')}
+          <span className="rounded-full bg-[#E4DBF4] px-3 py-1.5 text-xs font-semibold text-[#5C4675]">
+            Daily goal: {goal.toLocaleString('en-IN')}
           </span>
         </div>
 
         {history.length === 0 ? (
-          <p className="mt-5 rounded-xl bg-[#FCFAFE] p-4 text-sm text-[#92879F]">
-            Your previous daily step records will appear here.
-          </p>
+          <div className="mt-5 rounded-2xl border border-dashed border-[#E5DCEC] bg-[#FCFAFE] px-5 py-8 text-center">
+            <p className="font-semibold text-[#302442]">No previous records yet</p>
+            <p className="mt-2 text-sm leading-6 text-[#7E7E82]">
+              Your daily step history will appear here after you log steps on different days.
+            </p>
+          </div>
         ) : (
-          <div className="mt-5 space-y-4">
+          <div className="mt-6 space-y-5">
             {history.map(([date, entry]) => {
-              const percentage = Math.min((entry.steps / goal) * 100, 100)
+              const percentage = Math.min((Number(entry.steps) / goal) * 100, 100)
 
               return (
                 <div key={date}>
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-[#493456]">{date}</span>
-                    <span className="text-sm font-bold text-[#6C4A81]">
-                      {Number(entry.steps).toLocaleString('en-IN')} steps
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-[#302442]">{formatDate(date)}</span>
+                    <span className="text-sm font-bold tabular-nums text-[#493456]">
+                      {Number(entry.steps).toLocaleString('en-IN')} <span className="font-medium text-[#7E7E82]">steps</span>
                     </span>
                   </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#F0EAF4]">
+                  <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-[#F0EAF4]">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#B9DCC5] to-[#D8A7E8] transition-all duration-500"
+                      className="h-full rounded-full bg-[#CAECD6] transition-all duration-500"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>
+                  <p className="mt-1.5 text-right text-xs text-[#8B8A90]">
+                    {Math.round(percentage)}% of goal
+                  </p>
                 </div>
               )
             })}
           </div>
         )}
 
-        <p className="mt-5 text-[10px] leading-5 text-[#AA9DB3]">
-          Data is stored in this browser only. Clearing browser storage can
-          erase your history. Steps are not synced to your FitNect account.
+        <p className="mt-5 border-t border-[#EEEAF3] pt-4 text-xs leading-5 text-[#8B8A90]">
+          Step records are stored in this browser only. They are not currently synced to your FitNect account.
         </p>
       </section>
     </div>

@@ -5,6 +5,7 @@ import { getMyFitnessProfile, saveMyFitnessProfile } from '../services/fitnessPr
 const initialForm = {
   age: '',
   gender: 'prefer_not_to_say',
+  sex: '',
   heightCm: '',
   weightKg: '',
   goal: 'general_fitness',
@@ -43,6 +44,7 @@ function Onboarding() {
         setForm((previous) => ({
           ...previous,
           ...data.profile,
+          sex: data.profile.sex || '',
           heightCm: data.profile.heightCm ?? '',
           weightKg: data.profile.weightKg ?? '',
         }))
@@ -101,6 +103,11 @@ function Onboarding() {
               <label className="block text-sm font-semibold">Gender
                 <select className={inputClass + ' mt-2'} name="gender" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} required>
                   <option value="female">Female</option><option value="male">Male</option><option value="non_binary">Non-binary</option><option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+              </label>
+              <label className="block text-sm font-semibold">Sex (for nutrition targets)
+                <select className={inputClass + ' mt-2'} name="sex" value={form.sex} onChange={(e) => setForm({ ...form, sex: e.target.value })} required>
+                  <option value="">Select sex</option><option value="female">Female</option><option value="male">Male</option>
                 </select>
               </label>
               {fields.map((field) => (
