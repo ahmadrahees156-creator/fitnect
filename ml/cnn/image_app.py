@@ -1,9 +1,9 @@
-
 from flask import Flask, request, jsonify
 import tensorflow as tf
 import numpy as np
 import os
 import json
+import time
 
 from dotenv import load_dotenv
 from google import genai
@@ -202,6 +202,15 @@ def predict_image():
 
             label = "Normal"
             confidence = (1 - prediction) * 100
+        
+        app.logger.info("Starting MobileNetV2 inference")
+
+        start_time = time.time()
+
+        prediction = float(model.predict(image, verbose=0).reshape(-1)[0])
+
+        app.logger.info("MobileNetV2 completed in %.2f seconds",time.time() - start_time)
+
 
         # --------------------------------
         # 9. Gemini image validation
@@ -215,6 +224,16 @@ def predict_image():
         CNN model score: {confidence:.2f} percent.
 
         Examine the uploaded image carefully.
+
+        IMPORTANT IMAGE ANALYSIS RULES:
+        - Describe only features clearly visible in the uploaded image.
+        - Never invent bruises, cuts, swelling, redness or bleeding.
+        - If no obvious injury is visible, explicitly say:
+          "No obvious visible wound or bruising is observed."
+        - Do not contradict the uploaded image.
+        - If CNN predicts Normal, do not invent an injury.
+        - Do not infer hidden injuries from a normal photograph.
+        - Do not claim that an injury exists without visible evidence.
 
         CURRENT MODEL SUPPORTED REGION:
         Human feet and lower limbs only.
@@ -261,6 +280,8 @@ def predict_image():
         A photograph alone cannot establish injury severity.
         Recommend professional assessment when appropriate.
         """
+        app.logger.info("Starting Gemini image analysis")
+        gemini_start = time.time()
 
         gemini_response = gemini_client.models.generate_content(
             model=GEMINI_MODEL,
@@ -278,7 +299,8 @@ def predict_image():
                 temperature=0.2
             )
         )
-
+        app.logger.info("Gemini completed in %.2f seconds",time.time() - gemini_start)
+        
         # --------------------------------
         # 10. Read Gemini response
         # --------------------------------
@@ -307,7 +329,43 @@ def predict_image():
             }), 400
 
         # --------------------------------
-        # 11. Final response
+        # 11. Prepare final response
+        # --------------------------------
+
+        if label == "Normal":
+
+            visible_description = (
+                "No wound was detected by the image classifier."
+            )
+
+            explanation = (
+                "The image classifier categorized this image as Normal. "
+                "This does not guarantee that the foot is injury-free. "
+                "Seek medical assessment if you experience pain, "
+                "swelling, bruising or difficulty walking."
+            )
+
+            care_suggestions = [
+                "No injury-specific care is indicated by this classification.",
+                "Consult a healthcare professional if symptoms are present."
+            ]
+
+        else:
+
+            visible_description = gemini_result.get(
+                "visible_description", ""
+            )
+
+            explanation = gemini_result.get(
+                "explanation", ""
+            )
+
+            care_suggestions = gemini_result.get(
+                "care_suggestions", []
+            )
+
+        # --------------------------------
+        # 12. Final API response
         # --------------------------------
 
         return jsonify({
@@ -316,25 +374,17 @@ def predict_image():
 
             "prediction": label,
 
-            "confidence": round(
-                confidence, 2
-            ),
+            "confidence": round(confidence, 2),
 
             "body_part": gemini_result.get(
                 "body_part", "lower_limb"
             ),
 
-            "visible_description": gemini_result.get(
-                "visible_description", ""
-            ),
+            "visible_description": visible_description,
 
-            "gemini_explanation": gemini_result.get(
-                "explanation", ""
-            ),
+            "gemini_explanation": explanation,
 
-            "care_suggestions": gemini_result.get(
-                "care_suggestions", []
-            ),
+            "care_suggestions": care_suggestions,
 
             "disclaimer": (
                 "AI image classification is not a medical diagnosis. "
@@ -343,15 +393,11 @@ def predict_image():
 
         }), 200
 
-    except Exception:
+    except Exception as e:
+        app.logger.exception("Image prediction failed")
 
-        app.logger.exception(
-            "Image prediction failed"
-        )
-
-        return jsonify({
-            "success": False,
-            "error": "Image analysis failed. Please try again."}), 500
+        return jsonify({"success": False,"error": str(e)}), 500
+    
 @app.errorhandler(413)
 def file_too_large(error):
 
