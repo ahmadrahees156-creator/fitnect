@@ -85,7 +85,7 @@ def home():
 
 @app.route("/predict-image", methods=["POST"])
 def predict_image():
-
+    app.logger.info("[STAGE 1] Image request received")
     # Check uploaded image
     if "image" not in request.files:
 
@@ -124,6 +124,7 @@ def predict_image():
 
         # Read image
         image_bytes = file.read()
+        app.logger.info("[STAGE 2] Image received. Size: %s bytes",len(image_bytes))
 
         if not image_bytes:
 
@@ -188,6 +189,8 @@ def predict_image():
         # --------------------------------
         # 8. MobileNetV2 prediction
         # --------------------------------
+        app.logger.info("[STAGE 3] Starting MobileNetV2 inference")
+        start_time = time.time()
 
         prediction = float(
             model.predict(image, verbose=0).reshape(-1)[0]
@@ -202,15 +205,10 @@ def predict_image():
 
             label = "Normal"
             confidence = (1 - prediction) * 100
-        
-        app.logger.info("Starting MobileNetV2 inference")
-
-        start_time = time.time()
 
         prediction = float(model.predict(image, verbose=0).reshape(-1)[0])
 
-        app.logger.info("MobileNetV2 completed in %.2f seconds",time.time() - start_time)
-
+        app.logger.info("[STAGE 4] MobileNetV2 completed in %.2f seconds",time.time() - start_time)
 
         # --------------------------------
         # 9. Gemini image validation
@@ -280,7 +278,7 @@ def predict_image():
         A photograph alone cannot establish injury severity.
         Recommend professional assessment when appropriate.
         """
-        app.logger.info("Starting Gemini image analysis")
+        app.logger.info("[STAGE 5] Starting Gemini image analysis")
         gemini_start = time.time()
 
         gemini_response = gemini_client.models.generate_content(
@@ -299,8 +297,8 @@ def predict_image():
                 temperature=0.2
             )
         )
-        app.logger.info("Gemini completed in %.2f seconds",time.time() - gemini_start)
-        
+        app.logger.info("[STAGE 6] Gemini completed in %.2f seconds",time.time() - gemini_start)
+
         # --------------------------------
         # 10. Read Gemini response
         # --------------------------------
