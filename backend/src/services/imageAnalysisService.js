@@ -30,15 +30,27 @@ async function predictImageAnalysis({ buffer, originalname, mimetype }) {
     response = await fetch(url, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(35000),
+      signal: AbortSignal.timeout(90000),
     });
   } catch (error) {
-    const isTimeout = error.name === "TimeoutError" || error.code === 23;
+    console.error("CNN IMAGE SERVICE CONNECTION ERROR:", {
+      message: error.message,
+      name: error.name,
+      cause: error.cause?.message,
+      code: error.cause?.code,
+      url,
+    });
+
+    const isTimeout =
+      error.name === "TimeoutError" ||
+      error.name === "AbortError";
+
     const serviceError = new Error(
       isTimeout
-        ? "The image analysis service timed out. Please try again."
-        : "The image analysis service is unavailable. Please try again."
+        ? "The image analysis service timed out."
+        : "Unable to connect to the image analysis service."
     );
+
     serviceError.statusCode = 503;
     throw serviceError;
   }
