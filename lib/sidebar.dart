@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'profile.dart';
 import 'signin_screen.dart';
 import 'injury.dart';
-import 'recovery.dart';
-import 'nutrition.dart';
+import 'recovery_screen.dart';
+import 'nutrition_screen.dart';
 import 'wellness.dart';
 import 'workout.dart';
 
@@ -102,7 +102,7 @@ class SidebarDrawer extends StatelessWidget {
                       Navigator.push(
                      context,
                      MaterialPageRoute(
-                      builder: (context) => const RecoveryScreen(),
+                      builder: (context) => RecoveryScreen(token: token),
                      ),
                    );
                    }),

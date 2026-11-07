@@ -15,7 +15,6 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
 
   bool _isLoading = false;
 
-  // All controllers empty by default so "Enter value" shows up
   final _heartRateController = TextEditingController();
   final _stressLevelController = TextEditingController();
   final _hydrationLevelController = TextEditingController();
@@ -32,7 +31,6 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
   String _selectedSportType = 'Other';
   String _selectedGender = 'Female';
 
-  // --- PREDICT INJURY RISK API ---
   Future<void> _predictInjuryRisk() async {
     setState(() => _isLoading = true);
     final url = Uri.parse('$_baseUrl/api/injury-risk/predict');
@@ -87,7 +85,6 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
     }
   }
 
-  // --- RESULT MODAL DIALOG ---
   void _showResultDialog(Map<String, dynamic> data) {
     showDialog(
       context: context,
@@ -140,7 +137,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F5FC),
+      backgroundColor: const Color.fromARGB(255, 221, 216, 235),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -168,12 +165,11 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- TOP BANNER ---
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1B2E),
+                color: const Color.fromARGB(255, 66, 25, 82),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -217,14 +213,14 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
             const Text('Use values measured or recorded for you. The stress, sleep, recovery, training-load and fatigue fields must follow the model’s input scale. Don’t guess if you don’t know those values.', style: TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 16),
 
-            // --- INPUT FIELDS GRID WITH TIGHTER SPACING ---
+            // --- INPUT FIELDS GRID: Tight row spacing ---
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 1.65,
+              mainAxisSpacing: 2, // Very little vertical space between rows
+              childAspectRatio: 3.4, // Tightly packed compact cells
               children: [
                 _buildTextField('Heart rate', 'bpm', _heartRateController),
                 _buildTextField('Stress level', 'model scale [0-10]', _stressLevelController),
@@ -301,7 +297,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
                   flex: 2,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1E1B2E),
+                      backgroundColor: const Color.fromARGB(255, 66, 25, 82),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
@@ -317,7 +313,7 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      side: BorderSide(color: Colors.grey.shade300),
+                      side: BorderSide(color: const Color.fromARGB(255, 165, 157, 157)),
                     ),
                     onPressed: _clearInputs,
                     child: const Text('Clear inputs', style: TextStyle(color: Colors.black87, fontSize: 12)),
@@ -347,27 +343,29 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
   Widget _buildTextField(String label, String limitHint, TextEditingController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             Text(limitHint, style: const TextStyle(fontSize: 8, color: Colors.grey)),
           ],
         ),
-        const SizedBox(height: 4),
-        Expanded(
+        const SizedBox(height: 2),
+        SizedBox(
+          height: 32,
           child: TextField(
             controller: controller,
             keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 12),
+            style: const TextStyle(fontSize: 11),
             decoration: InputDecoration(
               hintText: 'Enter value',
-              hintStyle: TextStyle(fontSize: 10, color: Colors.grey.shade400),
+              hintStyle: TextStyle(fontSize: 9, color: Colors.grey.shade400),
               filled: true,
               fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
             ),
           ),
         ),
