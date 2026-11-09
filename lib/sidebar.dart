@@ -77,8 +77,6 @@ class SidebarDrawer extends StatelessWidget {
                   );
                   }),
                  
-                  
-                  
                   _buildDrawerItem(context, 'Injury Risk', false, () {
                      Navigator.pop(context);
                      Navigator.push(
