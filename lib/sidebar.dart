@@ -152,6 +152,4 @@ class SidebarDrawer extends StatelessWidget {
         onTap: onTap,
         dense: true,
       ),
-    );
-  }
-}
+    );}}
