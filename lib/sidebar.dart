@@ -114,8 +114,7 @@ class SidebarDrawer extends StatelessWidget {
                         ),
                       ),
                     );
-                  }),
-                 
+                  }),                
                 ],
               ),
             ),
@@ -132,13 +131,7 @@ class SidebarDrawer extends StatelessWidget {
                 },
                 icon: const Icon(Icons.logout, color: Colors.redAccent, size: 18),
                 label: const Text('Log out', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 14)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+              ),),],),),);}
 
   Widget _buildDrawerItem(BuildContext context, String title, bool isSelected, VoidCallback onTap) {
     return Container(
