@@ -85,7 +85,7 @@ def home():
 
 @app.route("/predict-image", methods=["POST"])
 def predict_image():
-    app.logger.info("[STAGE 1] Image request received")
+    app.logger.warning("[STAGE 1] Image request received")
     # Check uploaded image
     if "image" not in request.files:
 
@@ -124,7 +124,7 @@ def predict_image():
 
         # Read image
         image_bytes = file.read()
-        app.logger.info("[STAGE 2] Image received. Size: %s bytes",len(image_bytes))
+        app.logger.warning("[STAGE 2] Image received. Size: %s bytes",len(image_bytes))
 
         if not image_bytes:
 
