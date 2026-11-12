@@ -185,30 +185,36 @@ def predict_image():
             image.numpy(),
             axis=0
         )
-
+        
         # --------------------------------
         # 8. MobileNetV2 prediction
         # --------------------------------
-        app.logger.info("[STAGE 3] Starting MobileNetV2 inference")
-        start_time = time.time()
 
-        prediction = float(
-            model.predict(image, verbose=0).reshape(-1)[0]
+        app.logger.warning(
+            "[STAGE 3] Starting MobileNetV2 inference"
         )
 
-        if prediction >= 0.5:
+        start_time = time.time()
 
+        # Run prediction only once
+        raw_prediction = model.predict(
+            image,
+            verbose=0
+        )
+
+        prediction = float(raw_prediction.reshape(-1)[0])
+
+        if prediction >= 0.5:
             label = "Wound"
             confidence = prediction * 100
-
         else:
-
             label = "Normal"
             confidence = (1 - prediction) * 100
 
-        prediction = float(model.predict(image, verbose=0).reshape(-1)[0])
-
-        app.logger.info("[STAGE 4] MobileNetV2 completed in %.2f seconds",time.time() - start_time)
+        app.logger.warning(
+            "[STAGE 4] MobileNetV2 completed in %.2f seconds",
+            time.time() - start_time
+        )
 
         # --------------------------------
         # 9. Gemini image validation
@@ -278,7 +284,7 @@ def predict_image():
         A photograph alone cannot establish injury severity.
         Recommend professional assessment when appropriate.
         """
-        app.logger.info("[STAGE 5] Starting Gemini image analysis")
+        app.logger.warning("[STAGE 5] Starting Gemini image analysis")
         gemini_start = time.time()
 
         gemini_response = gemini_client.models.generate_content(
@@ -297,7 +303,7 @@ def predict_image():
                 temperature=0.2
             )
         )
-        app.logger.info("[STAGE 6] Gemini completed in %.2f seconds",time.time() - gemini_start)
+        app.logger.warning("[STAGE 6] Gemini completed in %.2f seconds",time.time() - gemini_start)
 
         # --------------------------------
         # 10. Read Gemini response
