@@ -5,6 +5,10 @@ import os
 import json
 import time
 
+# Limit TensorFlow CPU threads
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
+
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
