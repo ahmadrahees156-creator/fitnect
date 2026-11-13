@@ -48,7 +48,16 @@ if not os.path.exists(MODEL_PATH):
         f"CNN model not found: {MODEL_PATH}"
     )
 
-model = tf.keras.models.load_model(MODEL_PATH)
+model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+# Warm up MobileNetV2 once during startup
+dummy_image = np.zeros(
+    (1, 224, 224, 3),
+    dtype=np.float32
+)
+
+_ = model(dummy_image, training=False)
+
+print("MobileNetV2 warm-up completed!")
 
 print("MobileNetV2 loaded successfully!")
 
@@ -203,8 +212,7 @@ def predict_image():
         # Run prediction only once
         raw_prediction = model.predict(
             image,
-            verbose=0
-        )
+            training=False).numpy()
 
         prediction = float(raw_prediction.reshape(-1)[0])
 
