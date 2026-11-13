@@ -110,12 +110,6 @@ def predict_image():
     if not file.filename:
         return jsonify({"success": False, "error": "No image selected"}), 400
 
-    if not GEMINI_API_KEY or gemini_client is None:
-        return jsonify({
-            "success": False,
-            "error": "Gemini API key is not configured"
-        }), 503
-
     filename = file.filename.lower()
     if not filename.endswith((".jpg", ".jpeg", ".png")):
         return jsonify({
@@ -204,94 +198,61 @@ def predict_image():
         # --------------------------------
         # 7. Gemini image validation
         # --------------------------------
-        prompt = f"""
-You are an image validation and explanation assistant for FitNect.
+        gemini_result = None
+        gemini_available = False
 
-The CNN prediction is: {label}
-CNN model score: {confidence:.2f} percent.
-Examine the uploaded image carefully.
+        if gemini_client is not None:
+            try:
+                app.logger.warning("[STAGE 5] Starting Gemini image analysis")
+                gemini_start = time.time()
 
-IMPORTANT IMAGE ANALYSIS RULES:
-- Describe only features clearly visible in the uploaded image.
-- Never invent bruises, cuts, swelling, redness or bleeding.
-- If no obvious injury is visible, explicitly say:
-  "No obvious visible wound or bruising is observed."
-- Do not contradict the uploaded image.
-- If CNN predicts Normal, do not invent an injury.
-- Do not infer hidden injuries from a normal photograph.
-- Do not claim that an injury exists without visible evidence.
+                gemini_response = gemini_client.models.generate_content(
+                    model=GEMINI_MODEL,
+                    contents=[
+                        prompt,
+                        types.Part.from_bytes(
+                            data=image_bytes,
+                            mime_type=mime_type
+                        )
+                    ],
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.2
+                    )
+                )
 
-CURRENT MODEL SUPPORTED REGION:
-Human feet and lower limbs only.
+                if gemini_response.text:
+                    gemini_result = json.loads(gemini_response.text)
 
-VALID IMAGE:
-- A real photograph of a human foot or lower leg.
-- The image must be sufficiently clear to inspect.
+                    # Check response structure
+                    if not isinstance(gemini_result, dict):
+                        raise ValueError("Invalid Gemini JSON response")
 
-INVALID IMAGE:
-- Food, animals, pets, scenery or unrelated objects.
-- Drawings, cartoons, screenshots or diagrams.
-- Arm, hand, face or other unsupported body parts.
-- Very blurry, very dark, obstructed or unclear images.
-- Images where the relevant body part cannot be identified.
+                    if "is_valid" not in gemini_result:
+                        raise ValueError("Gemini validation field missing")
 
-Return ONLY valid JSON in this exact format:
-{{
-  "is_valid": true,
-  "reason": "",
-  "body_part": "foot",
-   "visible_description": "Brief description of visible features",
-   "explanation": "Simple explanation of the CNN result",
-   "care_suggestions": ["General care suggestion 1", "General care suggestion 2"]
-}}
+                    gemini_available = True
 
-If the image is invalid:
-- Set is_valid to false.
-- Explain the reason briefly.
-- Do not provide an injury prediction.
+                    app.logger.warning(
+                        "[STAGE 6] Gemini completed in %.2f seconds",
+                        time.time() - gemini_start
+                    )
 
-If the image is valid:
-- Preserve the CNN prediction exactly.
-- Explain the result cautiously.
-- Give general, conservative care suggestions.
-- Do not diagnose a medical condition.
-- Do not predict mild, moderate or severe injury.
-- Do not predict recovery time.
-- Do not describe CNN confidence as medical certainty.
+                else:
+                    app.logger.warning("Gemini returned empty response")
 
-A photograph alone cannot establish injury severity.
-Recommend professional assessment when appropriate.
-"""
+            except Exception as gemini_error:
+                app.logger.warning(
+                    "Gemini unavailable. CNN prediction will continue. "
+                    "Error: %s",
+                    gemini_error
+                )
 
-        app.logger.warning("[STAGE 5] Starting Gemini image analysis")
-        gemini_start = time.time()
+        else:
+            app.logger.warning("Gemini API key missing. CNN prediction will continue.")
 
-        gemini_response = gemini_client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=[
-                prompt,
-                types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-            ],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.2
-            )
-        )
-
-        app.logger.warning(
-            "[STAGE 6] Gemini completed in %.2f seconds",
-            time.time() - gemini_start
-        )
-
-        if not gemini_response.text:
-            return jsonify({
-                "success": False,
-                "error": "Gemini returned an empty response"
-            }), 502
-
-        gemini_result = json.loads(gemini_response.text)
-
-        if gemini_result.get("is_valid") is not True:
+        # Reject image only when Gemini validation actually succeeded
+        if gemini_available and gemini_result.get("is_valid") is not True:
             return jsonify({
                 "success": False,
                 "error": "Invalid or unsupported image",
@@ -300,7 +261,7 @@ Recommend professional assessment when appropriate.
                     "Please upload a clear foot or lower-limb image."
                 )
             }), 400
-
+  
         # --------------------------------
         # 8. Prepare final response
         # --------------------------------
@@ -318,22 +279,56 @@ Recommend professional assessment when appropriate.
                 "No injury-specific care is indicated by this classification.",
                 "Consult a healthcare professional if symptoms are present."
             ]
+
+        elif gemini_available:
+            visible_description = gemini_result.get(
+                "visible_description",
+                "A wound was detected by the image classifier."
+            )
+            explanation = gemini_result.get(
+                "explanation",
+                "The image classifier detected a possible wound."
+            )
+            care_suggestions = gemini_result.get(
+                "care_suggestions",
+                ["Consult a healthcare professional for assessment."]
+            )
+
         else:
-            visible_description = gemini_result.get("visible_description", "")
-            explanation = gemini_result.get("explanation", "")
-            care_suggestions = gemini_result.get("care_suggestions", [])
+            visible_description = (
+                "A wound was detected by the image classifier."
+            )
+            explanation = (
+                "The CNN detected a possible wound. "
+                "Gemini image analysis was unavailable, so "
+                "visual validation and explanation could not be completed."
+            )
+            care_suggestions = [
+                "Keep the affected area clean and protected.",
+                "Seek professional assessment if symptoms are present."
+            ]
 
         return jsonify({
             "success": True,
             "prediction": label,
             "confidence": round(confidence, 2),
-            "body_part": gemini_result.get("body_part", "lower_limb"),
+            "body_part": (
+                gemini_result.get("body_part", "lower_limb")
+                if gemini_available
+                else "lower_limb"
+            ),
             "visible_description": visible_description,
             "gemini_explanation": explanation,
             "care_suggestions": care_suggestions,
+            "gemini_available": gemini_available,
+            "validation_status": (
+                "validated" if gemini_available else "unverified"
+            ),
             "disclaimer": (
                 "AI image classification is not a medical diagnosis. "
-                "Model confidence does not indicate injury severity."
+                "Model confidence does not indicate injury severity. "
+                "When validation_status is unverified, the uploaded "
+                "image has not been checked by Gemini."
             )
         }), 200
 
