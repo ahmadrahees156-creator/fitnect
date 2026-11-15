@@ -205,7 +205,27 @@ def predict_image():
             try:
                 app.logger.warning("[STAGE 5] Starting Gemini image analysis")
                 gemini_start = time.time()
+                prompt = """
+                Analyze the uploaded image carefully.
 
+                Determine whether the image shows a real human foot or lower leg.
+                Check whether visible bruising, swelling, redness, wounds,
+                or other visible abnormalities are present.
+
+                Return ONLY valid JSON with these keys:
+                {
+                  "is_valid": true,
+                  "reason": "Brief reason",
+                  "body_part": "foot or lower_limb",
+                  "visible_description": "Describe visible findings",
+                  "explanation": "Explain the visible findings",
+                  "care_suggestions": ["Suggestion 1", "Suggestion 2"]
+                }
+
+                If the image is not a clear foot or lower-leg image,
+                set is_valid to false.
+                Do not claim a medical diagnosis.
+                """
                 gemini_response = gemini_client.models.generate_content(
                     model=GEMINI_MODEL,
                     contents=[
