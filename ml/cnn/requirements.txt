@@ -4,3 +4,6 @@ gunicorn
 tensorflow
 google-genai
 python-dotenv
+Pillow
+httpx
+tflite-runtime
