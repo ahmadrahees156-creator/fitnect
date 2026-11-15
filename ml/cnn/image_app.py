@@ -205,27 +205,46 @@ def predict_image():
             try:
                 app.logger.warning("[STAGE 5] Starting Gemini image analysis")
                 gemini_start = time.time()
+                
                 prompt = """
-                Analyze the uploaded image carefully.
+                You are a visual image analysis assistant for FitNect.
 
-                Determine whether the image shows a real human foot or lower leg.
-                Check whether visible bruising, swelling, redness, wounds,
-                or other visible abnormalities are present.
+                Analyze the ACTUAL uploaded image independently.
+                Do NOT use or repeat the CNN prediction.
+                Do NOT assume the image is normal or injured based on CNN output.
 
-                Return ONLY valid JSON with these keys:
+                Look carefully for:
+                - Purple, blue, or dark bruising
+                - Swelling around ankle or foot
+                - Visible redness
+                - Open wounds or bleeding
+                - Abnormal visible skin changes
+
+                IMPORTANT:
+                The uploaded image may show an ankle sprain with bruising
+                but no open wound. Bruising itself is a visible abnormality.
+
+                Return ONLY valid JSON:
                 {
-                  "is_valid": true,
-                  "reason": "Brief reason",
-                  "body_part": "foot or lower_limb",
-                  "visible_description": "Describe visible findings",
-                  "explanation": "Explain the visible findings",
-                  "care_suggestions": ["Suggestion 1", "Suggestion 2"]
+                 "is_valid": true,
+                 "reason": "Image contains a human foot or lower leg",
+                 "body_part": "foot",
+                 "visible_description": "Describe the actual visible appearance",
+                 "explanation": "Explain the visual observations independently",
+                 "care_suggestions": [
+                 "Appropriate general care suggestion",
+                 "When to seek medical assessment"
+                  ]
                 }
 
-                If the image is not a clear foot or lower-leg image,
+                If the image is not a clear human foot or lower-leg image,
                 set is_valid to false.
-                Do not claim a medical diagnosis.
+
+                Never diagnose an injury from an image.
+                Never say no wound means no injury.
+                Never claim the foot is healthy just because CNN says Normal.
                 """
+
                 gemini_response = gemini_client.models.generate_content(
                     model=GEMINI_MODEL,
                     contents=[
@@ -282,50 +301,44 @@ def predict_image():
                 )
             }), 400
   
-        # --------------------------------
+        
         # 8. Prepare final response
         # --------------------------------
-        if label == "Normal":
-            visible_description = (
-                "No wound was detected by the image classifier."
-            )
-            explanation = (
-                "The image classifier categorized this image as Normal. "
-                "This does not guarantee that the foot is injury-free. "
-                "Seek medical assessment if you experience pain, swelling, "
-                "bruising or difficulty walking."
-            )
-            care_suggestions = [
-                "No injury-specific care is indicated by this classification.",
-                "Consult a healthcare professional if symptoms are present."
-            ]
+        if gemini_available and gemini_result:
 
-        elif gemini_available:
+            # Always use Gemini visual analysis,
+            # regardless of CNN prediction
             visible_description = gemini_result.get(
                 "visible_description",
-                "A wound was detected by the image classifier."
+                "Visual description unavailable."
             )
+
             explanation = gemini_result.get(
                 "explanation",
-                "The image classifier detected a possible wound."
+                "Visual explanation unavailable."
             )
+
             care_suggestions = gemini_result.get(
                 "care_suggestions",
-                ["Consult a healthcare professional for assessment."]
+                ["Consult a healthcare professional if symptoms are present."]
             )
 
         else:
+
             visible_description = (
-                "A wound was detected by the image classifier."
+                "Visual analysis could not be completed."
             )
+
             explanation = (
-                "The CNN detected a possible wound. "
-                "Gemini image analysis was unavailable, so "
-                "visual validation and explanation could not be completed."
+                f"CNN prediction: {label}. "
+                "Gemini image analysis was unavailable. "
+                "CNN classification alone cannot confirm "
+                "whether the foot is injury-free."
             )
+
             care_suggestions = [
-                "Keep the affected area clean and protected.",
-                "Seek professional assessment if symptoms are present."
+                "Seek professional assessment if pain, "
+                "bruising or swelling is present."
             ]
 
         return jsonify({
@@ -334,7 +347,7 @@ def predict_image():
             "confidence": round(confidence, 2),
             "body_part": (
                 gemini_result.get("body_part", "lower_limb")
-                if gemini_available
+                if gemini_available and gemini_result
                 else "lower_limb"
             ),
             "visible_description": visible_description,
@@ -354,7 +367,8 @@ def predict_image():
 
     except Exception as e:
         app.logger.exception("Image prediction failed")
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": str(e)
+        }), 500
 
 @app.errorhandler(413)
 def file_too_large(error):
