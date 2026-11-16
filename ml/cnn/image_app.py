@@ -278,6 +278,9 @@ def cnn_fallback(label: str) -> Dict[str, Any]:
             "care_suggestions": [
                 "Avoid activities that worsen pain or irritation.",
                 "Keep the area clean and protect it from further injury.",
+                "If the image shows an arm, hand, wrist, or forearm injury, "
+                "visible cuts or scratches may be present, but their exact location "
+                "and severity cannot be confirmed by the CNN alone. "
                 "Seek medical care for worsening symptoms or concerning signs.",
             ],
         }
