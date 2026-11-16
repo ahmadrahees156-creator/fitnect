@@ -1,122 +1,248 @@
 # FitNect Backend API
 
-FitNect is a fitness and wellness application for tracking workouts, wellness check-ins, recovery-related information, hydration, nutrition, and activity history. The backend also provides fitness recommendations, workout-library access, coach–athlete relationship management, and an injury-risk prediction endpoint.
+FitNect is a fitness and wellness application for tracking workouts,
+wellness check-ins, recovery-related information, hydration, nutrition,
+and activity history. The backend also provides fitness recommendations,
+workout-library access, coach--athlete relationship management,
+numerical injury-risk prediction, and photo-based injury image analysis
+through an external CNN service.
 
-This README documents the backend structure and routes shown in the supplied `Project Structure(7).docx` source. It is intended as the project README and an integration reference. Verify deployed behaviour against the current repository and hosting environment before treating any endpoint as live-tested.
+This README documents the backend structure and routes shown in the
+supplied `Project Structure(7).docx` source. It is intended as the
+project README and an integration reference. Verify deployed behaviour
+against the current repository and hosting environment before treating
+any endpoint as live-tested.
 
 ## Contents
 
-- [Overview](#overview)
-- [Technology and dependencies](#technology-and-dependencies)
-- [Project structure](#project-structure)
-- [Base URLs](#base-urls)
-- [Authentication](#authentication)
-- [API reference](#api-reference)
-- [Nutrition route aliases](#nutrition-route-aliases)
-- [Error handling and status codes](#error-handling-and-status-codes)
-- [Environment configuration](#environment-configuration)
-- [Run locally](#run-locally)
-- [Data and date handling](#data-and-date-handling)
-- [Known integration notes](#known-integration-notes)
-- [Testing checklist](#testing-checklist)
-- [Machine-learning integration](#machine-learning-integration)
+-   [Overview](#overview)
 
----
+-   [Technology and dependencies](#technology-and-dependencies)
+
+-   [Project structure](#project-structure)
+
+-   [Base URLs](#base-urls)
+
+-   [Authentication](#authentication)
+
+-   [API reference](#api-reference)
+
+-   [Nutrition route aliases](#nutrition-route-aliases)
+
+-   [Error handling and status codes](#error-handling-and-status-codes)
+
+-   [Environment configuration](#environment-configuration)
+
+-   [Run locally](#run-locally)
+
+-   [Data and date handling](#data-and-date-handling)
+
+-   [Known integration notes](#known-integration-notes)
+
+-   [Testing checklist](#testing-checklist)
+
+-   [Machine-learning integration](#machine-learning-integration)
+
+-   [Image analysis API](#image-analysis-api)
+
+-   [Image-analysis timeout and
+    troubleshooting](#image-analysis-timeout-and-troubleshooting)
+
+**---**
 
 ## Overview
 
-The backend is a REST API built with Express. It accepts JSON requests from the frontend, authenticates users where required, validates request data, reads and writes MongoDB documents through Mongoose, and returns JSON responses.
+The backend is a REST API built with Express. It accepts JSON requests
+from the frontend, authenticates users where required, validates request
+data, reads and writes MongoDB documents through Mongoose, and returns
+JSON responses.
 
 ### Main responsibilities
 
-- Account registration, email OTP verification, login, Google login, and password reset.
-- User profile and fitness profile management.
-- Personal workout logging, workout statistics, and workout-library browsing.
-- Wellness, recovery-related check-ins, and hydration logging.
-- Nutrition diary, nutrition goals, food catalogue search, and nutrition-service integration.
-- Dashboard summary, insights, and activity-history aggregation.
-- Coach–athlete requests and relationship management.
-- An injury-risk prediction endpoint.
+-   Account registration, email OTP verification, login, Google login,
+    and password reset.
+
+-   User profile and fitness profile management.
+
+-   Personal workout logging, workout statistics, and workout-library
+    browsing.
+
+-   Wellness, recovery-related check-ins, and hydration logging.
+
+-   Nutrition diary, nutrition goals, food catalogue search, and
+    nutrition-service integration.
+
+-   Dashboard summary, insights, and activity-history aggregation.
+
+-   Coach--athlete requests and relationship management.
+
+-   Numerical injury-risk prediction through the configured ML service.
+
+-   Authenticated photo-based injury image analysis through an external
+    CNN service.
 
 ## Technology and dependencies
 
-The supplied source demonstrates use of the following technologies and packages. The actual installed versions must be confirmed in `package.json` and the lockfile.
+The supplied source demonstrates use of the following technologies and
+packages. The actual installed versions must be confirmed in
+`package.json` and the lockfile.
 
-| Technology/package | Role |
-|---|---|
-| Node.js | JavaScript runtime for the backend |
-| Express | HTTP server, route registration, and middleware |
-| Mongoose | MongoDB connection, models, queries, and aggregation |
-| MongoDB | Persistent application data |
-| `dotenv` | Loads environment variables from `.env` during local development |
-| `cors` | Configures cross-origin browser requests |
-| `helmet` | Adds HTTP security-related headers |
-| JWT/token service | Supports authenticated requests; token implementation is in `services/tokenService.js` |
-| `bcryptjs` | Listed in the project’s intended stack for password hashing/comparison; confirm its use and version in the current source and `package.json` |
-| `crypto` (Node.js built-in) | Used by the authentication controller for cryptographic token operations |
-| Brevo email API | Email sending through the project’s email service, according to the supplied implementation |
-| External nutrition service | Food search and nutrition data through `services/nutritionApiService.js` |
+| Technology/package \| Role \|
 
-Do not add package versions to this README until they have been checked against `package.json`.
+\|---\|---\|
+
+| Node.js \| JavaScript runtime for the backend \|
+
+| Express \| HTTP server, route registration, and middleware \|
+
+| Mongoose \| MongoDB connection, models, queries, and aggregation \|
+
+| MongoDB \| Persistent application data \|
+
+| `dotenv` \| Loads environment variables from `.env` during local
+  development \|
+
+| `cors` \| Configures cross-origin browser requests \|
+
+| `helmet` \| Adds HTTP security-related headers \|
+
+| JWT/token service \| Supports authenticated requests; token
+  implementation is in `services/tokenService.js` \|
+
+| `bcryptjs` \| Listed in the project's intended stack for password
+  hashing/comparison; confirm its use and version in the current source
+  and `package.json` \|
+
+| `crypto` (Node.js built-in) \| Used by the authentication controller
+  for cryptographic token operations \|
+
+| Brevo email API \| Email sending through the project's email service,
+  according to the supplied implementation \|
+| Multer / multipart upload middleware \| Receives uploaded image files
+  for photo analysis \|
+| Fetch / AbortSignal timeout \| Sends the image to the external CNN API
+  and bounds the upstream request \|
+
+| External nutrition service \| Food search and nutrition data through
+  `services/nutritionApiService.js` \|
+
+Do not add package versions to this README until they have been checked
+against `package.json`.
 
 ## Project structure
 
-```text
+``` text
+
 backend/
+
 ├── src/
-│   ├── config/
-│   │   └── db.js
-│   ├── controllers/
-│   │   ├── activityHistoryController.js
-│   │   ├── authController.js
-│   │   ├── coachAthleteController.js
-│   │   ├── dashboardController.js
-│   │   ├── fitnessProfileController.js
-│   │   ├── fitnessRecommendationController.js
-│   │   ├── foodController.js
-│   │   ├── googleAuthController.js
-│   │   ├── hydrationController.js
-│   │   ├── injuryRiskController.js
-│   │   ├── insightsController.js
-│   │   ├── nutritionApiController.js
-│   │   ├── nutritionController.js
-│   │   ├── nutritionGoalController.js
-│   │   ├── recoveryController.js
-│   │   ├── userController.js
-│   │   ├── wellnessController.js
-│   │   ├── workoutController.js
-│   │   ├── workoutLibraryController.js
-│   │   └── workoutStatsController.js
-│   ├── middleware/
-│   │   ├── authMiddleware.js
-│   │   ├── authorizeRoles.js
-│   │   └── errorHandler.js
-│   ├── models/
-│   │   ├── CoachAthlete.js
-│   │   ├── EmailOTP.js
-│   │   ├── FitnessProfile.js
-│   │   ├── Food.js
-│   │   ├── Hydration.js
-│   │   ├── Nutrition.js
-│   │   ├── NutritionGoal.js
-│   │   ├── PasswordResetToken.js
-│   │   ├── User.js
-│   │   ├── WellnessCheckIn.js
-│   │   ├── Workout.js
-│   │   └── WorkoutLibrary.js
-│   ├── routes/
-│   ├── scripts/
-│   │   ├── importFoods.js
-│   │   └── importWorkouts.js
-│   ├── services/
-│   │   ├── emailService.js
-│   │   ├── fitnessRecommendationService.js
-│   │   ├── injuryRiskService.js
-│   │   ├── nutritionApiService.js
-│   │   ├── otpService.js
-│   │   └── tokenService.js
-│   ├── app.js
-│   └── server.js
+
+│   ├── config/
+
+│   │   └── db.js
+
+│   ├── controllers/
+
+│   │   ├── activityHistoryController.js
+
+│   │   ├── authController.js
+
+│   │   ├── coachAthleteController.js
+
+│   │   ├── dashboardController.js
+
+│   │   ├── fitnessProfileController.js
+
+│   │   ├── fitnessRecommendationController.js
+
+│   │   ├── foodController.js
+
+│   │   ├── googleAuthController.js
+
+│   │   ├── hydrationController.js
+
+│   │   ├── injuryRiskController.js
+
+│   │   ├── insightsController.js
+
+│   │   ├── nutritionApiController.js
+
+│   │   ├── nutritionController.js
+
+│   │   ├── nutritionGoalController.js
+
+│   │   ├── recoveryController.js
+
+│   │   ├── userController.js
+
+│   │   ├── wellnessController.js
+
+│   │   ├── workoutController.js
+
+│   │   ├── workoutLibraryController.js
+
+│   │   └── workoutStatsController.js
+
+│   ├── middleware/
+
+│   │   ├── authMiddleware.js
+
+│   │   ├── authorizeRoles.js
+
+│   │   └── errorHandler.js
+
+│   ├── models/
+
+│   │   ├── CoachAthlete.js
+
+│   │   ├── EmailOTP.js
+
+│   │   ├── FitnessProfile.js
+
+│   │   ├── Food.js
+
+│   │   ├── Hydration.js
+
+│   │   ├── Nutrition.js
+
+│   │   ├── NutritionGoal.js
+
+│   │   ├── PasswordResetToken.js
+
+│   │   ├── User.js
+
+│   │   ├── WellnessCheckIn.js
+
+│   │   ├── Workout.js
+
+│   │   └── WorkoutLibrary.js
+
+│   ├── routes/
+
+│   ├── scripts/
+
+│   │   ├── importFoods.js
+
+│   │   └── importWorkouts.js
+
+│   ├── services/
+
+│   │   ├── emailService.js
+
+│   │   ├── fitnessRecommendationService.js
+
+│   │   ├── injuryRiskService.js
+
+│   │   ├── nutritionApiService.js
+
+│   │   ├── otpService.js
+
+│   │   └── tokenService.js
+
+│   ├── app.js
+
+│   └── server.js
+
 └── package.json
 ```
 
@@ -124,423 +250,1039 @@ backend/
 
 A typical protected request follows this flow:
 
-1. The frontend sends an HTTP request to a route.
-2. `app.js` directs the request to the relevant router.
-3. `authMiddleware.js` verifies the token when the route uses `protect`.
-4. The route calls a controller function.
-5. The controller validates input and uses a model or service.
-6. Mongoose reads or writes MongoDB, or a service calls an external provider.
-7. The controller returns a JSON response.
-8. Errors may be passed to the central error handler.
+1\. The frontend sends an HTTP request to a route.
 
-**Route** defines the HTTP method and URL. **Controller** implements request handling. **Model** describes database documents. **Service** contains reusable operations or integrations. **Middleware** runs before or around a route handler.
+2\. `app.js` directs the request to the relevant router.
+
+3\. `authMiddleware.js` verifies the token when the route uses
+`protect`.
+
+4\. The route calls a controller function.
+
+5\. The controller validates input and uses a model or service.
+
+6\. Mongoose reads or writes MongoDB, or a service calls an external
+provider.
+
+7\. The controller returns a JSON response.
+
+8\. Errors may be passed to the central error handler.
+
+\*\*\*\*Route\*\*\*\* defines the HTTP method and URL.
+\*\*\*\*Controller\*\*\*\* implements request handling.
+\*\*\*\*Model\*\*\*\* describes database documents.
+\*\*\*\*Service\*\*\*\* contains reusable operations or integrations.
+\*\*\*\*Middleware\*\*\*\* runs before or around a route handler.
 
 ## Base URLs
 
-| Environment | Base URL |
-|---|---|
-| Deployed backend | `https://fitnect-api-1k4t.onrender.com` |
-| Local development | `http://localhost:5000` |
+| Environment \| Base URL \|
 
-The local port is based on the supplied `server.js`, which uses `process.env.PORT` or falls back to `5000`. The deployed URL was supplied in the project draft; confirm it is still the active Render service.
+\|---\|---\|
+
+| Deployed backend \| `https\://fitnect-api-1k4t.onrender.com` \|
+
+| Local development \| `http\://localhost:5000` \|
+
+The local port is based on the supplied `server.js`, which uses
+`process.env.PORT` or falls back to `5000`. The deployed URL was
+supplied in the project draft; confirm it is still the active Render
+service.
 
 The health-check endpoint is:
 
-```http
+``` http
+
 GET /api/health
 ```
 
 Example full URL:
 
-```text
-https://fitnect-api-1k4t.onrender.com/api/health
+``` text
+
+https\://fitnect-api-1k4t.onrender.com/api/health
 ```
 
 All paths below are relative to the selected base URL.
 
 ## Authentication
 
-Protected endpoints use the `protect` middleware and normally require an access token in the request header:
+Protected endpoints use the `protect` middleware and normally require an
+access token in the request header:
 
-```http
-Authorization: Bearer <access_token>
+``` http
+
+Authorization: Bearer \<access_token>
+
 Content-Type: application/json
 ```
 
-Do not send a token placeholder literally; replace it with the token returned by the login flow.
+Do not send a token placeholder literally; replace it with the token
+returned by the login flow.
 
 The authentication routes in the supplied source are:
 
-| Method | Endpoint | Access | Controller/function | Purpose |
-|---|---|---|---|---|
-| POST | `/api/auth/register` | Public | `register` | Validates registration data, creates or updates an unverified account, and initiates email verification according to the controller logic. |
-| POST | `/api/auth/verify-email` | Public | `verifyEmail` | Verifies an account using the submitted OTP. |
-| POST | `/api/auth/resend-otp` | Public | `resendOTP` | Requests another verification OTP. |
-| POST | `/api/auth/login` | Public | `login` | Validates credentials and returns authentication information. |
-| POST | `/api/auth/google` | Public | `googleLogin` in `googleAuthController.js` | Handles Google sign-in credentials. |
-| PATCH | `/api/auth/change-password` | Protected | `changePassword` | Changes the password for the authenticated user after the controller’s checks. |
-| POST | `/api/auth/forgot-password` | Public | `forgotPassword` | Initiates password reset and requests a reset email. |
-| POST | `/api/auth/reset-password` | Public | `resetPassword` | Validates a reset token and updates the password. |
+| Method \| Endpoint \| Access \| Controller/function \| Purpose \|
+
+\|---\|---\|---\|---\|---\|
+
+| POST \| `/api/auth/register` \| Public \| `register` \| Validates
+  registration data, creates or updates an unverified account, and
+  initiates email verification according to the controller logic. \|
+
+| POST \| `/api/auth/verify-email` \| Public \| `verifyEmail` \|
+  Verifies an account using the submitted OTP. \|
+
+| POST \| `/api/auth/resend-otp` \| Public \| `resendOTP` \| Requests
+  another verification OTP. \|
+
+| POST \| `/api/auth/login` \| Public \| `login` \| Validates
+  credentials and returns authentication information. \|
+
+| POST \| `/api/auth/google` \| Public \| `googleLogin` in
+  `googleAuthController.js` \| Handles Google sign-in credentials. \|
+
+| PATCH \| `/api/auth/change-password` \| Protected \| `changePassword`
+  \| Changes the password for the authenticated user after the
+  controller's checks. \|
+
+| POST \| `/api/auth/forgot-password` \| Public \| `forgotPassword` \|
+  Initiates password reset and requests a reset email. \|
+
+| POST \| `/api/auth/reset-password` \| Public \| `resetPassword` \|
+  Validates a reset token and updates the password. \|
 
 ### Password reset notes
 
-The supplied controller uses the email service and `FRONTEND_URL` to construct a reset link. Verify these deployed environment variables and provider settings if reset emails are not received. A generic success response does not necessarily prove that the email provider delivered a message; check backend logs and the email provider’s logs.
+The supplied controller uses the email service and `FRONTEND_URL` to
+construct a reset link. Verify these deployed environment variables and
+provider settings if reset emails are not received. A generic success
+response does not necessarily prove that the email provider delivered a
+message; check backend logs and the email provider's logs.
 
-Never publish reset tokens, passwords, JWT secrets, or provider API keys.
+Never publish reset tokens, passwords, JWT secrets, or provider API
+keys.
 
 ## API reference
 
-The tables below reflect the route declarations shown in the supplied source document. “Protected” means the route applies the `protect` middleware in that source. The response fields and detailed validation rules should be confirmed in the corresponding controller and model.
+The tables below reflect the route declarations shown in the supplied
+source document. "Protected" means the route applies the `protect`
+middleware in that source. The response fields and detailed validation
+rules should be confirmed in the corresponding controller and model.
 
 ### Root and health
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/` | Public | Inline handler in `app.js` | Returns service status information. |
-| GET | `/api/health` | Public | Inline handler in `app.js` | Returns a basic backend health response. |
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-A successful health check confirms that the server responds; it does not guarantee that MongoDB or every external service is functioning.
+\|---\|---\|---\|---\|---\|
 
-### User profile — `/api/users`
+| GET \| `/` \| Public \| Inline handler in `app.js` \| Returns service
+  status information. \|
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/users/me` | Protected | `getMyProfile` | Retrieves the authenticated user's profile. |
-| PATCH | `/api/users/me` | Protected | `updateMyProfile` | Updates permitted fields on the authenticated user's profile. |
+| GET \| `/api/health` \| Public \| Inline handler in `app.js` \|
+  Returns a basic backend health response. \|
 
-The user identity should come from the verified authentication context, not an arbitrary user ID submitted by the client. The supplied controller should be treated as the authority for allowed fields and validation rules.
+A successful health check confirms that the server responds; it does not
+guarantee that MongoDB or every external service is functioning.
 
-### Fitness profile — `/api/fitness-profile`
+### User profile --- `/api/users`
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/fitness-profile/me` | Protected | `getMyFitnessProfile` | Retrieves the current user's fitness profile. |
-| PUT | `/api/fitness-profile/me` | Protected | `saveMyFitnessProfile` | Creates or updates the current user's fitness profile. |
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-The profile can provide inputs for personalised fitness and nutrition calculations. Use the model/controller for the exact supported fields.
+\|---\|---\|---\|---\|---\|
 
-### Fitness recommendations — `/api/fitness-recommendations`
+| GET \| `/api/users/me` \| Protected \| `getMyProfile` \| Retrieves the
+  authenticated user's profile. \|
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/fitness-recommendations/me` | Protected | `getMyFitnessRecommendations` | Calls `fitnessRecommendationService` for recommendations for the authenticated user and returns them in a JSON response. |
+| PATCH \| `/api/users/me` \| Protected \| `updateMyProfile` \| Updates
+  permitted fields on the authenticated user's profile. \|
 
-This endpoint retrieves recommendations; it does **not** itself create a workout log. To save a recommendation to workout history, the frontend must call `POST /api/workouts` with the workout fields required by that controller.
+The user identity should come from the verified authentication context,
+not an arbitrary user ID submitted by the client. The supplied
+controller should be treated as the authority for allowed fields and
+validation rules.
 
-### Workout logs — `/api/workouts`
+### Fitness profile --- `/api/fitness-profile`
+
+| Method \| Endpoint \| Access \| Function \| Purpose \|
+
+\|---\|---\|---\|---\|---\|
+
+| GET \| `/api/fitness-profile/me` \| Protected \| `getMyFitnessProfile`
+  \| Retrieves the current user's fitness profile. \|
+
+| PUT \| `/api/fitness-profile/me` \| Protected \|
+  `saveMyFitnessProfile` \| Creates or updates the current user's
+  fitness profile. \|
+
+The profile can provide inputs for personalised fitness and nutrition
+calculations. Use the model/controller for the exact supported fields.
+
+### Fitness recommendations --- `/api/fitness-recommendations`
+
+| Method \| Endpoint \| Access \| Function \| Purpose \|
+
+\|---\|---\|---\|---\|---\|
+
+| GET \| `/api/fitness-recommendations/me` \| Protected \|
+  `getMyFitnessRecommendations` \| Calls `fitnessRecommendationService`
+  for recommendations for the authenticated user and returns them in a
+  JSON response. \|
+
+This endpoint retrieves recommendations; it does \*\*\*\*not\*\*\*\*
+itself create a workout log. To save a recommendation to workout
+history, the frontend must call `POST /api/workouts` with the workout
+fields required by that controller.
+
+### Workout logs --- `/api/workouts`
 
 All routes in this router are protected.
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| POST | `/api/workouts` | Protected | `createWorkout` | Validates and creates a workout log for the authenticated user. |
-| GET | `/api/workouts` | Protected | `getWorkouts` | Lists workout logs for the authenticated user. |
-| GET | `/api/workouts/stats` | Protected | `getWorkoutStats` | Returns workout statistics. |
-| GET | `/api/workouts/:id` | Protected | `getWorkoutById` | Retrieves a workout by ID, subject to controller checks. |
-| PATCH | `/api/workouts/:id` | Protected | `updateWorkout` | Updates a workout by ID, subject to controller checks. |
-| DELETE | `/api/workouts/:id` | Protected | `deleteWorkout` | Deletes a workout by ID, subject to controller checks. |
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-Example create-workout body, based on the fields identified in the supplied controller:
+\|---\|---\|---\|---\|---\|
 
-```json
+| POST \| `/api/workouts` \| Protected \| `createWorkout` \| Validates
+  and creates a workout log for the authenticated user. \|
+
+| GET \| `/api/workouts` \| Protected \| `getWorkouts` \| Lists workout
+  logs for the authenticated user. \|
+
+| GET \| `/api/workouts/stats` \| Protected \| `getWorkoutStats` \|
+  Returns workout statistics. \|
+
+| GET \| `/api/workouts/:id` \| Protected \| `getWorkoutById` \|
+  Retrieves a workout by ID, subject to controller checks. \|
+
+| PATCH \| `/api/workouts/:id` \| Protected \| `updateWorkout` \|
+  Updates a workout by ID, subject to controller checks. \|
+
+| DELETE \| `/api/workouts/:id` \| Protected \| `deleteWorkout` \|
+  Deletes a workout by ID, subject to controller checks. \|
+
+Example create-workout body, based on the fields identified in the
+supplied controller:
+
+``` json
+
 {
-  "title": "Full Body Workout",
-  "category": "strength",
-  "durationMinutes": 30,
-  "exercises": [
-    {
-      "name": "Squats"
-    }
-  ],
-  "notes": "Beginner session"
+
+  "title": "Full Body Workout",
+
+  "category": "strength",
+
+  "durationMinutes": 30,
+
+  "exercises": [
+
+    {
+
+      "name": "Squats"
+
+    }
+
+  ],
+
+  "notes": "Beginner session"
+
 }
 ```
 
-Use only category values accepted by the actual model/controller. Include a date only in the format supported by the application.
+Use only category values accepted by the actual model/controller.
+Include a date only in the format supported by the application.
 
-### Workout library — `/api/workout-library`
-
-All routes in this router are protected.
-
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/workout-library` | Protected | `getWorkoutLibrary` | Lists available predefined workouts/exercises from the library. |
-| GET | `/api/workout-library/:id` | Protected | `getWorkoutDetails` | Retrieves details for one library item. |
-
-`server.js` checks whether the workout library is empty and attempts to import initial exercises at startup. The import can fail independently, so check server logs if the library returns no items.
-
-### Wellness — `/api/wellness`
+### Workout library --- `/api/workout-library`
 
 All routes in this router are protected.
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| POST | `/api/wellness` | Protected | `saveWellness` | Saves a wellness check-in. |
-| GET | `/api/wellness/today` | Protected | `getTodayWellness` | Retrieves today's wellness information. |
-| GET | `/api/wellness/history` | Protected | `getWellnessHistory` | Retrieves previous wellness check-ins. |
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-### Recovery — `/api/recovery`
+\|---\|---\|---\|---\|---\|
 
-All routes in this router are protected.
+| GET \| `/api/workout-library` \| Protected \| `getWorkoutLibrary` \|
+  Lists available predefined workouts/exercises from the library. \|
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| POST | `/api/recovery` | Protected | `saveRecovery` | Saves or updates recovery-related information according to the controller. |
-| GET | `/api/recovery/today` | Protected | `getTodayRecovery` | Retrieves today's recovery-related information. |
-| GET | `/api/recovery/history` | Protected | `getRecoveryHistory` | Retrieves recovery history. |
+| GET \| `/api/workout-library/:id` \| Protected \| `getWorkoutDetails`
+  \| Retrieves details for one library item. \|
 
-The supplied implementation relates recovery information to wellness check-ins. Do not assume it maintains a separate machine-learning recovery-score history unless such persistence is implemented.
+`server.js` checks whether the workout library is empty and attempts to
+import initial exercises at startup. The import can fail independently,
+so check server logs if the library returns no items.
 
-### Hydration — `/api/hydration`
+### Wellness --- `/api/wellness`
 
 All routes in this router are protected.
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| POST | `/api/hydration` | Protected | `addHydration` | Saves a hydration entry. |
-| GET | `/api/hydration/today` | Protected | `getTodayHydration` | Retrieves today's hydration information. |
-| GET | `/api/hydration/history` | Protected | `getHydrationHistory` | Retrieves hydration history. |
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-Check the controller/model for the exact units and accepted fields. The `amountMl` field is used by the activity-history aggregation.
+\|---\|---\|---\|---\|---\|
 
-### Nutrition diary — `/api/nutrition`
+| POST \| `/api/wellness` \| Protected \| `saveWellness` \| Saves a
+  wellness check-in. \|
+
+| GET \| `/api/wellness/today` \| Protected \| `getTodayWellness` \|
+  Retrieves today's wellness information. \|
+
+| GET \| `/api/wellness/history` \| Protected \| `getWellnessHistory` \|
+  Retrieves previous wellness check-ins. \|
+
+### Recovery --- `/api/recovery`
 
 All routes in this router are protected.
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| POST | `/api/nutrition` | Protected | `addNutrition` | Creates a nutrition diary entry. |
-| POST | `/api/nutrition/from-catalogue` | Protected | `addFoodFromCatalogue` | Creates a diary entry using catalogue food information. |
-| GET | `/api/nutrition/today` | Protected | `getTodayNutrition` | Retrieves today's nutrition entries/summary as implemented by the controller. |
-| GET | `/api/nutrition/history` | Protected | `getNutritionHistory` | Retrieves nutrition history. |
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-Searching for a food is not the same as logging it. The frontend must call a diary creation endpoint after the user chooses a food.
+\|---\|---\|---\|---\|---\|
 
-### Nutrition service proxy — `/api/nutrition-engine` and `/api/nutrition-api`
+| POST \| `/api/recovery` \| Protected \| `saveRecovery` \| Saves or
+  updates recovery-related information according to the controller. \|
 
-Both prefixes mount the same `nutritionApiRoutes` router in `app.js`. They expose the same four operations under two different URL prefixes.
+| GET \| `/api/recovery/today` \| Protected \| `getTodayRecovery` \|
+  Retrieves today's recovery-related information. \|
+
+| GET \| `/api/recovery/history` \| Protected \| `getRecoveryHistory` \|
+  Retrieves recovery history. \|
+
+The supplied implementation relates recovery information to wellness
+check-ins. Do not assume it maintains a separate machine-learning
+recovery-score history unless such persistence is implemented.
+
+### Hydration --- `/api/hydration`
+
+All routes in this router are protected.
+
+| Method \| Endpoint \| Access \| Function \| Purpose \|
+
+\|---\|---\|---\|---\|---\|
+
+| POST \| `/api/hydration` \| Protected \| `addHydration` \| Saves a
+  hydration entry. \|
+
+| GET \| `/api/hydration/today` \| Protected \| `getTodayHydration` \|
+  Retrieves today's hydration information. \|
+
+| GET \| `/api/hydration/history` \| Protected \| `getHydrationHistory`
+  \| Retrieves hydration history. \|
+
+Check the controller/model for the exact units and accepted fields. The
+`amountMl` field is used by the activity-history aggregation.
+
+### Nutrition diary --- `/api/nutrition`
+
+All routes in this router are protected.
+
+| Method \| Endpoint \| Access \| Function \| Purpose \|
+
+\|---\|---\|---\|---\|---\|
+
+| POST \| `/api/nutrition` \| Protected \| `addNutrition` \| Creates a
+  nutrition diary entry. \|
+
+| POST \| `/api/nutrition/from-catalogue` \| Protected \|
+  `addFoodFromCatalogue` \| Creates a diary entry using catalogue food
+  information. \|
+
+| GET \| `/api/nutrition/today` \| Protected \| `getTodayNutrition` \|
+  Retrieves today's nutrition entries/summary as implemented by the
+  controller. \|
+
+| GET \| `/api/nutrition/history` \| Protected \| `getNutritionHistory`
+  \| Retrieves nutrition history. \|
+
+Searching for a food is not the same as logging it. The frontend must
+call a diary creation endpoint after the user chooses a food.
+
+### Nutrition service proxy --- `/api/nutrition-engine` and `/api/nutrition-api`
+
+Both prefixes mount the same `nutritionApiRoutes` router in `app.js`.
+They expose the same four operations under two different URL prefixes.
 
 All routes are protected.
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/nutrition-engine/foods?search=<term>` | Protected | `searchFoods` | Searches the external food catalogue through `nutritionApiService`. |
-| GET | `/api/nutrition-engine/nutrition?fdc_id=<id>` | Protected | `getFoodNutrition` | Retrieves nutrition information for a numeric food ID. |
-| POST | `/api/nutrition-engine/meal-summary` | Protected | `getMealSummary` | Processes submitted food items to provide a meal summary. |
-| POST | `/api/nutrition-engine/nutrition-targets` | Protected | `getNutritionTargets` | Calculates or retrieves nutrition targets using profile data and the nutrition service logic. |
-| GET | `/api/nutrition-api/foods?search=<term>` | Protected | `searchFoods` | Alias of the food-search operation above. |
-| GET | `/api/nutrition-api/nutrition?fdc_id=<id>` | Protected | `getFoodNutrition` | Alias of the food-nutrition operation above. |
-| POST | `/api/nutrition-api/meal-summary` | Protected | `getMealSummary` | Alias of the meal-summary operation above. |
-| POST | `/api/nutrition-api/nutrition-targets` | Protected | `getNutritionTargets` | Alias of the nutrition-target operation above. |
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-The two prefixes are route aliases, not recursive calls. They do create duplicate public URLs for the same router operations. The frontend should consistently use one prefix unless compatibility with the other is required.
+\|---\|---\|---\|---\|---\|
 
-### Nutrition goals — `/api/nutrition-goals`
+| GET \| `/api/nutrition-engine/foods?search=\<term>` \| Protected \|
+  `searchFoods` \| Searches the external food catalogue through
+  `nutritionApiService`. \|
+
+| GET \| `/api/nutrition-engine/nutrition?fdc_id=\<id>` \| Protected \|
+  `getFoodNutrition` \| Retrieves nutrition information for a numeric
+  food ID. \|
+
+| POST \| `/api/nutrition-engine/meal-summary` \| Protected \|
+  `getMealSummary` \| Processes submitted food items to provide a meal
+  summary. \|
+
+| POST \| `/api/nutrition-engine/nutrition-targets` \| Protected \|
+  `getNutritionTargets` \| Calculates or retrieves nutrition targets
+  using profile data and the nutrition service logic. \|
+
+| GET \| `/api/nutrition-api/foods?search=\<term>` \| Protected \|
+  `searchFoods` \| Alias of the food-search operation above. \|
+
+| GET \| `/api/nutrition-api/nutrition?fdc_id=\<id>` \| Protected \|
+  `getFoodNutrition` \| Alias of the food-nutrition operation above. \|
+
+| POST \| `/api/nutrition-api/meal-summary` \| Protected \|
+  `getMealSummary` \| Alias of the meal-summary operation above. \|
+
+| POST \| `/api/nutrition-api/nutrition-targets` \| Protected \|
+  `getNutritionTargets` \| Alias of the nutrition-target operation
+  above. \|
+
+The two prefixes are route aliases, not recursive calls. They do create
+duplicate public URLs for the same router operations. The frontend
+should consistently use one prefix unless compatibility with the other
+is required.
+
+### Nutrition goals --- `/api/nutrition-goals`
 
 All routes in this router are protected.
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/nutrition-goals` | Protected | `getGoals` | Retrieves the user's nutrition goals. |
-| PUT | `/api/nutrition-goals` | Protected | `saveGoals` | Creates or updates nutrition goals. |
-| GET | `/api/nutrition-goals/progress/today` | Protected | `getTodayProgress` | Calculates today's progress against nutrition goals. |
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-Progress depends on the user's recorded nutrition entries and configured goals. The exact fields and formulas are defined by the goal controller/model.
+\|---\|---\|---\|---\|---\|
 
-### Local food catalogue — `/api/foods`
+| GET \| `/api/nutrition-goals` \| Protected \| `getGoals` \| Retrieves
+  the user's nutrition goals. \|
 
-The supplied `foodRoutes.js` does not attach the `protect` middleware. These two routes are therefore public at the router level in the supplied source.
+| PUT \| `/api/nutrition-goals` \| Protected \| `saveGoals` \| Creates
+  or updates nutrition goals. \|
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/foods?search=<term>&page=1&limit=20` | Public | `searchFoods` | Searches the local `Food` catalogue with pagination. The controller validates pagination and search input. |
-| GET | `/api/foods/:fdcId` | Public | `getFoodById` | Retrieves a local food entry using its food ID. |
+| GET \| `/api/nutrition-goals/progress/today` \| Protected \|
+  `getTodayProgress` \| Calculates today's progress against nutrition
+  goals. \|
 
-The controller comments identify a default page size of 20 and a maximum page size of 50. Verify the current controller for all validation rules.
+Progress depends on the user's recorded nutrition entries and configured
+goals. The exact fields and formulas are defined by the goal
+controller/model.
 
-### Dashboard — `/api/dashboard`
+### Local food catalogue --- `/api/foods`
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/dashboard/summary` | Protected | `getDashboardSummary` | Combines relevant fitness records into a dashboard summary. |
+The supplied `foodRoutes.js` does not attach the `protect` middleware.
+These two routes are therefore public at the router level in the
+supplied source.
 
-A dashboard summary is an aggregation of existing records; it is not necessarily a separately stored record. The supplied activity/recovery logic should not be described as a machine-learning score unless a model is actually called.
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-### Insights — `/api/insights`
+\|---\|---\|---\|---\|---\|
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/insights` | Protected | `getInsights` | Returns insights based on the controller/service logic. |
+| GET \| `/api/foods?search=\<term>&page=1&limit=20` \| Public \|
+  `searchFoods` \| Searches the local `Food` catalogue with pagination.
+  The controller validates pagination and search input. \|
 
-Check `insightsController.js` before describing the output as AI-generated. Rule-based calculations and machine-learning predictions are different implementations.
+| GET \| `/api/foods/:fdcId` \| Public \| `getFoodById` \| Retrieves a
+  local food entry using its food ID. \|
 
-### Activity history — `/api/activity-history`
+The controller comments identify a default page size of 20 and a maximum
+page size of 50. Verify the current controller for all validation rules.
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| GET | `/api/activity-history?days=7` | Protected | `getActivityHistory` | Aggregates daily workout, wellness/recovery, hydration, and nutrition values for a requested date range. |
+### Dashboard --- `/api/dashboard`
 
-The supplied controller accepts a `days` query parameter that must be an integer from 1 through 90. It groups data by UTC date and returns a daily history array. This UTC grouping is relevant when investigating differences between dates displayed by the frontend and dates stored by the backend.
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-### Injury risk — `/api/injury-risk`
+\|---\|---\|---\|---\|---\|
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| POST | `/api/injury-risk/predict` | Protected | `predictMyInjuryRisk` | Passes validated user information to the injury-risk service and returns its result. |
+| GET \| `/api/dashboard/summary` \| Protected \| `getDashboardSummary`
+  \| Combines relevant fitness records into a dashboard summary. \|
 
-The supplied code accepts a recovery score as an input to injury-risk prediction. That alone does not prove the backend generates or persists recovery-score history. A prediction is not a medical diagnosis.
+A dashboard summary is an aggregation of existing records; it is not
+necessarily a separately stored record. The supplied activity/recovery
+logic should not be described as a machine-learning score unless a model
+is actually called.
 
-### Coach–athlete management — `/api/coach-athletes`
+### Insights --- `/api/insights`
 
-All routes in this router are protected. Role and relationship checks should be enforced by the controller.
+| Method \| Endpoint \| Access \| Function \| Purpose \|
 
-| Method | Endpoint | Access | Function | Purpose |
-|---|---|---|---|---|
-| POST | `/api/coach-athletes/athletes/:athleteId/request` | Protected | `requestAthlete` | Creates a coach's request to connect with an athlete. |
-| GET | `/api/coach-athletes/requests/incoming` | Protected | `getIncomingRequests` | Lists incoming coach–athlete requests for the authenticated user. |
-| PATCH | `/api/coach-athletes/requests/:assignmentId` | Protected | `respondToRequest` | Handles a response to a connection request. |
-| GET | `/api/coach-athletes/athletes` | Protected | `getAssignedAthletes` | Retrieves athletes associated with the authenticated coach, subject to controller checks. |
-| GET | `/api/coach-athletes/coaches` | Protected | `getMyCoaches` | Retrieves coaches associated with the authenticated athlete, subject to controller checks. |
+\|---\|---\|---\|---\|---\|
 
-A coach role should not by itself grant access to every athlete's private information. The active relationship and authorization logic must be checked before exposing records.
+| GET \| `/api/insights` \| Protected \| `getInsights` \| Returns
+  insights based on the controller/service logic. \|
+
+Check `insightsController.js` before describing the output as
+AI-generated. Rule-based calculations and machine-learning predictions
+are different implementations.
+
+### Activity history --- `/api/activity-history`
+
+| Method \| Endpoint \| Access \| Function \| Purpose \|
+
+\|---\|---\|---\|---\|---\|
+
+| GET \| `/api/activity-history?days=7` \| Protected \|
+  `getActivityHistory` \| Aggregates daily workout, wellness/recovery,
+  hydration, and nutrition values for a requested date range. \|
+
+The supplied controller accepts a `days` query parameter that must be an
+integer from 1 through 90. It groups data by UTC date and returns a
+daily history array. This UTC grouping is relevant when investigating
+differences between dates displayed by the frontend and dates stored by
+the backend.
+
+### Injury risk --- `/api/injury-risk`
+
+| Method \| Endpoint \| Access \| Function \| Purpose \|
+
+\|---\|---\|---\|---\|---\|
+
+| POST \| `/api/injury-risk/predict` \| Protected \|
+  `predictMyInjuryRisk` \| Passes validated user information to the
+  injury-risk service and returns its result. \|
+
+The supplied code accepts a recovery score as an input to injury-risk
+prediction. That alone does not prove the backend generates or persists
+recovery-score history. A prediction is not a medical diagnosis.
+
+### Coach--athlete management --- `/api/coach-athletes`
+
+All routes in this router are protected. Role and relationship checks
+should be enforced by the controller.
+
+| Method \| Endpoint \| Access \| Function \| Purpose \|
+
+\|---\|---\|---\|---\|---\|
+
+| POST \| `/api/coach-athletes/athletes/:athleteId/request` \| Protected
+  \| `requestAthlete` \| Creates a coach's request to connect with an
+  athlete. \|
+
+| GET \| `/api/coach-athletes/requests/incoming` \| Protected \|
+  `getIncomingRequests` \| Lists incoming coach--athlete requests for
+  the authenticated user. \|
+
+| PATCH \| `/api/coach-athletes/requests/:assignmentId` \| Protected \|
+  `respondToRequest` \| Handles a response to a connection request. \|
+
+| GET \| `/api/coach-athletes/athletes` \| Protected \|
+  `getAssignedAthletes` \| Retrieves athletes associated with the
+  authenticated coach, subject to controller checks. \|
+
+| GET \| `/api/coach-athletes/coaches` \| Protected \| `getMyCoaches` \|
+  Retrieves coaches associated with the authenticated athlete, subject
+  to controller checks. \|
+
+A coach role should not by itself grant access to every athlete's
+private information. The active relationship and authorization logic
+must be checked before exposing records.
 
 ## Nutrition route aliases
 
 The source mounts `nutritionApiRoutes` twice:
 
-```js
+``` js
+
 app.use("/api/nutrition-api", nutritionApiRoutes);
+
 app.use("/api/nutrition-engine", nutritionApiRoutes);
 ```
 
-This means the same router handlers are available through both prefixes. It is not recursion, but it can make API documentation confusing and can lead to inconsistent frontend usage. For new frontend code, choose one canonical prefix and use it consistently.
+This means the same router handlers are available through both prefixes.
+It is not recursion, but it can make API documentation confusing and can
+lead to inconsistent frontend usage. For new frontend code, choose one
+canonical prefix and use it consistently.
 
 ## Error handling and status codes
 
-`app.js` returns a JSON 404 response for an unknown route and registers a central error handler after the routes.
+`app.js` returns a JSON 404 response for an unknown route and registers
+a central error handler after the routes.
 
 Common HTTP status codes:
 
-| Status | Meaning |
-|---|---|
-| 200 | Request succeeded |
-| 201 | Resource created |
-| 400 | Invalid or missing input |
-| 401 | Authentication missing or invalid |
-| 403 | Authenticated user is not permitted to perform the action |
-| 404 | Route or resource not found |
-| 409 | Conflict, such as a duplicate account where checked |
-| 500 | Unexpected server error |
+| Status \| Meaning \|
 
-The exact status code for each error is controlled by its route/controller and middleware. Do not assume all endpoints use every status code above.
+\|---\|---\|
+
+| 200 \| Request succeeded \|
+
+| 201 \| Resource created \|
+
+| 400 \| Invalid or missing input \|
+
+| 401 \| Authentication missing or invalid \|
+
+| 403 \| Authenticated user is not permitted to perform the action \|
+
+| 404 \| Route or resource not found \|
+
+| 409 \| Conflict, such as a duplicate account where checked \|
+
+| 500 \| Unexpected server error \|
+
+The exact status code for each error is controlled by its
+route/controller and middleware. Do not assume all endpoints use every
+status code above.
 
 ## Environment configuration
 
 The supplied source confirms these environment-variable names:
 
-| Variable | Purpose |
-|---|---|
-| `PORT` | Server port; defaults to `5000` in the supplied `server.js` |
-| `HOST` | Bind host; defaults to `0.0.0.0` |
-| `MONGODB_URI` or `MONGO_URI` | MongoDB connection string; at least one must be configured |
-| `FRONTEND_URL` | Used to construct frontend password-reset links |
-| `BREVO_API_KEY` | API key for the Brevo email service, as required by the supplied email-service integration |
-| `BREVO_SENDER_EMAIL` | Sender email used by the email service |
+| Variable \| Purpose \|
 
-Other variables may be required by Google authentication, the external nutrition service, or other service implementations. Check `googleAuthController.js`, `nutritionApiService.js`, `emailService.js`, and the deployment configuration for the complete list. Do not guess environment-variable names.
+\|---\|---\|
 
-Keep `.env` out of version control. Never put real credentials in README examples, commits, issues, or screenshots.
+| `PORT` \| Server port; defaults to `5000` in the supplied `server.js`
+  \|
+
+| `HOST` \| Bind host; defaults to `0.0.0.0` \|
+
+| `MONGODB_URI` or `MONGO_URI` \| MongoDB connection string; at least
+  one must be configured \|
+
+| `FRONTEND_URL` \| Used to construct frontend password-reset links \|
+
+| `BREVO_API_KEY` \| API key for the Brevo email service, as required by
+  the supplied email-service integration \|
+
+| `BREVO_SENDER_EMAIL` \| Sender email used by the email service \|
+
+Other variables may be required by Google authentication, the external
+nutrition service, or other service implementations. Check
+`googleAuthController.js`, `nutritionApiService.js`, `emailService.js`,
+and the deployment configuration for the complete list. Do not guess
+environment-variable names.
+
+Keep `.env` out of version control. Never put real credentials in README
+examples, commits, issues, or screenshots.
 
 ## Run locally
 
 Prerequisites:
-- A supported Node.js installation.
-- Access to a MongoDB database.
-- The required environment variables configured.
+
+-   A supported Node.js installation.
+
+-   Access to a MongoDB database.
+
+-   The required environment variables configured.
 
 From the backend directory:
 
-```bash
+``` bash
+
 npm install
+
 npm start
 ```
 
-The supplied `server.js` uses `PORT` or defaults to `5000`. Confirm that `package.json` defines the `start` script before running these commands; if it does not, use the script actually defined there.
+The supplied `server.js` uses `PORT` or defaults to `5000`. Confirm that
+`package.json` defines the `start` script before running these commands;
+if it does not, use the script actually defined there.
 
 The startup sequence:
-1. Loads environment variables.
-2. Connects to MongoDB.
-3. Checks whether the workout library contains entries.
-4. Attempts to import initial workouts if the library is empty.
-5. Starts the Express server.
 
-If the database connection fails, the server logs the failure and does not proceed with normal startup.
+1\. Loads environment variables.
+
+2\. Connects to MongoDB.
+
+3\. Checks whether the workout library contains entries.
+
+4\. Attempts to import initial workouts if the library is empty.
+
+5\. Starts the Express server.
+
+If the database connection fails, the server logs the failure and does
+not proceed with normal startup.
 
 ## Data and date handling
 
-Workout, nutrition, hydration, and wellness records are user-specific. Protected controllers should use the authenticated user identity when querying and saving records.
+Workout, nutrition, hydration, and wellness records are user-specific.
+Protected controllers should use the authenticated user identity when
+querying and saving records.
 
 The supplied `activityHistoryController.js`:
-- Defaults to a 7-day history when `days` is not provided.
-- Accepts an integer `days` value from 1 to 90.
-- Uses UTC day boundaries.
-- Groups records into UTC dates.
-- Aggregates workout count and duration, wellness metrics, hydration amount, and nutrition totals.
 
-Because the backend uses UTC grouping, the frontend should not mix UTC dates and local calendar dates without an explicit conversion strategy. When a workout from yesterday appears under today's date, compare the stored database date, the API response date, and the frontend's date filtering/display logic.
+-   Defaults to a 7-day history when `days` is not provided.
+
+-   Accepts an integer `days` value from 1 to 90.
+
+-   Uses UTC day boundaries.
+
+-   Groups records into UTC dates.
+
+-   Aggregates workout count and duration, wellness metrics, hydration
+    amount, and nutrition totals.
+
+Because the backend uses UTC grouping, the frontend should not mix UTC
+dates and local calendar dates without an explicit conversion strategy.
+When a workout from yesterday appears under today's date, compare the
+stored database date, the API response date, and the frontend's date
+filtering/display logic.
 
 ## Known integration notes
 
 ### Adding a recommended workout
 
-`GET /api/fitness-recommendations/me` retrieves suggestions; it does not save a workout. The frontend's Add action must send `POST /api/workouts` with the fields required by `createWorkout`, include the access token, handle errors, and refresh workout history after a successful response.
+`GET /api/fitness-recommendations/me` retrieves suggestions; it does not
+save a workout. The frontend's Add action must send `POST /api/workouts`
+with the fields required by `createWorkout`, include the access token,
+handle errors, and refresh workout history after a successful response.
 
 ### Forgot-password email
 
-The reset flow depends on the reset controller, `FRONTEND_URL`, the email service, and email-provider configuration. Inspect backend and provider logs if an email is not received. A generic frontend success message should not be treated as proof of delivery.
+The reset flow depends on the reset controller, `FRONTEND_URL`, the
+email service, and email-provider configuration. Inspect backend and
+provider logs if an email is not received. A generic frontend success
+message should not be treated as proof of delivery.
 
 ### Nested nutrition data
 
-The nutrition engine proxies data from an external service and wraps it in a response object. If the upstream response already has its own `data` property, the result may appear deeply nested. The frontend must follow the actual JSON response structure. Avoid adding unnecessary wrappers, and standardise response formats where possible.
+The nutrition engine proxies data from an external service and wraps it
+in a response object. If the upstream response already has its own
+`data` property, the result may appear deeply nested. The frontend must
+follow the actual JSON response structure. Avoid adding unnecessary
+wrappers, and standardise response formats where possible.
 
 ### ML functionality
 
-An endpoint named `predict` does not by itself prove that a trained ML model is integrated. Verify `injuryRiskService.js` and the model/runtime it invokes. Likewise, the recovery routes shown in the source are recovery-related data routes; they do not establish a separate persisted ML recovery-score history.
+An endpoint named `predict` does not by itself prove that a trained ML
+model is integrated. Verify `injuryRiskService.js` and the model/runtime
+it invokes. Likewise, the recovery routes shown in the source are
+recovery-related data routes; they do not establish a separate persisted
+ML recovery-score history.
 
 ## Testing checklist
 
 Before considering an endpoint integrated:
 
-1. Confirm its route exists and is mounted in `src/app.js`.
-2. Confirm the controller function and model/service exist.
-3. Test a valid request.
-4. Test missing and invalid fields.
-5. Test protected routes without a token.
-6. Confirm the request is saved or retrieved from the correct user's records.
-7. Confirm one user's token cannot access another user's private data.
-8. Check the exact JSON response in the browser Network tab or an API client.
-9. Check server logs when external services fail.
-10. Verify the frontend uses the correct HTTP method, URL, token, request fields, and response shape.
+1\. Confirm its route exists and is mounted in `src/app.js`.
+
+2\. Confirm the controller function and model/service exist.
+
+3\. Test a valid request.
+
+4\. Test missing and invalid fields.
+
+5\. Test protected routes without a token.
+
+6\. Confirm the request is saved or retrieved from the correct user's
+records.
+
+7\. Confirm one user's token cannot access another user's private data.
+
+8\. Check the exact JSON response in the browser Network tab or an API
+client.
+
+9\. Check server logs when external services fail.
+
+10\. Verify the frontend uses the correct HTTP method, URL, token,
+request fields, and response shape.
 
 ## Machine-learning integration
 
-The supplied source contains an injury-risk prediction route and service, but this README does not assume a specific trained model or accuracy. Before adding or documenting an ML model, establish:
-- The model artifact and runtime.
-- Required feature names, units, and types.
-- Preprocessing and missing-value rules.
-- Expected output schema.
-- Sample inputs and outputs.
-- Error behaviour and versioning.
-- Whether predictions are stored and how a user retrieves their history.
+The supplied source contains an injury-risk prediction route and
+service, but this README does not assume a specific trained model or
+accuracy. Before adding or documenting an ML model, establish:
 
-The API should validate inputs, run the agreed inference process, and return a documented response. Prediction results should be presented as estimates, not medical diagnoses.
+-   The model artifact and runtime.
 
----
+-   Required feature names, units, and types.
+
+-   Preprocessing and missing-value rules.
+
+-   Expected output schema.
+
+-   Sample inputs and outputs.
+
+-   Error behaviour and versioning.
+
+-   Whether predictions are stored and how a user retrieves their
+    history.
+
+The API should validate inputs, run the agreed inference process, and
+return a documented response. Prediction results should be presented as
+estimates, not medical diagnoses.
+
+**---**
+
+## Image analysis API
+
+FitNect exposes an authenticated image-analysis endpoint. The Node.js
+backend receives and validates the uploaded image, forwards it to the
+external CNN service, normalises the returned JSON, and sends the result
+to the frontend.
+
+### Endpoints
+
+  --------------------------------------------------------------------------------------
+  Method            Endpoint                         Access            Purpose
+  ----------------- -------------------------------- ----------------- -----------------
+  POST              `/api/image-analysis/predict`    Protected         Uploads an image
+                                                                       for analysis and
+                                                                       returns the
+                                                                       CNN/AI result.
+
+  POST              `/api/injury-analysis/predict`   Protected         Alias for the
+                                                                       image-analysis
+                                                                       endpoint.
+  --------------------------------------------------------------------------------------
+
+The primary route declaration is:
+
+``` js
+router.post("/predict", protect, uploadImageMiddleware, analyzeInjuryPhoto);
+```
+
+### Request
+
+Send a `multipart/form-data` request. Do not send the image as JSON or
+base64 unless the API contract is deliberately changed.
+
+``` http
+POST /api/image-analysis/predict
+Authorization: Bearer <access_token>
+```
+
+Form-data:
+
+  Key       Type   Required   Details
+  --------- ------ ---------- --------------------------------------------
+  `image`   File   Yes        JPG, JPEG or PNG image; maximum size 8 MB.
+
+Example using browser JavaScript:
+
+``` js
+const formData = new FormData();
+formData.append("image", selectedFile);
+
+const response = await fetch(`${API_BASE_URL}/api/image-analysis/predict`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${accessToken}`
+  },
+  body: formData
+});
+
+const result = await response.json();
+
+if (!response.ok) {
+  throw new Error(result.message || "Image analysis failed");
+}
+```
+
+When using `FormData`, allow the browser or HTTP client to set the
+multipart `Content-Type` and boundary. Do not manually set
+`Content-Type: application/json`.
+
+### Validation performed by the backend
+
+-   The route requires a valid authenticated user.
+-   The upload field name must be `image`.
+-   The file must be a supported JPG/JPEG/PNG image.
+-   The controller checks image content/signature rather than relying
+    only on the filename.
+-   The maximum upload size is 8 MB.
+-   Missing, empty, unsupported or invalid image uploads are rejected
+    before the upstream prediction request.
+
+### External CNN service
+
+The image-analysis service forwards the image as multipart field `image`
+to:
+
+``` text
+POST https://fitnect-cnn-api.onrender.com/predict-image
+```
+
+The base URL can be overridden through `CNN_IMAGE_API_URL` if that
+variable is supported/configured in the active service code. The
+deployed environment must use the correct CNN service URL.
+
+The Node backend is an integration/proxy layer. It does not itself run
+the MobileNetV2 model, Gemini or Groq. The external ML service is
+responsible for image inference and its explanation-provider logic.
+
+### Response fields
+
+The backend normalises the upstream response into the following shape:
+
+  ------------------------------------------------------------------------
+  Field                    Type                    Description
+  ------------------------ ----------------------- -----------------------
+  `success`                Boolean                 Whether the analysis
+                                                   request succeeded.
+
+  `prediction`             String                  Predicted class, for
+                                                   example `Normal` or an
+                                                   injury/wound label
+                                                   supported by the model.
+
+  `confidence`             Number                  Model confidence value.
+                                                   This is not a medical
+                                                   severity score.
+
+  `body_part`              String                  Body part/region
+                                                   identified or validated
+                                                   by the ML service.
+
+  `visible_description`    String                  Description of visible
+                                                   image characteristics.
+
+  `gemini_explanation`     String                  Explanation text
+                                                   returned by the ML
+                                                   service. With provider
+                                                   fallback, this field
+                                                   may contain Gemini,
+                                                   Groq or
+                                                   fallback-generated
+                                                   text; the field name is
+                                                   retained for API
+                                                   compatibility.
+
+  `care_suggestions`       Array                   Care suggestions
+                                                   returned by the ML
+                                                   service.
+
+  `gemini_available`       Boolean                 Whether Gemini was
+                                                   available for the
+                                                   request, when supplied
+                                                   by the ML service.
+
+  `groq_available`         Boolean                 Whether Groq was
+                                                   available for the
+                                                   request, when supplied
+                                                   by the ML service.
+
+  `explanation_provider`   String                  Provider/source used
+                                                   for the explanation, as
+                                                   defined by the ML
+                                                   service.
+
+  `validation_status`      String                  Image/body-part
+                                                   validation status, as
+                                                   defined by the ML
+                                                   service.
+
+  `disclaimer`             String                  Non-diagnostic
+                                                   disclaimer.
+  ------------------------------------------------------------------------
+
+Example response shape (illustrative; actual values and provider enum
+depend on the ML service):
+
+``` json
+{
+  "success": true,
+  "prediction": "Normal",
+  "confidence": 0.94,
+  "body_part": "foot",
+  "visible_description": "No obvious wound is visible in the submitted image.",
+  "gemini_explanation": "The image does not show an obvious visible wound.",
+  "care_suggestions": [],
+  "gemini_available": true,
+  "groq_available": true,
+  "explanation_provider": "gemini",
+  "validation_status": "valid",
+  "disclaimer": "AI image output is not a medical diagnosis. Consult a qualified healthcare professional for assessment."
+}
+```
+
+The sample is a documentation example, not a guarantee of a particular
+prediction or provider result.
+
+### Provider behaviour
+
+The ML integration plan describes Gemini as the primary explanation
+provider and Groq as the fallback if Gemini fails. If both providers are
+unavailable, the ML service should return its documented fallback
+explanation while preserving the CNN prediction.
+
+Important distinction: the Node.js backend forwards and normalises these
+response fields. Gemini/Groq selection and inference must be implemented
+and deployed in the external CNN service. The presence of
+`groq_available` or `explanation_provider` in the Node response alone
+does not prove that the live ML service has successfully executed the
+fallback path.
+
+### Storage
+
+The described image-analysis controller returns the prediction result
+directly. It does not create an image-analysis MongoDB document or save
+the uploaded image/prediction history. Therefore, no MongoDB schema
+change is required for the current request/response flow. If prediction
+history is added later, it will require a deliberate persistence design,
+privacy rules and a corresponding model/API.
+
+## Image-analysis timeout and troubleshooting
+
+The image-analysis flow has multiple independent timeout layers:
+
+1.  Frontend/browser request timeout.
+2.  Node.js request handling and Node-to-CNN upstream timeout.
+3.  ML service inference and Gemini/Groq provider timeouts.
+4.  Hosting platform or proxy request limits.
+
+Increasing one timeout does not automatically increase the others.
+
+The source snippets reviewed during development have shown differing
+timeout values in different versions/reports. Confirm the current values
+in the active branch and deployed service before choosing a frontend
+timeout. In particular, inspect `CNN_REQUEST_TIMEOUT_MS` in
+`imageAnalysisService.js` and the request timeout in
+`imageAnalysisController.js`.
+
+### Troubleshooting
+
+  -----------------------------------------------------------------------
+  Symptom                             What to check
+  ----------------------------------- -----------------------------------
+  `400` response                      Confirm the form field is exactly
+                                      `image`, file is not empty, and
+                                      file is a valid supported image.
+
+  `401` response                      Confirm the frontend sends a
+                                      current JWT in
+                                      `Authorization: Bearer ...`.
+
+  Upload rejected for size            Keep the image at or below 8 MB.
+
+  `503` or upstream error             Check the CNN service URL, Render
+                                      service status and backend logs.
+
+  Request times out in browser        Check the frontend HTTP client's
+                                      timeout and compare it with the
+                                      backend/ML processing window.
+
+  Prediction arrives without AI       Check Gemini/Groq configuration and
+  explanation                         logs in the external ML service.
+
+  Gemini fails but Groq should run    Verify the fallback implementation
+                                      and test it directly on the ML
+                                      service.
+  -----------------------------------------------------------------------
+
+Do not interpret an AI-generated image result as a medical diagnosis.
+Users should seek assessment from a qualified healthcare professional,
+especially for severe, worsening or uncertain symptoms.
 
 ## Route-count note
 
-The supplied source declares 53 route handlers when counting the root and health routes and each router's declarations once. The nutrition API router is mounted under two prefixes, adding four alternate full paths. This gives 57 reachable method/path combinations in the source configuration if both aliases are counted separately. This is a source-derived route count, not a live deployment test.
+The earlier supplied source declared 53 route handlers when counting the
+root and health routes and each router's declarations once. The later
+image-analysis routes add new method/path declarations. The nutrition
+API router is mounted under two prefixes, adding four alternate full
+paths. With the two image-analysis paths documented above, the total
+reachable method/path combinations will be higher; count the current
+mounted route declarations in `src/app.js` and route files before
+publishing an exact total. This is a source-derived route count, not a
+live deployment test.
 
 ## Implementation status
 
-This README describes the code visible in the supplied project structure document. It does not claim that every route has been tested against the deployed server. Before release, compare this file with the current repository, `package.json`, environment configuration, and live API responses.
+This README describes the code visible in the supplied project structure
+document. It does not claim that every route has been tested against the
+deployed server. Before release, compare this file with the current
+repository, `package.json`, environment configuration, and live API
+responses.
+
+------------------------------------------------------------------------
+
+## Documentation maintenance
+
+Keep this README aligned with the active backend branch. When an
+endpoint or integration changes, update its route table, request fields,
+response shape, authentication requirement, environment variables and
+tests together. Do not document secrets, assume a service is live
+because a route exists, or claim an ML fallback is verified until the
+external ML service has been tested.
