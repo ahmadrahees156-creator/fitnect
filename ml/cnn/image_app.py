@@ -116,6 +116,29 @@ def normalize_image(file_bytes: bytes) -> Image.Image:
     return image
 
 
+def is_blurry_image(image: Image.Image, threshold: float = 80.0) -> bool:
+    """
+    Basic blur detection using Laplacian variance.
+    Lower variance generally means less visible sharpness.
+    """
+    gray = image.convert("L").resize((256, 256))
+    arr = np.asarray(gray, dtype=np.float32)
+
+    laplacian = (
+        -4 * arr[1:-1, 1:-1]
+        + arr[:-2, 1:-1]
+        + arr[2:, 1:-1]
+        + arr[1:-1, :-2]
+        + arr[1:-1, 2:]
+    )
+
+    sharpness = float(np.var(laplacian))
+
+    logger.info("Image sharpness score: %.2f", sharpness)
+
+    return sharpness < threshold
+
+
 def cnn_predict(image: Image.Image):
     if interpreter is None:
         raise RuntimeError("CNN model is not loaded.")
@@ -320,6 +343,29 @@ def predict_image():
         return jsonify({"success": False, "error": str(exc) or "Invalid image file."}), 400
 
     mime_type = uploaded.mimetype or "image/jpeg"
+
+    # ----------------------------------------
+    # Reject blurry images before CNN/provider
+    # ----------------------------------------
+    if is_blurry_image(image):
+        return jsonify({
+            "success": True,
+            "prediction": "Invalid Image",
+            "confidence": 0,
+            "body_part": "unknown",
+            "visible_description": "",
+            "gemini_explanation": (
+                "The image is too blurry to analyze reliably. "
+                "Please upload a clear, focused photo."
+            ),
+            "care_suggestions": [],
+            "gemini_available": False,
+            "groq_available": False,
+            "explanation_provider": "image_quality_check",
+            "validation_status": "invalid",
+            "disclaimer": "AI image output is not a medical diagnosis."
+        })
+
     try:
         prediction, confidence = cnn_predict(image)
     except Exception as exc:
