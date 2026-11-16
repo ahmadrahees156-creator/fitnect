@@ -38,8 +38,25 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash").strip()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b").strip()
 
-gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
-groq_client = Groq(api_key=GROQ_API_KEY, timeout=18.0, max_retries=0) if GROQ_API_KEY else None
+# Gemini primary - 8 seconds timeout
+gemini_client = (
+    genai.Client(
+        api_key=GEMINI_API_KEY,
+        http_options=types.HttpOptions(timeout=8000)
+    )
+    if GEMINI_API_KEY else None
+)
+
+# Groq backup - 12 seconds timeout
+groq_client = (
+    Groq(
+        api_key=GROQ_API_KEY,
+        timeout=12.0,
+        max_retries=0
+    )
+    if GROQ_API_KEY else None
+)
+
 
 # ------------------------------------------------------------
 # Load CNN model
@@ -312,11 +329,11 @@ def predict_image():
     if not analysis.get("is_valid", True):
         return jsonify({
             "success": True,
-            "prediction": prediction,
-            "confidence": confidence,
+            "prediction": "Invalid Image",
+            "confidence": 0,
             "body_part": analysis.get("body_part", "unknown"),
             "visible_description": analysis.get("visible_description", ""),
-            "gemini_explanation": analysis.get("reason") or "This image could not be verified as a suitable injury-related image.",
+            "gemini_explanation": analysis.get("reason") or "Please upload a clear image of a human body part or injury.",
             "care_suggestions": [],
             "gemini_available": gemini_available,
             "groq_available": groq_available,
