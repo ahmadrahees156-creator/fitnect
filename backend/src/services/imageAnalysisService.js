@@ -1,3 +1,5 @@
+const CNN_REQUEST_TIMEOUT_MS = 300000; // 5 minutes (300,000 ms)
+
 function getCnnBaseUrl() {
   return (
     process.env.CNN_IMAGE_API_URL || "https://fitnect-cnn-api.onrender.com"
@@ -17,6 +19,10 @@ function getCnnBaseUrl() {
 async function predictImageAnalysis({ buffer, originalname, mimetype }) {
   const url = `${getCnnBaseUrl()}/predict-image`;
 
+  console.log(
+    `[ImageAnalysis] Sending request to CNN service: URL=${url}, filename="${originalname}", size=${buffer.length} bytes, timeout=${CNN_REQUEST_TIMEOUT_MS}ms`
+  );
+
   const formData = new FormData();
   formData.append(
     "image",
@@ -30,18 +36,39 @@ async function predictImageAnalysis({ buffer, originalname, mimetype }) {
     response = await fetch(url, {
       method: "POST",
       body: formData,
-      signal: AbortSignal.timeout(35000),
+      signal: AbortSignal.timeout(CNN_REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
-    const isTimeout = error.name === "TimeoutError" || error.code === 23;
+    const isTimeout =
+      error.name === "TimeoutError" ||
+      error.name === "AbortError";
+
+    if (isTimeout) {
+      console.error(
+        `[ImageAnalysis] CNN service request timed out after ${CNN_REQUEST_TIMEOUT_MS}ms: URL=${url}`
+      );
+    } else {
+      console.error(
+        `[ImageAnalysis] CNN service connection failure: URL=${url}, error=${error.message}`,
+        {
+          name: error.name,
+          cause: error.cause?.message,
+          code: error.cause?.code,
+        }
+      );
+    }
+
     const serviceError = new Error(
       isTimeout
-        ? "The image analysis service timed out. Please try again."
-        : "The image analysis service is unavailable. Please try again."
+        ? "The image analysis service timed out. Please try again later."
+        : "Photo analysis is temporarily unavailable. Please try again later."
     );
+
     serviceError.statusCode = 503;
     throw serviceError;
   }
+
+  console.log(`[ImageAnalysis] CNN service response: status=${response.status}`);
 
   const rawText = await response.text().catch(() => "");
   let result = null;
@@ -53,6 +80,11 @@ async function predictImageAnalysis({ buffer, originalname, mimetype }) {
   }
 
   if (!response.ok) {
+    console.error(
+      `[ImageAnalysis] CNN service returned error HTTP ${response.status}:`,
+      result || rawText
+    );
+
     if (response.status === 413) {
       const err = new Error("Image is too large. Maximum size is 8 MB.");
       err.statusCode = 413;
@@ -80,6 +112,10 @@ async function predictImageAnalysis({ buffer, originalname, mimetype }) {
   }
 
   if (!result || typeof result !== "object") {
+    console.error(
+      "[ImageAnalysis] CNN service returned invalid non-JSON response:",
+      rawText
+    );
     const err = new Error(
       "The image analysis service returned an invalid response."
     );
@@ -87,24 +123,37 @@ async function predictImageAnalysis({ buffer, originalname, mimetype }) {
     throw err;
   }
 
-  // Preserve external service contract
+  // Preserve external service contract including Gemini-primary / Groq-backup fields
   return {
-    success: true,
+    success: result.success !== undefined ? Boolean(result.success) : true,
     prediction: result.prediction || "Normal",
     confidence: Number(result.confidence) || 0,
-    body_part: result.body_part || "lower_limb",
+    body_part: result.body_part || "unknown",
     visible_description: result.visible_description || "",
     gemini_explanation: result.gemini_explanation || "",
     care_suggestions: Array.isArray(result.care_suggestions)
       ? result.care_suggestions
       : [],
+    gemini_available:
+      typeof result.gemini_available === "boolean"
+        ? result.gemini_available
+        : false,
+    groq_available:
+      typeof result.groq_available === "boolean"
+        ? result.groq_available
+        : false,
+    explanation_provider: result.explanation_provider || "cnn_fallback",
+    validation_status:
+      result.validation_status ||
+      (result.prediction === "Invalid Image" ? "invalid" : "not_verified"),
     disclaimer:
       result.disclaimer ||
-      "AI image classification is not a medical diagnosis. Model confidence does not indicate injury severity.",
+      "AI image output is not a medical diagnosis. Consult a qualified healthcare professional for assessment.",
   };
 }
 
 module.exports = {
   predictImageAnalysis,
   getCnnBaseUrl,
+  CNN_REQUEST_TIMEOUT_MS,
 };

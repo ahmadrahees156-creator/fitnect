@@ -101,6 +101,11 @@ function getImageMimeType(buffer, filename) {
  * POST /api/image-analysis/predict
  */
 async function analyzeInjuryPhoto(req, res, next) {
+  // Allow this individual analysis request to wait up to 5 minutes without socket timeout
+  if (typeof req.setTimeout === "function") {
+    req.setTimeout(300000);
+  }
+
   try {
     const file = req.file;
 
@@ -128,6 +133,10 @@ async function analyzeInjuryPhoto(req, res, next) {
     const filename = String(file.originalname || "upload.jpg").trim();
     const mimetype = getImageMimeType(file.buffer, filename);
 
+    console.log(
+      `[ImageAnalysis] Image received by Multer: name="${filename}", size=${file.size} bytes, mimetype="${mimetype}"`
+    );
+
     const result = await predictImageAnalysis({
       buffer: file.buffer,
       originalname: filename,
@@ -136,6 +145,10 @@ async function analyzeInjuryPhoto(req, res, next) {
 
     return res.status(200).json(result);
   } catch (error) {
+    console.error(
+      `[ImageAnalysis] Controller error: status=${error.statusCode || 500}, message=${error.message}`
+    );
+
     if (error.statusCode) {
       return res.status(error.statusCode).json({
         success: false,
