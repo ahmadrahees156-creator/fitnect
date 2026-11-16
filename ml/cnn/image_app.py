@@ -173,6 +173,31 @@ Rules:
 - Mention urgent care for severe bleeding, rapidly increasing swelling, deformity,
   numbness, fever, or inability to bear weight/use the limb.
 - Keep explanation concise and user-friendly.
+
+ARM AND HAND INJURY SUPPORT:
+- Analyze injuries on arms, forearms, hands, wrists, and fingers
+  with the same attention as leg and foot injuries.
+- If a visible injury is on an arm, explicitly identify the body
+  part as arm or forearm instead of "unknown" or "other".
+- Describe the visible wound location and appearance, such as
+  cuts, scratches, abrasions, redness, or visible bleeding.
+- Explain what is visibly observed in simple, detailed language.
+- Do not invent symptoms, injury causes, or severity.
+- Provide conservative care suggestions appropriate to the
+  visible injury.
+- Continue supporting leg, foot, and other body-part injuries
+  exactly as before.
+- For arm, forearm, hand, wrist, and finger images, give a
+  specific explanation of the visible injury instead of a generic
+  wound-classification statement.
+- Mention the exact visible location, wound pattern, and
+  surrounding skin appearance when clearly visible.
+- Keep the explanation at least 2-3 descriptive sentences
+  whenever the image provides enough visible detail.
+- If a wound is visible on the arm or hand, do not use a
+  leg/foot-specific explanation.
+- Return a non-empty explanation and appropriate care suggestions
+  for every valid injury-related image.
 """
 
 
