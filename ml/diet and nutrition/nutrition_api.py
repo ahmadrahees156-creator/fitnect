@@ -5,10 +5,23 @@ import pandas as pd
 app = Flask(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
-CSV_PATH = BASE_DIR / "cleaned_nutrition" / "nutrition_api.csv"
+CSV_PATH = BASE_DIR / "cleaned_nutrition" / "nutrition_api_combined.csv"
 
 foods = pd.read_csv(CSV_PATH)
+foods["fdc_id"] = pd.to_numeric(foods["fdc_id"], errors="raise").astype("int64")
+foods["gram_weight"] = pd.to_numeric(foods["gram_weight"], errors="coerce")
+
+nutrition_cols = ["calories_kcal","protein_g","fat_g","carbs_g"]
+
+for col in nutrition_cols:
+    foods[col] = pd.to_numeric(foods[col], errors="coerce")
+
 foods = foods.where(pd.notna(foods), None)
+
+print("Combined nutrition dataset loaded successfully!")
+print("Total records:", len(foods))
+print("FNDDS records:", (foods["source"] == "FNDDS").sum())
+print("INDB records:", (foods["source"] == "INDB").sum())
 
 @app.route("/foods", methods=["GET"])
 def get_foods():
@@ -34,6 +47,7 @@ def get_nutrition():
     result = foods[foods["fdc_id"] == int(food_id)]
     result = result[
         ~result["portion_description"].astype(str).str.strip().str.casefold().eq("quantity not specified")]
+
 
     if result.empty:
         return jsonify({"error": "Food not found"}), 404
