@@ -81,7 +81,7 @@ export default function PhotoInjuryAnalysis() {
 
       <section className="rounded-3xl border border-[#EEEAF3] bg-white p-5 shadow-[0_8px_28px_rgba(72,46,94,.035)] sm:p-7">
         <h3 className="text-xl font-bold text-[#302442]">Upload an injury photo</h3>
-        <p className="mt-2 text-sm leading-6 text-[#7E7E82]">Supported areas: feet and lower limbs only. Arm images are not supported yet.</p>
+        <p className="mt-2 text-sm leading-6 text-[#7E7E82]">Supported areas: Arm,feet and lower limbs only.</p>
         <p className="mt-1 text-xs text-[#92879F]">JPG, JPEG or PNG · Maximum file size 8 MB</p>
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <label className="block rounded-2xl border-2 border-dashed border-[#DCCFE9] bg-[#FCFAFE] p-5 transition hover:border-[#A98BC5] hover:bg-[#F8F5FC]">
