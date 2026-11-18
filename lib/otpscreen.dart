@@ -88,8 +88,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       if (response.statusCode == 200 || response.statusCode == 201) {
          final data = jsonDecode(response.body);
           final String token = data['token'] ?? ''; 
-          //final String email = widget.email;
-
+          
         if (mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) =>  DetailsScreen(

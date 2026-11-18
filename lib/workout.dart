@@ -19,11 +19,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   // ignore: unused_field
   bool _isSaving = false;
 
-  // Stats Data
   int _totalWorkouts = 0;
   int _totalMinutes = 0;
 
-  // Workouts Lists & Library Data
   List<dynamic> _todayWorkouts = [];
   List<dynamic> _libraryWorkouts = [];
   String _searchQuery = '';
@@ -37,7 +35,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     _fetchWorkoutLibrary();
   }
 
-  // --- 1. FETCH TODAY'S WORKOUTS & CALCULATE STATS ---
   Future<void> _fetchTodayWorkouts() async {
     final url = Uri.parse('$_baseUrl/api/workouts');
     try {
@@ -73,7 +70,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
   }
 
-  // --- 2. FETCH WORKOUT LIBRARY ---
   Future<void> _fetchWorkoutLibrary() async {
     setState(() => _isLoadingLibrary = true);
     
@@ -107,7 +103,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
   }
 
-  // --- 3. FETCH INDIVIDUAL EXERCISE DETAILS ---
   Future<void> _fetchExerciseDetails(String exerciseId) async {
     final url = Uri.parse('$_baseUrl/api/workout-library/$exerciseId');
     try {
@@ -168,7 +163,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
   }
 
-  // --- 4. DELETE WORKOUT ---
   Future<void> _deleteWorkout(String id) async {
     final url = Uri.parse('$_baseUrl/api/workouts/$id');
     try {
@@ -192,7 +186,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
   }
 
-  // --- 5. POST LOG WORKOUT ---
   Future<void> _logWorkout({
     required String title,
     required String category,
@@ -253,7 +246,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     }
   }
 
-  // --- SHOW ADD WORKOUT MODAL ---
   void _showAddWorkoutDialog() {
     final titleController = TextEditingController(text: 'Upper Body Day');
     final durationController = TextEditingController(text: '45');
@@ -357,7 +349,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- HERO BANNER ---
+            
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -389,7 +381,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             const SizedBox(height: 20),
 
-            // --- TODAY'S TRAINING SECTION ---
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -471,13 +462,11 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   ),
             const SizedBox(height: 24),
 
-            // --- WORKOUT LIBRARY SECTION ---
             const Text('Workout library', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             const Text('Explore guided sessions, find the right intensity, and choose a workout that fits your day.', style: TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 12),
 
-            // Search Bar
             TextField(
               onChanged: (val) {
                 setState(() => _searchQuery = val);
@@ -494,7 +483,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Library Cards Grid / List
             _isLoadingLibrary
                 ? const Center(child: CircularProgressIndicator(color: Color(0xFF6B4FA0)))
                 : ListView.builder(

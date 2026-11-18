@@ -107,7 +107,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
           const SnackBar(content: Text('Fitness profile saved successfully!')),
         );
 
-        // Navigate to DashboardScreen with properly parsed types
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -166,7 +165,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             const Text('These details help FitNect personalise wellness insights and training guidance. You can update them later from your profile.', style: TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 20),
 
-            // Age, Height, Weight row
             Row(
               children: [
                 Expanded(child: _buildTextField('Age', _ageController)),
@@ -178,7 +176,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             ),
             const SizedBox(height: 16),
 
-            // BMI Box
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -215,7 +212,6 @@ class _DetailsScreenState extends State<DetailsScreen> {
             _buildDropdownField('Dietary preference', ['vegetarian', 'non_vegetarian', 'vegan', 'other'], _selectedDietaryPreference, (val) => setState(() => _selectedDietaryPreference = val!)),
             const SizedBox(height: 24),
 
-            // Action Buttons
             Row(
               children: [
                 Expanded(

@@ -213,14 +213,13 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
             const Text('Use values measured or recorded for you. The stress, sleep, recovery, training-load and fatigue fields must follow the model’s input scale. Don’t guess if you don’t know those values.', style: TextStyle(fontSize: 11, color: Colors.grey)),
             const SizedBox(height: 16),
 
-            // --- INPUT FIELDS GRID: Tight row spacing ---
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               crossAxisSpacing: 8,
-              mainAxisSpacing: 2, // Very little vertical space between rows
-              childAspectRatio: 3.4, // Tightly packed compact cells
+              mainAxisSpacing: 2, 
+              childAspectRatio: 3.4, 
               children: [
                 _buildTextField('Heart rate', 'bpm', _heartRateController),
                 _buildTextField('Stress level', 'model scale [0-10]', _stressLevelController),
@@ -238,7 +237,6 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
             ),
             const SizedBox(height: 16),
 
-            // --- DROPDOWNS ---
             Row(
               children: [
                 Expanded(
@@ -290,7 +288,6 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
             ),
             const SizedBox(height: 20),
 
-            // --- ACTION BUTTONS ---
             Row(
               children: [
                 Expanded(
@@ -323,7 +320,6 @@ class _InjuryRiskScreenState extends State<InjuryRiskScreen> {
             ),
             const SizedBox(height: 24),
 
-            // --- INFO CARDS BOTTOM ---
             Row(
               children: [
                 _buildInfoCard('BEFORE TRAINING', 'Warm up properly', 'Start sessions with 5–10 minutes of easy movement and dynamic mobility.'),

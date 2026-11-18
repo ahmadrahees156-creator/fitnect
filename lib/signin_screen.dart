@@ -1,10 +1,8 @@
-//import 'package:fitnect/dashboard.dart';
 import 'package:fitnect/details.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:google_sign_in/google_sign_in.dart';
-
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -44,7 +42,6 @@ class _SignInScreenState extends State<SignInScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final String token = data['token'] ?? '';
-        //final String email = _emailController.text.trim();
         debugPrint('Login Token: $token');  
       
 
