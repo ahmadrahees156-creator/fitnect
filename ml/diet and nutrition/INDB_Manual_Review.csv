@@ -1,0 +1,64 @@
+food_code,food_name,primarysource,suggested_category,manual_decision,final_category,reviewer_note,approved_for_fitnect
+ASC174,Carrot and fenugreek leaves (Gajar methi),asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC034,Carrot apple sandwich (Gajar aur seb ka sandwich),asc_manual,Needs_Review,Approved,Breakfast,,True
+OSR122,Carrot cake (Gajar ka cake),open_source_recipes,Needs_Review,Approved,Sweets_Desserts,,True
+BFP276,"Cauliflower, pea and potato bhujia (Phoolgobhi, matar aur aloo bhujia)",bfp_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC475,Channa murmura premix,asc_manual,Needs_Review,Approved,Snacks,,True
+ASC096,Chapati/Roti,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC027,Cheese and tomato sandwich (Cheese aur tamatar ke sandwich),asc_manual,Needs_Review,Approved,Breakfast,,True
+ASC040,Cheese and tomato sandwich (toasted) (Cheese aur tamatar ke sandwich (toasted)),asc_manual,Needs_Review,Approved,Breakfast,,True
+BFP270,Crispy okra/Crispy lady's fingers (Karare bhindi),bfp_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC178,Dry potato (Sookhe aloo),asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC214,Dum aloo,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC037,Egg and tomato sandwich (Ande aur tamatar ka sandwich),asc_manual,Needs_Review,Approved,Breakfast,,True
+ASC024,Egg sandwich (Ande ka sandwich),asc_manual,Needs_Review,Approved,Breakfast,,True
+OSR146,Gujarati handvo ,open_source_recipes,Needs_Review,Approved,Breakfast,,True
+ASC226,Kadhai Paneer,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC321,Kulfi,asc_manual,Needs_Review,Approved,Sweets_Desserts,,True
+ASC493,Lemon squash (Nimbu ka squash),asc_manual,Needs_Review,Approved,Drinks,,True
+ASC150,Makki ki roti,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC216,Methi chaman,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC223,Methi malai paneer,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC109,Methi poori,asc_manual,Needs_Review,Approved,Breakfast,,True
+BFP413,Murmura chikki,bfp_manual,Needs_Review,Approved,Snacks,,True
+BFP205,Mushroom matar,bfp_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC142,Naan,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+BFP168,Onion tomato baghar (Pyaaz tamatar ka tadka),bfp_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC222,Paneer in butter sauce,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+OSR077,Paneer lababdar,open_source_recipes,Needs_Review,Approved,Lunch_Dinner,,True
+BFP544,Paneer patties,bfp_manual,Needs_Review,Approved,Snacks,,True
+ASC042,Paneer pea sandwich (toasted) (Paneer matar ka sandwich),asc_manual,Needs_Review,Approved,Breakfast,,True
+ASC381,Paneer shaslik/tikka,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+OSR148,Papdi,open_source_recipes,Needs_Review,Approved,Snacks,,True
+ASC472,Paushtik roti,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+OSR112,Pav bhaji,open_source_recipes,Needs_Review,Approved,Lunch_Dinner,,True
+BFP373,Pavlova,bfp_manual,Needs_Review,Not_Approved,,,False
+ASC044,Pea keema sandwich (toasted) (Matar aur keema ka sandwich),asc_manual,Needs_Review,Approved,Breakfast,,True
+ASC041,Pea potato sandwich (toasted) (Matar aloo ka sandwich),asc_manual,Needs_Review,Approved,Breakfast,,True
+ASC029,Peanut and tomato sandwich (Moongfali aur tamatar ka sandwich),asc_manual,Needs_Review,Approved,Breakfast,,True
+ASC382,Peanut brittle (Moongfali ki chikki),asc_manual,Needs_Review,Approved,Snacks,,True
+BFP117,Peas poori (Matar ki poori),bfp_manual,Needs_Review,Approved,Breakfast,,True
+BFP589,Plum squash (Aloo bukhara squash),bfp_manual,Needs_Review,Approved,Drinks,,True
+ASC360,Potato bonda (Aloo bonda),asc_manual,Needs_Review,Approved,Snacks,,True
+BFP031,Potato canjee (Aloo canjee),bfp_manual,Needs_Review,Needs_Confirmation,,,False
+ASC172,Potato capsicum (Shimla mirch aloo),asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC171,Potato cauliflower (Aloo gobhi),asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC175,Potato fenugreek (Aloo methi),asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC111,Potato stuffed poori (Aloo ki poori),asc_manual,Needs_Review,Approved,Breakfast,,True
+BFP393,Rasmalai,bfp_manual,Needs_Review,Approved,Sweets_Desserts,,True
+OSR099,Sago khitchdi/khichri (Sabudana khitchdi/khichri),open_source_recipes,Needs_Review,Approved,Breakfast,,True
+ASC217,Sarson ka saag,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC059,Scrambled egg (Ande ki bhurji),asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+OSR123,Semolina cake (Suji/Rava cake),open_source_recipes,Needs_Review,Approved,Sweets_Desserts,,True
+ASC221,Shahi paneer,asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+BFP206,Soya chunks and peas (Nutrinugget matar),bfp_manual,Needs_Review,Approved,Lunch_Dinner,,True
+BFP575,Soya roti,bfp_manual,Needs_Review,Approved,Lunch_Dinner,,True
+BFP159,Spaghetti with paneer balls and tomato sauce,bfp_manual,Needs_Review,Needs_Confirmation,,,False
+OSR093,Spinach and paneer souffle ,open_source_recipes,Needs_Review,Needs_Confirmation,,,False
+BFP257,Spinach and potato (Palak aloo),bfp_manual,Needs_Review,Approved,Lunch_Dinner,,True
+BFP208,Spinach mushroom (Palak mushroom),bfp_manual,Needs_Review,Approved,Lunch_Dinner,,True
+OSR071,Spinach mushroom scrambled egg (Palak mushroom bhurji),open_source_recipes,Needs_Review,Approved,Lunch_Dinner,,True
+ASC215,Spinach paneer (Palak paneer),asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
+ASC460,Spinach peanut namak paras (Palak moongfali namak paras),asc_manual,Needs_Review,Approved,Snacks,,True
+ASC108,Spinach poori (Palak poori),asc_manual,Needs_Review,Approved,Breakfast,,True
+ASC184,Stuffed okra (Bharwa bhindi),asc_manual,Needs_Review,Approved,Lunch_Dinner,,True
