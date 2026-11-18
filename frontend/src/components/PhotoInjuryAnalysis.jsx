@@ -75,7 +75,7 @@ export default function PhotoInjuryAnalysis() {
         <div className="relative max-w-3xl">
           <span className="inline-flex rounded-full border border-[#D7C6E8] bg-white/60 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[1.7px] text-[#72529A]">Photo assessment</span>
           <h2 className="mt-5 text-3xl font-bold leading-tight tracking-[-1px] text-[#151517] sm:text-4xl">Photo Injury Analysis</h2>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-[#68616F]">Upload a clear photo of a foot or lower limb to receive an image-based classification and care suggestions.</p>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-[#68616F]">Upload a clear photo of a Arm,Foot or lower limb to receive an image-based classification and care suggestions.</p>
         </div>
       </section>
 
