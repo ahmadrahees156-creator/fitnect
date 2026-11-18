@@ -6,7 +6,7 @@ import 'recovery_screen.dart';
 import 'nutrition_screen.dart';
 import 'wellness.dart';
 import 'workout.dart';
-
+import 'photo_injury_screen.dart';
 class SidebarDrawer extends StatelessWidget {
   final String userName;
   final String userEmail;
@@ -86,6 +86,15 @@ class SidebarDrawer extends StatelessWidget {
                      ),
                      );
                    }),
+                   _buildDrawerItem(context, 'Photo Injury Analysis', false, () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                    builder: (context) => PhotoInjuryScreen(token: token),
+                    ),
+                    );
+                    }),
                    _buildDrawerItem(context, 'Nutrition', false, () {
                     Navigator.pop(context);
                     Navigator.push(
