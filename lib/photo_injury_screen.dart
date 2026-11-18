@@ -187,7 +187,7 @@ class _PhotoInjuryScreenState extends State<PhotoInjuryScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Upload a clear photo of a foot or lower limb to receive an image-based classification and care suggestions.',
+                    'Upload a clear photo of arm, foot or lower limb to receive an image-based classification and care suggestions.',
                     style: TextStyle(
                       fontSize: 11,
                       color: Colors.black54,
@@ -226,7 +226,7 @@ class _PhotoInjuryScreenState extends State<PhotoInjuryScreen> {
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Supported areas: Feet and lower limbs only.\nJPG, JPEG or PNG • Maximum file size: 8 MB',
+                    'Supported areas: Arm, feet and lower limbs only.\nJPG, JPEG or PNG • Maximum file size: 8 MB',
                     style: TextStyle(
                       fontSize: 10,
                       color: Colors.black54,
